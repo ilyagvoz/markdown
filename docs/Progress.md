@@ -78,7 +78,7 @@ Current UI smoke coverage includes:
 - reveal in Finder
 - watched-folder add/delete
 - selected-file rename/delete and final-file deletion
-- live-preview editing, saving, undo/redo, new bullet creation, and marker replacement
+- live-preview editing, saving, undo/redo, new bullet creation, ordered-list continuation, and marker replacement
 - crash-report checks
 
 See `docs/Validation.md` and `docs/Test-Coverage.md` for the latest details.

@@ -642,9 +642,15 @@ public enum MarkdownEditorHTML {
 
   function continuationSource(block, after) {
     if (block.type === "unordered-list" && block.visibleText.trim() !== "") return `${block.marker} ${after}`;
-    if (block.type === "ordered-list" && block.visibleText.trim() !== "") return `${block.marker} ${after}`;
+    if (block.type === "ordered-list" && block.visibleText.trim() !== "") return `${nextOrderedListMarker(block.marker)} ${after}`;
     if (block.type === "quote" && block.visibleText.trim() !== "") return `> ${after}`;
     return after;
+  }
+
+  function nextOrderedListMarker(marker) {
+    const [, number = "", delimiter = "."] = marker.match(/^(\d+)([.)])$/) ?? [];
+    if (!number) return marker;
+    return `${Number(number) + 1}${delimiter}`;
   }
 
   function parseLine(source, { index, inFence }) {

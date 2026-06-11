@@ -166,6 +166,18 @@ Here is a list with a bunch of bullet points:
 * Two
 ```
 
+- Opened a temporary Markdown file containing `Hello`.
+- Replaced it with `Steps:`, then typed `1. One`, `Return`, `Two`, `Return`, `Three`.
+- Saved with `Cmd+S`.
+- Verified the file on disk was exactly:
+
+```text
+Steps:
+1. One
+2. Two
+3. Three
+```
+
 - Opened a temporary Markdown file containing `* One`.
 - Focused the first unordered-list item.
 - Pressed Left Arrow repeatedly to reach marker replacement, typed `>`, and saved with `Cmd+S`.

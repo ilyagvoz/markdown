@@ -18,6 +18,8 @@ final class MarkdownEditorHTMLTests: XCTestCase {
         XCTAssertTrue(html.contains("function undo()"))
         XCTAssertTrue(html.contains("function redo()"))
         XCTAssertTrue(html.contains("restoreHistorySnapshot"))
+        XCTAssertTrue(html.contains("function nextOrderedListMarker"))
+        XCTAssertTrue(html.contains("Number(number) + 1"))
         XCTAssertTrue(html.contains("saveRequested"))
     }
 

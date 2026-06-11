@@ -182,6 +182,37 @@ if [[ "$(cat "$EDIT_FILE")" != "$EXPECTED_EDIT" ]]; then
 fi
 rm -rf "$EDIT_DIR"
 
+ORDERED_DIR="$(mktemp -d /tmp/markdown-ui-ordered.XXXXXX)"
+ORDERED_FILE="$ORDERED_DIR/ordered.md"
+printf 'Hello\n' > "$ORDERED_FILE"
+launch_app "$ORDERED_FILE"
+run_applescript "edit ordered list continuation" '
+  tell process "Markdown"
+    set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "paragraph line 1"
+    click targetArea
+  end tell
+  delay 0.2
+  keystroke "a" using command down
+  delay 0.1
+  keystroke "Steps:"
+  key code 36
+  keystroke "1. One"
+  key code 36
+  keystroke "Two"
+  key code 36
+  keystroke "Three"
+  delay 1.0
+  keystroke "s" using command down
+  delay 1
+'
+EXPECTED_ORDERED=$'Steps:\n1. One\n2. Two\n3. Three'
+if [[ "$(cat "$ORDERED_FILE")" != "$EXPECTED_ORDERED" ]]; then
+  echo "Ordered list smoke failed: unexpected saved Markdown" >&2
+  cat "$ORDERED_FILE" >&2
+  exit 1
+fi
+rm -rf "$ORDERED_DIR"
+
 UNDO_DIR="$(mktemp -d /tmp/markdown-ui-undo.XXXXXX)"
 UNDO_FILE="$UNDO_DIR/undo.md"
 printf 'Original\n' > "$UNDO_FILE"

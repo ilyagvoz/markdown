@@ -36,7 +36,7 @@ Run for performance-sensitive changes:
 | Search current document | Unit tests and UI smoke | Unit tests verify matching/context; UI smoke opens `Cmd+F`, types queries, and clicks results. |
 | Search workspace | Unit tests and UI smoke | Unit tests verify file metadata, snippets, limits, and occurrence numbers; UI smoke searches an opened folder and clicks a cross-file result. |
 | Jump from search result into preview | UI smoke | Exercises WebView JavaScript bridge and crash-report checks. |
-| Live-preview editing | Unit tests and UI smoke | Unit tests cover editor HTML/script generation; UI smoke edits a paragraph into bullet lines, saves with `Cmd+S`, and verifies the Markdown file on disk. |
+| Live-preview editing | Unit tests and UI smoke | Unit tests cover editor HTML/script generation; UI smoke edits a paragraph into bullet lines and ordered `1.` / `2.` / `3.` lines, saves with `Cmd+S`, and verifies the Markdown file on disk. |
 | Live-preview undo/redo | Unit tests and UI smoke | Unit tests cover editor history script generation; UI smoke edits a paragraph, saves after `Cmd+Z`, verifies original file content, then saves after `Shift+Cmd+Z` and verifies redone content. |
 | Marker replacement editing | UI smoke | Focuses a list item, uses Left Arrow marker replacement, saves, and verifies `* One` becomes `> One` on disk. |
 | Right outline panel | Unit tests and UI smoke | Unit tests verify outline extraction; UI smoke clicks outline landmarks. |
