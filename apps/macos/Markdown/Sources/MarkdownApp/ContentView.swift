@@ -699,6 +699,8 @@ struct ShortcutHelpView: View {
     private let shortcuts: [(String, String)] = [
         ("Open file or folder", "Cmd O"),
         ("Save current document", "Cmd S"),
+        ("Undo edit", "Cmd Z"),
+        ("Redo edit", "Shift Cmd Z"),
         ("Search current document", "Cmd F"),
         ("Previous Markdown file", "Cmd Up"),
         ("Next Markdown file", "Cmd Down"),

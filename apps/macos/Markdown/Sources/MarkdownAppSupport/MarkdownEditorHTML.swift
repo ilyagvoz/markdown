@@ -40,7 +40,7 @@ public enum MarkdownEditorHTML {
             }
 
             main {
-              max-width: 820px;
+              max-width: 780px;
               margin: 0 auto;
             }
 
@@ -54,15 +54,16 @@ public enum MarkdownEditorHTML {
             }
 
             .editor-content {
-              min-height: 1.35em;
+              min-height: 0;
               outline: none;
               border-radius: 7px;
-              padding: 0.04em 0.2em;
+              padding: 0;
               white-space: pre-wrap;
               overflow-wrap: anywhere;
             }
 
             .editor-content:focus {
+              padding: 0.04em 0.2em;
               background: var(--focus);
               box-shadow: 0 0 0 2px var(--focus-strong);
             }
@@ -74,8 +75,21 @@ public enum MarkdownEditorHTML {
             }
 
             .editor-block-blank {
-              min-height: 0.95em;
-              margin-bottom: 0.55em;
+              height: 0;
+              min-height: 0;
+              margin: 0;
+              overflow: hidden;
+            }
+
+            .editor-block-blank:focus-within {
+              height: auto;
+              min-height: 1.35em;
+              margin-bottom: 1.05em;
+              overflow: visible;
+            }
+
+            .editor-block-blank:focus-within .editor-content {
+              min-height: 1.35em;
             }
 
             .editor-block-heading {
@@ -85,6 +99,10 @@ public enum MarkdownEditorHTML {
             .editor-block-heading[data-level="1"] {
               margin-top: 0;
               margin-bottom: 0.62em;
+            }
+
+            .editor-block-heading[data-level="2"] {
+              margin-top: 1.9em;
             }
 
             .editor-block-heading .editor-content {
@@ -145,6 +163,7 @@ public enum MarkdownEditorHTML {
             .editor-block-fence .editor-content {
               font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
               font-size: 0.88em;
+              line-height: 1.55;
               background: var(--code-bg);
               border: 1px solid var(--rule);
             }
@@ -152,6 +171,8 @@ public enum MarkdownEditorHTML {
             .editor-block-code .editor-content {
               border-radius: 0;
               border-bottom-width: 0;
+              padding-left: 1.1em;
+              padding-right: 1.1em;
             }
 
             .editor-block-code:not(.editor-block-code-start) .editor-content {
@@ -169,12 +190,14 @@ public enum MarkdownEditorHTML {
             .editor-block-code-start .editor-content {
               border-top-left-radius: 7px;
               border-top-right-radius: 7px;
+              padding-top: 1em;
             }
 
             .editor-block-code-end .editor-content {
               border-bottom-width: 1px;
               border-bottom-left-radius: 7px;
               border-bottom-right-radius: 7px;
+              padding-bottom: 1em;
             }
 
             .editor-block-fence .editor-content {
@@ -243,6 +266,12 @@ public enum MarkdownEditorHTML {
   let blocks = parseMarkdown(window.initialMarkdown || "");
   let pendingCommitTimer = null;
   let pendingMarkerSelection = null;
+  let pendingUndoSnapshot = null;
+  let activeTypingSnapshot = null;
+  let lastTypingAt = 0;
+  const maxHistoryDepth = 100;
+  const undoStack = [];
+  const redoStack = [];
   const editor = document.querySelector("[data-editor]");
 
   render();
@@ -291,7 +320,7 @@ public enum MarkdownEditorHTML {
     return false;
   };
 
-  function render(focusID = null, selectionRange = null, caretEnd = false) {
+  function render(focusID = null, selectionRange = null, caretEnd = false, caretOffset = null) {
     editor.innerHTML = "";
     blocks = reindexBlocks(blocks);
 
@@ -331,7 +360,12 @@ public enum MarkdownEditorHTML {
         moveCaretToEnd(content);
       });
 
+      content.addEventListener("beforeinput", (event) => {
+        captureUndoSnapshot(block.id, event);
+      });
+
       content.addEventListener("input", () => {
+        recordUndoSnapshot();
         const rawText = content.textContent;
         if (block.unlocked) {
           blocks = updateUnlockedDraft(blocks, block.id, rawText);
@@ -352,6 +386,16 @@ public enum MarkdownEditorHTML {
           post("saveRequested", { key: event.key, route });
           return;
         }
+        if (route === "undo") {
+          event.preventDefault();
+          undo();
+          return;
+        }
+        if (route === "redo") {
+          event.preventDefault();
+          redo();
+          return;
+        }
         if (route !== "editor") {
           post("shortcut", { key: event.key, route });
           return;
@@ -359,6 +403,8 @@ public enum MarkdownEditorHTML {
 
         if (block.unlocked && pendingMarkerSelection?.id === block.id && isMarkerReplacementKey(event)) {
           event.preventDefault();
+          recordUndoSnapshot(makeHistorySnapshot(block.id));
+          resetTypingSnapshot();
           const replacement = event.key === "Backspace" || event.key === "Delete" ? "" : event.key;
           replaceRangeInContent(content, pendingMarkerSelection.start, pendingMarkerSelection.end, replacement);
           pendingMarkerSelection = null;
@@ -370,6 +416,8 @@ public enum MarkdownEditorHTML {
 
         if (block.unlocked && normalizedKey(event.key) === "Enter") {
           event.preventDefault();
+          recordUndoSnapshot(makeHistorySnapshot(block.id));
+          resetTypingSnapshot();
           clearPendingMarkerSelection();
           blocks = commitUnlockedSource(blocks, block.id, true);
           render(block.id, null, true);
@@ -379,6 +427,8 @@ public enum MarkdownEditorHTML {
 
         if (!block.unlocked && normalizedKey(event.key) === "Enter") {
           event.preventDefault();
+          recordUndoSnapshot(makeHistorySnapshot(block.id));
+          resetTypingSnapshot();
           const nextID = splitBlockAtCaret(block.id, currentCaretOffset());
           render(nextID, null, true);
           post("documentChanged");
@@ -422,6 +472,9 @@ public enum MarkdownEditorHTML {
             setTextSelection(target, selectionRange.start, selectionRange.end);
           }
         }, 0);
+      } else if (caretOffset !== null) {
+        clearPendingMarkerSelection();
+        setTextSelection(target, caretOffset, caretOffset);
       } else if (caretEnd) {
         moveCaretToEnd(target);
       } else {
@@ -437,6 +490,86 @@ public enum MarkdownEditorHTML {
       markdown: serializeBlocks(blocks),
       ...payload,
     });
+  }
+
+  function captureUndoSnapshot(blockID, event) {
+    const snapshot = makeHistorySnapshot(blockID);
+    const now = Date.now();
+    if (isCoalescedTypingInput(event) && activeTypingSnapshot?.blockID === blockID && now - lastTypingAt < 1200) {
+      pendingUndoSnapshot = activeTypingSnapshot;
+      lastTypingAt = now;
+      return;
+    }
+
+    activeTypingSnapshot = { ...snapshot, blockID };
+    pendingUndoSnapshot = activeTypingSnapshot;
+    lastTypingAt = now;
+
+    if (!isCoalescedTypingInput(event)) {
+      resetTypingSnapshot();
+    }
+  }
+
+  function recordUndoSnapshot(snapshot = null) {
+    const candidate = snapshot || pendingUndoSnapshot || makeHistorySnapshot();
+    pendingUndoSnapshot = null;
+    if (!candidate) return;
+    pushHistorySnapshot(undoStack, candidate);
+    redoStack.length = 0;
+  }
+
+  function pushHistorySnapshot(stack, snapshot) {
+    if (!snapshot || typeof snapshot.markdown !== "string") return;
+    if (stack.at(-1)?.markdown === snapshot.markdown) return;
+    stack.push(snapshot);
+    if (stack.length > maxHistoryDepth) stack.shift();
+  }
+
+  function makeHistorySnapshot(fallbackBlockID = null) {
+    return {
+      markdown: serializeBlocks(blocks),
+      focusID: focusedBlockID() || fallbackBlockID,
+      caretOffset: currentCaretOffset(),
+    };
+  }
+
+  function undo() {
+    restoreHistorySnapshot(undoStack, redoStack, "undo");
+  }
+
+  function redo() {
+    restoreHistorySnapshot(redoStack, undoStack, "redo");
+  }
+
+  function restoreHistorySnapshot(sourceStack, destinationStack, action) {
+    const snapshot = sourceStack.pop();
+    if (!snapshot) return;
+
+    clearPendingCommit();
+    clearPendingMarkerSelection();
+    resetTypingSnapshot();
+    pushHistorySnapshot(destinationStack, makeHistorySnapshot(snapshot.focusID));
+    blocks = parseMarkdown(snapshot.markdown);
+    render(snapshot.focusID, null, false, snapshot.caretOffset);
+    post("documentChanged", { history: action });
+  }
+
+  function focusedBlockID() {
+    const block = document.activeElement?.closest?.(".editor-block");
+    return block?.dataset?.blockId || null;
+  }
+
+  function resetTypingSnapshot() {
+    activeTypingSnapshot = null;
+    lastTypingAt = 0;
+  }
+
+  function isCoalescedTypingInput(event) {
+    const type = event?.inputType || "";
+    return type === "insertText"
+      || type === "insertCompositionText"
+      || type === "deleteContentBackward"
+      || type === "deleteContentForward";
   }
 
   function parseMarkdown(markdown) {
@@ -749,6 +882,9 @@ public enum MarkdownEditorHTML {
     const meta = Boolean(eventLike.metaKey);
     const key = normalizedKey(eventLike.key);
     if (!meta) return "editor";
+    if (key === "z" && eventLike.shiftKey) return "redo";
+    if (key === "z") return "undo";
+    if (key === "y") return "redo";
     if (key === "s") return "save";
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) return "native-navigation";
     if (key === "o" || key === "f" || key === "/" || key === "r") return "native-command";

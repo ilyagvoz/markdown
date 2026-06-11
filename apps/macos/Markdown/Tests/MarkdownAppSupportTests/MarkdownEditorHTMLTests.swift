@@ -15,6 +15,9 @@ final class MarkdownEditorHTMLTests: XCTestCase {
         XCTAssertTrue(html.contains("function markerSelectionRange"))
         XCTAssertTrue(html.contains("function inlineMarkdownHTML"))
         XCTAssertTrue(html.contains("shouldParseTypedSource"))
+        XCTAssertTrue(html.contains("function undo()"))
+        XCTAssertTrue(html.contains("function redo()"))
+        XCTAssertTrue(html.contains("restoreHistorySnapshot"))
         XCTAssertTrue(html.contains("saveRequested"))
     }
 
@@ -26,6 +29,7 @@ final class MarkdownEditorHTMLTests: XCTestCase {
         XCTAssertTrue(html.contains(".editor-block-fence:not(.editor-block-unlocked)"))
         XCTAssertTrue(html.contains(".editor-block-unlocked"))
         XCTAssertTrue(html.contains("function markerViewText"))
+        XCTAssertTrue(html.contains(".editor-block-blank:focus-within"))
         XCTAssertTrue(html.contains("editor-block-code-start"))
         XCTAssertTrue(html.contains("editor-block-code-end"))
         XCTAssertTrue(html.contains("border-top-width: 0;"))

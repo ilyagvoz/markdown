@@ -38,6 +38,7 @@ The app should preserve enough window and navigation state to feel calm between 
 - As a reader, I can use standard macOS open/recent-document workflows.
 - As a reader, the app renders with a polished light theme and comfortable reading defaults.
 - As an editor, I can make quick changes directly in the rendered document and save with `Cmd+S`.
+- As an editor, I can undo and redo live-preview edits with standard macOS shortcuts.
 - As an editor, I can create new Markdown blocks with `Return` and typed markers like `*`, `>`, or `#`.
 
 ## MVP Markdown Scope

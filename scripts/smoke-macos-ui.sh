@@ -182,6 +182,43 @@ if [[ "$(cat "$EDIT_FILE")" != "$EXPECTED_EDIT" ]]; then
 fi
 rm -rf "$EDIT_DIR"
 
+UNDO_DIR="$(mktemp -d /tmp/markdown-ui-undo.XXXXXX)"
+UNDO_FILE="$UNDO_DIR/undo.md"
+printf 'Original\n' > "$UNDO_FILE"
+launch_app "$UNDO_FILE"
+run_applescript "edit undo and redo" '
+  tell process "Markdown"
+    set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "paragraph line 1"
+    click targetArea
+  end tell
+  delay 0.2
+  keystroke "a" using command down
+  delay 0.1
+  keystroke "Changed"
+  delay 0.2
+  keystroke "z" using command down
+  delay 0.5
+  keystroke "s" using command down
+  delay 0.7
+'
+if [[ "$(cat "$UNDO_FILE")" != "Original" ]]; then
+  echo "Undo smoke failed: unexpected saved Markdown after undo" >&2
+  cat "$UNDO_FILE" >&2
+  exit 1
+fi
+run_applescript "redo edit" '
+  keystroke "z" using {command down, shift down}
+  delay 0.5
+  keystroke "s" using command down
+  delay 0.7
+'
+if [[ "$(cat "$UNDO_FILE")" != "Changed" ]]; then
+  echo "Redo smoke failed: unexpected saved Markdown after redo" >&2
+  cat "$UNDO_FILE" >&2
+  exit 1
+fi
+rm -rf "$UNDO_DIR"
+
 MARKER_DIR="$(mktemp -d /tmp/markdown-ui-marker.XXXXXX)"
 MARKER_FILE="$MARKER_DIR/marker.md"
 printf '* One\n' > "$MARKER_FILE"

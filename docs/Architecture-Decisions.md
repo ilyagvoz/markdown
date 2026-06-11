@@ -108,5 +108,6 @@ Consequences:
 - Pressing Left Arrow at the start of a formatted line selects the Markdown marker for fast type changes.
 - Pressing Return creates a new editable block; typed markers such as `*`, `>`, and `#` convert the new block.
 - `Cmd+S` writes the current Markdown source back to the selected local file.
+- `Cmd+Z` and `Shift+Cmd+Z` use an app-owned editor history so undo/redo works across rendered block edits, block creation, and marker replacement.
 - The editor bridge must remain small, defensive, and covered by UI smoke because WebKit interaction bugs are easy to miss with unit tests alone.
-- Undo/redo, paste normalization, IME/input methods, external file conflicts, accessibility, and large-file editing remain hardening areas.
+- Paste normalization, IME/input methods, external file conflicts, accessibility, and large-file editing remain hardening areas.

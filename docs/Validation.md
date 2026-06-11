@@ -126,12 +126,13 @@ Validated screenshots:
 - `artifacts/screenshots/markdown-polish-03-workspace-search.png` - workspace search UI with cross-file results.
 - `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing branch with inline Markdown rendered in read mode and block syntax hidden.
 - `artifacts/screenshots/markdown-editing-branch-code-preview.png` - live-preview editing branch code-block view with fences and syntax gutter hidden.
+- `artifacts/screenshots/markdown-editing-branch-restored-preview-spacing.png` - live-preview editing branch after restoring preview-like spacing by hiding source-only blank lines in read mode.
 
 Assessment:
 
 - Function: single-file and folder-open flows work.
 - Usability: sidebar hierarchy is clear, selected row is obvious, current/workspace search is discoverable, the outline panel is useful without overpowering the reading/editing surface, live-preview editing keeps block markers hidden until intentional marker editing, and status text remains unobtrusive.
-- Joy: the light-only palette, warm paper reading surface, teal selection, calm three-pane layout, comfortable typography, and new app icon are directionally right for daily use.
+- Joy: the light-only palette, warm paper reading surface, teal selection, calm three-pane layout, comfortable typography, restored preview-like document spacing, and new app icon are directionally right for daily use.
 
 Known UX follow-ups:
 
@@ -169,6 +170,9 @@ Here is a list with a bunch of bullet points:
 - Focused the first unordered-list item.
 - Pressed Left Arrow repeatedly to reach marker replacement, typed `>`, and saved with `Cmd+S`.
 - Verified the file on disk was exactly `> One`.
+- Opened a temporary Markdown file containing `Original`.
+- Replaced it with `Changed`, pressed `Cmd+Z`, saved, and verified the file on disk returned to `Original`.
+- Pressed `Shift+Cmd+Z`, saved, and verified the file on disk became `Changed`.
 
 Keyboard/search:
 
