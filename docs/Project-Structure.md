@@ -79,7 +79,11 @@ markdown/
 │   │   ├── Sources/
 │   │   └── fixtures/
 │   └── spike2-editing-update-mode/
-│       └── README.md
+│       ├── Package.swift
+│       ├── README.md
+│       ├── RESULTS.md
+│       ├── Sources/
+│       └── Tests/
 │
 └── artifacts/
     ├── Markdown.app

@@ -170,6 +170,7 @@ struct SidebarView: View {
                     Image(systemName: "magnifyingglass")
                 }
                 .help("Search current document")
+                .accessibilityLabel("Search current document or workspace")
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
@@ -379,6 +380,7 @@ struct PreviewPane: View {
             }
             .buttonStyle(.borderless)
             .help("Search")
+            .accessibilityLabel("Search current document or workspace")
 
             Button {
                 model.toggleOutline()
@@ -387,6 +389,7 @@ struct PreviewPane: View {
             }
             .buttonStyle(.borderless)
             .help("Toggle document outline")
+            .accessibilityLabel("Toggle document outline")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
@@ -461,6 +464,7 @@ struct SearchPanel: View {
                     }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
+                    .accessibilityLabel("Clear search")
                 }
             }
             .padding(.horizontal, 16)
@@ -609,6 +613,7 @@ struct OutlinePanel: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Hide outline")
+                .accessibilityLabel("Hide outline")
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)

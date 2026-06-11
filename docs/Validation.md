@@ -53,6 +53,18 @@ Latest result:
 
 See `docs/Test-Coverage.md` for the user-focused coverage matrix.
 
+Run for the editing/update-mode spike:
+
+```sh
+swift test --package-path spikes/spike2-editing-update-mode
+```
+
+Latest result:
+
+- Passed.
+- 7 spike tests.
+- Coverage areas: no-edit Markdown round-trip, heading/list/quote/fenced-code/code-content edits preserving presentation markers, and marker unlock behavior.
+
 Run:
 
 ```sh
@@ -64,9 +76,9 @@ Latest release-profile result:
 | Metric | Observation |
 |---|---:|
 | Settled idle CPU | 0.0-0.1% on later samples |
-| Fixture settled RSS | about 91.6 MB |
+| Fixture settled RSS | about 91.7 MB |
 | Larger-folder settled RSS | about 116.6 MB against `~/dev/distill-v3/docs` |
-| Launch/render RSS range | about 91.6-122.8 MB in the latest release-profile runs |
+| Launch/render RSS range | about 91.7-122.8 MB in the latest release-profile runs |
 | Virtual size | very large, expected for modern macOS/WebKit process address space and not useful as real memory pressure |
 
 In the managed Codex sandbox, SwiftPM may warn that user-level SwiftPM configuration/security paths under `~/Library` are not writable. The project scripts keep scratch space and caches inside the workspace; those warnings do not fail the gate.
@@ -97,8 +109,6 @@ Assessment:
 
 Known UX follow-ups:
 
-- Add the editing/update-mode spike.
-- Add a focused accessibility/VoiceOver spot check.
 - Add a first-run empty-state screenshot pass once final window sizing is settled.
 
 ## Feature Smoke
@@ -139,6 +149,21 @@ App identity:
 - Added `CFBundleIconFile`, Markdown document type metadata, and productivity app category metadata to `Info.plist`.
 - Updated `build-macos-app.sh` to copy resource files into `Contents/Resources`.
 - Verified `/Applications/Markdown.app/Contents/Resources/AppIcon.icns` exists after install.
+
+Editing/update-mode spike:
+
+- Added `spikes/spike2-editing-update-mode` Swift package.
+- Added a tested Markdown line-model prototype for preserving presentation markers during ordinary visible-text edits.
+- Recommendation: prototype production editing with a WebView-backed live-preview editor first, while keeping Markdown serialization in an app-owned Swift line/block model.
+- Production editing remains deferred until broader round-trip, input, undo/redo, shortcut, large-file, and file-conflict gates are proven.
+
+Accessibility spot check:
+
+- Verified the app exposes a standard macOS accessibility window through System Events.
+- Drove the keyboard-only sidebar path with plain arrows, `Space`, and `Return`; the app stayed alive and did not trap the key path.
+- Added explicit accessibility labels for icon-only search, outline, clear-search, and hide-outline controls.
+- Sidebar file/folder rows include explicit file/folder accessibility labels in code.
+- System Events did not expose enough SwiftUI child labels to act as a full accessibility audit, so a broader hands-on VoiceOver pass remains a future distribution-quality task.
 
 ## Crash Fix
 

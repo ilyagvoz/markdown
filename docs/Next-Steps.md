@@ -2,77 +2,43 @@
 
 Last updated: 2026-06-11
 
-This is the forward-looking planning backlog. Completed work and implementation lessons live in `docs/Progress.md`; latest test/profile results live in `docs/Validation.md`.
+All planned reader-MVP items from the previous backlog are complete. Completed capabilities and lessons live in `docs/Progress.md`; latest test/profile/screenshot results live in `docs/Validation.md`.
 
-## Current Planning Goal
+## Current State
 
-Decide the next product stage now that the preview-first MVP foundation is stable.
+Complete:
 
-Recommended next stage: make Markdown useful for daily reading across real local folders, without starting the full editing project yet.
+- Workspace-wide search.
+- Sidebar keyboard navigation.
+- Selected-file deletion/rename handling.
+- Visual polish screenshot pass.
+- App icon and bundle metadata.
+- Editing/update-mode spike and recommendation.
+- Focused accessibility spot check.
 
-## Stage Candidates
+## Future Candidates
 
-### 1. Editing / Update Mode Spike
+These are not active backlog items for the completed reader-MVP checklist.
 
-Goal: decide whether live-preview editing is feasible without corrupting Markdown or degrading the reading experience.
+### Production Editing / Update Mode
 
-Product behavior to investigate:
+Use the Spike 2 recommendation:
 
-- Editing an existing line should preserve its current presentation style by default.
-- If the cursor is inside code, heading, list item, quote, or paragraph content, ordinary text edits should keep that presentation mode.
-- Changing a line's presentation type should be intentional.
-- Moving to the beginning of the line and pressing `Left Arrow` should expose/unlock Markdown markers so the user can change `#`, list markers, quote markers, fenced code markers, or remove them.
-- `Cmd+S` should save once editing exists.
+- prototype a WebView-backed live-preview editor first;
+- keep Markdown serialization in an app-owned Swift line/block model;
+- do not ship editing until the production gates in `spikes/spike2-editing-update-mode/RESULTS.md` are proven.
 
-Spike options:
+### Broader Accessibility Pass
 
-- WebView editor using contenteditable or ProseMirror-like document behavior while keeping app-owned Markdown serialization.
-- Native `NSTextView`/SwiftUI text editor with attributed presentation and a Markdown-aware line model.
+Run a fuller hands-on VoiceOver and keyboard accessibility pass before external distribution.
 
-Evaluate:
+### Distribution Hardening
 
-- caret behavior
-- IME/input correctness
-- undo/redo
-- selection
-- keyboard shortcuts
-- paste behavior
-- Markdown serialization
-- performance on large files
-- Common Markdown round-trip safety
+Add signing, notarization, and release packaging once the app is ready to distribute beyond local install.
 
-Validation:
+## Gates For Future Features
 
-- Golden round-trip tests before production editing ships.
-- Explicit recommendation before implementation.
-
-### 2. Accessibility / VoiceOver Spot Check
-
-Goal: confirm the reader MVP is navigable and understandable with macOS accessibility tooling.
-
-Scope:
-
-- Spot check the window, left sidebar rows, preview controls, search panel, and outline panel.
-- Verify folders and Markdown files are distinguishable.
-- Verify expanded/collapsed folder state is understandable.
-- Verify the supported keyboard path does not trap focus.
-- Keep this as a focused spot check, not a full formal accessibility audit.
-
-Validation:
-
-- Record findings in `docs/Validation.md`.
-- Fix critical issues found during the spot check.
-
-## Suggested Order
-
-1. Editing/update-mode spike.
-2. Focused accessibility/VoiceOver spot check.
-
-Reasoning: workspace-wide search, sidebar keyboard navigation, selected-file churn handling, visual screenshot review, and app identity are complete. The remaining product-planning work is the editing spike plus a focused hands-on accessibility check.
-
-## Gates For Any Next Feature
-
-Run before marking work complete:
+Run before marking future work complete:
 
 ```sh
 ./scripts/test-macos.sh
@@ -85,6 +51,12 @@ Run for performance-sensitive changes:
 
 ```sh
 ./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures
+```
+
+Run for editing-spike changes:
+
+```sh
+swift test --package-path spikes/spike2-editing-update-mode
 ```
 
 Update the relevant docs in the same change:

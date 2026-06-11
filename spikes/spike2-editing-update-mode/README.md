@@ -1,5 +1,15 @@
 # Spike 2: Editing / Update Mode
 
+Status: complete.
+
+Result: prototype production editing with a WebView-backed live-preview editor first, but keep Markdown serialization in an app-owned Swift line/block model. See `RESULTS.md`.
+
+Validation:
+
+```sh
+swift test --package-path spikes/spike2-editing-update-mode
+```
+
 ## Goal
 
 Work out how to add Obsidian-like live-preview editing without corrupting Markdown source or losing the app's clean preview-first feel.

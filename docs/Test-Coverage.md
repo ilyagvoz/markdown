@@ -46,6 +46,8 @@ Run for performance-sensitive changes:
 | Selected-file rename/delete | Unit tests and UI smoke | Unit tests verify replacement selection during rebuilds; UI smoke renames and deletes the selected file and deletes the final Markdown file. |
 | File change awareness | Manual smoke currently | Needs an automated smoke that edits the selected file and verifies app survival/no crash report. |
 | Resource readout | Manual/profile currently | Profile gate covers idle CPU/RSS; formatting/throttling should get unit tests when extracted. |
+| Editing/update-mode spike | Spike unit tests | `swift test --package-path spikes/spike2-editing-update-mode` covers line-model round-trip and marker-preserving edits. |
+| Focused accessibility spot check | Manual/AX smoke | Confirms standard accessibility window, keyboard-only sidebar path, and explicit labels for icon-only controls. Broader VoiceOver audit remains future distribution work. |
 | Crash report regression | UI smoke | Fails if a new `Markdown-*.ips` appears during the run. |
 
 ## Known Coverage Gaps
