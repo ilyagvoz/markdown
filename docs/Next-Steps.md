@@ -12,41 +12,7 @@ Recommended next stage: make Markdown useful for daily reading across real local
 
 ## Stage Candidates
 
-### 1. Visual Polish Pass
-
-Goal: keep the app clean, readable, and pleasant for everyday use before adding larger features.
-
-Scope:
-
-- Screenshot the current three-pane app at default and small window sizes.
-- Review sidebar density, typography, header treatment, empty states, search UI, outline panel, status readout, and pane resizing.
-- Confirm light-only styling remains consistent across app chrome and WebView preview.
-- Keep resize dividers invisible; avoid heavy pane boundary lines.
-- Include a focused accessibility/VoiceOver spot check for sidebar rows and main navigation.
-- Iterate until the app feels calm, native, and joyful to launch.
-
-Validation:
-
-- Save screenshots under `artifacts/screenshots`.
-- Record assessment in `docs/Validation.md`.
-
-### 2. App Identity
-
-Goal: make the installed app feel real.
-
-Scope:
-
-- Add a proper app icon.
-- Refine bundle metadata.
-- Keep local install flow simple through `./scripts/install-macos-app.sh`.
-- Defer signing/notarization until the app is closer to distribution.
-
-Validation:
-
-- Build and install the app.
-- Confirm the app icon appears in Finder, Dock, App Switcher, and Launchpad/Spotlight where available.
-
-### 3. Editing / Update Mode Spike
+### 1. Editing / Update Mode Spike
 
 Goal: decide whether live-preview editing is feasible without corrupting Markdown or degrading the reading experience.
 
@@ -80,13 +46,29 @@ Validation:
 - Golden round-trip tests before production editing ships.
 - Explicit recommendation before implementation.
 
+### 2. Accessibility / VoiceOver Spot Check
+
+Goal: confirm the reader MVP is navigable and understandable with macOS accessibility tooling.
+
+Scope:
+
+- Spot check the window, left sidebar rows, preview controls, search panel, and outline panel.
+- Verify folders and Markdown files are distinguishable.
+- Verify expanded/collapsed folder state is understandable.
+- Verify the supported keyboard path does not trap focus.
+- Keep this as a focused spot check, not a full formal accessibility audit.
+
+Validation:
+
+- Record findings in `docs/Validation.md`.
+- Fix critical issues found during the spot check.
+
 ## Suggested Order
 
-1. Visual polish pass.
-2. App identity.
-3. Editing/update-mode spike.
+1. Editing/update-mode spike.
+2. Focused accessibility/VoiceOver spot check.
 
-Reasoning: workspace-wide search, sidebar keyboard navigation, and selected-file churn handling are complete. Visual polish and app identity are the remaining reader-MVP hardening work before the editing spike.
+Reasoning: workspace-wide search, sidebar keyboard navigation, selected-file churn handling, visual screenshot review, and app identity are complete. The remaining product-planning work is the editing spike plus a focused hands-on accessibility check.
 
 ## Gates For Any Next Feature
 

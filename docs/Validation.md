@@ -85,17 +85,21 @@ Validated screenshots:
 - `artifacts/screenshots/markdown-next-06-final-fixtures.png` - final three-pane fixture flow.
 - `artifacts/screenshots/markdown-next-07-shortcuts-help.png` - Help keyboard shortcuts sheet.
 - `artifacts/screenshots/markdown-pane-persistence-invisible-dividers.png` - pane persistence build with invisible resize hit targets.
+- `artifacts/screenshots/markdown-polish-01-default.png` - current default three-pane layout.
+- `artifacts/screenshots/markdown-polish-02-small.png` - current small-window layout.
+- `artifacts/screenshots/markdown-polish-03-workspace-search.png` - workspace search UI with cross-file results.
 
 Assessment:
 
 - Function: single-file and folder-open flows work.
-- Usability: sidebar hierarchy is clear, selected file is obvious, current-document search is discoverable, the outline panel is useful without overpowering the reading surface, and status text remains unobtrusive.
-- Joy: the light-only palette, warm paper reading surface, teal selection, calm three-pane layout, and comfortable typography are directionally right for daily use.
+- Usability: sidebar hierarchy is clear, selected row is obvious, current/workspace search is discoverable, the outline panel is useful without overpowering the reading surface, and status text remains unobtrusive.
+- Joy: the light-only palette, warm paper reading surface, teal selection, calm three-pane layout, comfortable typography, and new app icon are directionally right for daily use.
 
 Known UX follow-ups:
 
 - Add the editing/update-mode spike.
-- Add a first-run empty-state screenshot pass once the app has an icon and final window sizing.
+- Add a focused accessibility/VoiceOver spot check.
+- Add a first-run empty-state screenshot pass once final window sizing is settled.
 
 ## Feature Smoke
 
@@ -128,6 +132,13 @@ Pane persistence:
 - Added unit coverage for save/load, older preference migration, and pane width clamping.
 - Kept pane resize hit targets invisible; no heavy divider lines are shown in the UI.
 - Did not add synthetic drag UI automation because macOS drag-coordinate tests were unreliable; drag behavior remains manual QA while persistence logic is automated.
+
+App identity:
+
+- Added `AppIcon.icns` and a full iconset under `apps/macos/Markdown/Resources`.
+- Added `CFBundleIconFile`, Markdown document type metadata, and productivity app category metadata to `Info.plist`.
+- Updated `build-macos-app.sh` to copy resource files into `Contents/Resources`.
+- Verified `/Applications/Markdown.app/Contents/Resources/AppIcon.icns` exists after install.
 
 ## Crash Fix
 

@@ -28,6 +28,8 @@ markdown/
 │           ├── Package.swift
 │           ├── Package.resolved
 │           ├── Resources/
+│           │   ├── AppIcon.icns
+│           │   ├── AppIcon.iconset/
 │           │   └── Info.plist
 │           ├── Sources/
 │           │   ├── MarkdownApp/

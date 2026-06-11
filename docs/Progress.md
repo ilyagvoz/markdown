@@ -31,6 +31,8 @@ Complete capabilities:
 - `Cmd+R` reveal in Finder.
 - Help menu keyboard shortcut reference.
 - Lightweight CPU/RSS readout in the status area.
+- Visual polish screenshot pass for default, small-window, and workspace-search states.
+- App icon and Markdown document bundle metadata.
 - Release build, install, profile, and UI smoke scripts.
 
 ## Architecture Decisions In Force

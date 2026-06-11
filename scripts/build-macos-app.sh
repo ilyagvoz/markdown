@@ -20,5 +20,6 @@ rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp "$PACKAGE_DIR/.build/$CONFIGURATION/Markdown" "$APP_DIR/Contents/MacOS/Markdown"
 cp "$PACKAGE_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
+find "$PACKAGE_DIR/Resources" -maxdepth 1 -type f ! -name "Info.plist" -exec cp {} "$APP_DIR/Contents/Resources/" \;
 
 echo "$APP_DIR"
