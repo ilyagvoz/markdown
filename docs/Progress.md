@@ -34,6 +34,7 @@ Complete capabilities:
 - Visual polish screenshot pass for default, small-window, and workspace-search states.
 - App icon and Markdown document bundle metadata.
 - Editing/update-mode spike with tested Markdown line-model prototype and recommendation.
+- Candidate A WebView editor spike with tested marker-preserving browser model prototype.
 - Focused accessibility spot check with explicit labels added for icon-only controls.
 - Release build, install, profile, and UI smoke scripts.
 
@@ -57,6 +58,7 @@ Current verified gates:
 - `./scripts/install-macos-app.sh` installs `/Applications/Markdown.app`.
 - `./scripts/smoke-macos-ui.sh` passes against the installed app.
 - `swift test --package-path spikes/spike2-editing-update-mode` passes with 7 tests.
+- `node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs` passes with 5 tests.
 - `./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures` shows settled idle CPU near 0% and RSS around 92-95 MB in release builds.
 
 Current UI smoke coverage includes:

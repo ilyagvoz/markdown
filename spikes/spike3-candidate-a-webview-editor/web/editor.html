@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Candidate A WebView Editor Spike</title>
+    <link rel="stylesheet" href="./editor.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="editor-pane">
+        <h1>Candidate A WebView Editor</h1>
+        <p class="caption">
+          Edit visible text directly. Ordinary edits preserve Markdown presentation markers in the app-owned model.
+          Press Left Arrow at the start of a block to unlock the raw Markdown marker.
+        </p>
+        <div class="editor" data-editor aria-label="Markdown live preview editor"></div>
+        <p class="status" data-status>Ready.</p>
+      </section>
+      <aside class="source-pane" aria-label="Serialized Markdown source">
+        <h1>Serialized Markdown</h1>
+        <pre data-source></pre>
+      </aside>
+    </main>
+    <script type="module" src="./editor-ui.mjs"></script>
+  </body>
+</html>

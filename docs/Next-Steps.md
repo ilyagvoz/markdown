@@ -22,10 +22,12 @@ These are not active backlog items for the completed reader-MVP checklist.
 
 ### Production Editing / Update Mode
 
-Use the Spike 2 recommendation:
+Use the Spike 2 and Candidate A recommendations:
 
 - prototype a WebView-backed live-preview editor first;
 - keep Markdown serialization in an app-owned Swift line/block model;
+- use the Candidate A browser model in `spikes/spike3-candidate-a-webview-editor` as the starting point;
+- next concrete step is a native macOS `WKWebView` editor spike or debug view;
 - do not ship editing until the production gates in `spikes/spike2-editing-update-mode/RESULTS.md` are proven.
 
 ### Broader Accessibility Pass
@@ -57,6 +59,7 @@ Run for editing-spike changes:
 
 ```sh
 swift test --package-path spikes/spike2-editing-update-mode
+node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs
 ```
 
 Update the relevant docs in the same change:

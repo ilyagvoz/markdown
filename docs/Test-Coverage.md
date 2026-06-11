@@ -47,6 +47,7 @@ Run for performance-sensitive changes:
 | File change awareness | Manual smoke currently | Needs an automated smoke that edits the selected file and verifies app survival/no crash report. |
 | Resource readout | Manual/profile currently | Profile gate covers idle CPU/RSS; formatting/throttling should get unit tests when extracted. |
 | Editing/update-mode spike | Spike unit tests | `swift test --package-path spikes/spike2-editing-update-mode` covers line-model round-trip and marker-preserving edits. |
+| Candidate A WebView editor spike | Spike unit tests | `node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs` covers browser-model round-trip, marker-preserving edits, unlock, type changes, and shortcut classification. |
 | Focused accessibility spot check | Manual/AX smoke | Confirms standard accessibility window, keyboard-only sidebar path, and explicit labels for icon-only controls. Broader VoiceOver audit remains future distribution work. |
 | Crash report regression | UI smoke | Fails if a new `Markdown-*.ips` appears during the run. |
 

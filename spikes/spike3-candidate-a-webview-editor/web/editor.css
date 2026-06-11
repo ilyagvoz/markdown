@@ -1,0 +1,104 @@
+:root {
+  color-scheme: light;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  background: #fbfaf5;
+  color: #2d2f31;
+}
+
+body {
+  margin: 0;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  min-height: 100vh;
+}
+
+.editor-pane {
+  padding: 42px 56px;
+}
+
+.source-pane {
+  border-left: 1px solid rgba(45, 47, 49, 0.12);
+  background: #f4f1e8;
+  padding: 28px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.caption {
+  margin: 0 0 28px;
+  color: #687074;
+  max-width: 680px;
+  line-height: 1.45;
+}
+
+.editor {
+  max-width: 760px;
+}
+
+.editor-block {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.editor-marker {
+  color: #008994;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  min-height: 1em;
+  opacity: 0.78;
+}
+
+.editor-content {
+  outline: none;
+  border-radius: 6px;
+  padding: 3px 6px;
+  line-height: 1.6;
+}
+
+.editor-content:focus {
+  background: rgba(0, 137, 148, 0.09);
+  box-shadow: 0 0 0 2px rgba(0, 137, 148, 0.18);
+}
+
+.editor-block-heading .editor-content {
+  font-size: 34px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.editor-block-quote .editor-content {
+  color: #596266;
+  font-style: italic;
+  border-left: 3px solid rgba(0, 137, 148, 0.45);
+  padding-left: 14px;
+}
+
+.editor-block-code .editor-content,
+.editor-block-fence .editor-content {
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  background: #efeee8;
+}
+
+.source-pane pre {
+  white-space: pre-wrap;
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.status {
+  margin-top: 24px;
+  color: #687074;
+  font-size: 12px;
+}

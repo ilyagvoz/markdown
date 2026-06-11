@@ -65,6 +65,18 @@ Latest result:
 - 7 spike tests.
 - Coverage areas: no-edit Markdown round-trip, heading/list/quote/fenced-code/code-content edits preserving presentation markers, and marker unlock behavior.
 
+Run for the Candidate A WebView editor spike:
+
+```sh
+node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs
+```
+
+Latest result:
+
+- Passed.
+- 5 spike tests.
+- Coverage areas: no-edit round-trip, marker-preserving visible edits, marker unlock, intentional presentation-type change from unlocked source, and native shortcut routing classification.
+
 Run:
 
 ```sh
@@ -156,6 +168,13 @@ Editing/update-mode spike:
 - Added a tested Markdown line-model prototype for preserving presentation markers during ordinary visible-text edits.
 - Recommendation: prototype production editing with a WebView-backed live-preview editor first, while keeping Markdown serialization in an app-owned Swift line/block model.
 - Production editing remains deferred until broader round-trip, input, undo/redo, shortcut, large-file, and file-conflict gates are proven.
+
+Candidate A WebView editor spike:
+
+- Added `spikes/spike3-candidate-a-webview-editor` static WebView/editor prototype.
+- Added dependency-free browser model tests using Node's built-in test runner.
+- Recommendation: proceed to a native macOS `WKWebView` editor spike or debug view next, with Swift as the authoritative Markdown serializer and DOM state treated as interaction state only.
+- Automated browser screenshot was not captured because Playwright is not installed in the runtime; the static prototype remains manually inspectable via a local server.
 
 Accessibility spot check:
 

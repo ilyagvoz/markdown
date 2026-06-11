@@ -78,12 +78,17 @@ markdown/
 │   │   ├── RESULTS.md
 │   │   ├── Sources/
 │   │   └── fixtures/
-│   └── spike2-editing-update-mode/
-│       ├── Package.swift
+│   ├── spike2-editing-update-mode/
+│   │   ├── Package.swift
+│   │   ├── README.md
+│   │   ├── RESULTS.md
+│   │   ├── Sources/
+│   │   └── Tests/
+│   └── spike3-candidate-a-webview-editor/
 │       ├── README.md
 │       ├── RESULTS.md
-│       ├── Sources/
-│       └── Tests/
+│       ├── tests/
+│       └── web/
 │
 └── artifacts/
     ├── Markdown.app
@@ -189,7 +194,8 @@ Owns technical validation work.
 Current spikes:
 
 - `spike1-rendering-engine` - completed; recommends WebView-backed rendering for MVP.
-- `spike2-editing-update-mode` - scaffolded; intended to investigate live-preview editing/update behavior.
+- `spike2-editing-update-mode` - completed; recommends WebView-backed editing with app-owned Markdown serialization.
+- `spike3-candidate-a-webview-editor` - completed; prototypes and tests the WebView editor model path from Spike 2.
 
 Rules:
 
