@@ -21,6 +21,7 @@ Complete capabilities:
 - Selected-file live refresh when the Markdown file changes on disk.
 - Folder watching for added/deleted Markdown files in opened folders.
 - Current-document search with `Cmd+F`.
+- Workspace-wide search across opened folders, without a persistent index.
 - Right-side document outline with heading and landmark jumps.
 - Left and right pane toggles with `Cmd+Left Arrow` and `Cmd+Right Arrow`.
 - Pane size and visibility persistence for the left sidebar and right outline.
@@ -45,7 +46,7 @@ Durable decisions live in `docs/Architecture-Decisions.md`.
 
 Current verified gates:
 
-- `./scripts/test-macos.sh` passes with 16 tests.
+- `./scripts/test-macos.sh` passes with 18 tests.
 - `./scripts/build-macos-app.sh` builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` installs `/Applications/Markdown.app`.
 - `./scripts/smoke-macos-ui.sh` passes against the installed app.
@@ -57,6 +58,7 @@ Current UI smoke coverage includes:
 - folder open
 - unified open panel shortcut
 - current-document search
+- workspace-wide search
 - outline jumps
 - pane visibility toggles
 - document navigation shortcuts
@@ -86,7 +88,6 @@ Visual polish is product work, not garnish. The app should remain light, quiet, 
 
 ## Deferred But Important
 
-- Workspace-wide search.
 - Production editing/update mode.
 - Fuller first-responder sidebar keyboard navigation for plain arrows, folder selection, `Return`, and `Space`.
 - Selected-file deletion/rename UX.

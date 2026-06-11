@@ -50,4 +50,52 @@ final class MarkdownDocumentAnalyzerTests: XCTestCase {
         XCTAssertEqual(results[0].occurrence, 0)
         XCTAssertEqual(results[1].occurrence, 1)
     }
+
+    func testWorkspaceSearchFileIncludesFileContext() {
+        let analyzer = MarkdownDocumentAnalyzer()
+        let fileURL = URL(fileURLWithPath: "/tmp/workspace/notes/install.md")
+
+        let results = analyzer.searchWorkspaceFile(
+            fileURL: fileURL,
+            relativePath: "notes/install.md",
+            markdown: """
+            # Install
+
+            Searchable setup step.
+            Another searchable setup step.
+            """,
+            query: "searchable"
+        )
+
+        XCTAssertEqual(results.count, 2)
+        XCTAssertEqual(results[0].fileURL, fileURL)
+        XCTAssertEqual(results[0].fileName, "install.md")
+        XCTAssertEqual(results[0].relativePath, "notes/install.md")
+        XCTAssertEqual(results[0].headingContext, "Install")
+        XCTAssertEqual(results[0].occurrence, 0)
+        XCTAssertEqual(results[1].occurrence, 1)
+    }
+
+    func testWorkspaceSearchFileHonorsLimitAndTruncatesSnippetAroundMatch() {
+        let analyzer = MarkdownDocumentAnalyzer()
+        let longPrefix = String(repeating: "prefix ", count: 30)
+        let longSuffix = String(repeating: " suffix", count: 30)
+
+        let results = analyzer.searchWorkspaceFile(
+            fileURL: URL(fileURLWithPath: "/tmp/workspace/large.md"),
+            relativePath: "large.md",
+            markdown: """
+            \(longPrefix)needle\(longSuffix)
+            needle second
+            needle third
+            """,
+            query: "needle",
+            limit: 2
+        )
+
+        XCTAssertEqual(results.count, 2)
+        XCTAssertTrue(results[0].snippet.hasPrefix("..."))
+        XCTAssertTrue(results[0].snippet.contains("needle"))
+        XCTAssertTrue(results[0].snippet.hasSuffix("..."))
+    }
 }

@@ -27,7 +27,7 @@ The product should feel like a simplified Obsidian focused on preview-first read
 
 ## Current Focus
 
-The first polished MVP foundation is built under [`apps/macos/Markdown`](apps/macos/Markdown). It is a light-mode-only SwiftUI macOS app with WebView-backed Markdown preview, file/folder open flows, collapsible sidebar navigation, current-document search, a right-side outline, pane persistence, file watching, and user-focused smoke coverage.
+The first polished MVP foundation is built under [`apps/macos/Markdown`](apps/macos/Markdown). It is a light-mode-only SwiftUI macOS app with WebView-backed Markdown preview, file/folder open flows, collapsible sidebar navigation, current-document and workspace search, a right-side outline, pane persistence, file watching, and user-focused smoke coverage.
 
 ## Run It
 
@@ -56,10 +56,10 @@ The release app bundle is generated at `artifacts/Markdown.app`. After install, 
 
 Latest verified gates:
 
-- `./scripts/test-macos.sh` - 16 tests passing.
+- `./scripts/test-macos.sh` - 18 tests passing.
 - `./scripts/build-macos-app.sh` - builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` - installs `/Applications/Markdown.app`.
-- `./scripts/smoke-macos-ui.sh` - drives installed-app file/folder, search, outline, shortcut, watcher, and crash-report checks.
+- `./scripts/smoke-macos-ui.sh` - drives installed-app file/folder, current/workspace search, outline, shortcut, watcher, and crash-report checks.
 - `./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures` - release app idles near 0% CPU and about 92-95 MB RSS after launch settles.
 - Screenshot QA:
   - `artifacts/screenshots/markdown-next-06-final-fixtures.png` - final three-pane fixture flow.

@@ -12,26 +12,7 @@ Recommended next stage: make Markdown useful for daily reading across real local
 
 ## Stage Candidates
 
-### 1. Workspace-Wide Search
-
-Goal: find content across an opened folder quickly while preserving the app's lightweight feel.
-
-Scope:
-
-- Search all Markdown files in the opened workspace.
-- Keep current-document search fast and primary.
-- Show file name, heading context when available, and a short snippet.
-- Jump from a result to the file and matching location.
-- Avoid persistent indexing for the first version; add indexing only if measurement shows it is needed.
-- Keep search case-insensitive by default.
-
-Validation:
-
-- Unit-test matching, snippet generation, and result ordering.
-- UI smoke: open folder, search across files, select result, verify app survives and no crash report appears.
-- Profile on fixture folders and at least one larger real folder.
-
-### 2. Sidebar Keyboard Navigation
+### 1. Sidebar Keyboard Navigation
 
 Goal: make the folder tree feel native and reliable without needing the mouse.
 
@@ -53,7 +34,7 @@ Validation:
 - UI smoke: exercise focused sidebar navigation and verify app survival/crash reports.
 - Manual VoiceOver spot check once labels are in place.
 
-### 3. File Deletion And Rename UX
+### 2. File Deletion And Rename UX
 
 Goal: handle real-world file churn gracefully.
 
@@ -69,7 +50,7 @@ Validation:
 - Unit-test workspace rebuild behavior around selected-file preservation and removal.
 - UI smoke: delete the selected file in an opened folder and verify no crash report appears.
 
-### 4. Visual Polish Pass
+### 3. Visual Polish Pass
 
 Goal: keep the app clean, readable, and pleasant for everyday use before adding larger features.
 
@@ -86,7 +67,7 @@ Validation:
 - Save screenshots under `artifacts/screenshots`.
 - Record assessment in `docs/Validation.md`.
 
-### 5. App Identity
+### 4. App Identity
 
 Goal: make the installed app feel real.
 
@@ -102,7 +83,7 @@ Validation:
 - Build and install the app.
 - Confirm the app icon appears in Finder, Dock, App Switcher, and Launchpad/Spotlight where available.
 
-### 6. Editing / Update Mode Spike
+### 5. Editing / Update Mode Spike
 
 Goal: decide whether live-preview editing is feasible without corrupting Markdown or degrading the reading experience.
 
@@ -138,14 +119,13 @@ Validation:
 
 ## Suggested Order
 
-1. Workspace-wide search.
-2. Sidebar keyboard navigation.
-3. File deletion/rename UX.
-4. Visual polish pass.
-5. App identity.
-6. Editing/update-mode spike.
+1. Sidebar keyboard navigation.
+2. File deletion/rename UX.
+3. Visual polish pass.
+4. App identity.
+5. Editing/update-mode spike.
 
-Reasoning: search, navigation, and file churn improve daily reader usefulness while keeping the stable preview-first foundation intact. Editing is valuable but risky enough to keep behind a spike until the reader experience is stronger.
+Reasoning: workspace-wide search is complete. Navigation and file churn are the next reader-usefulness gaps while keeping the stable preview-first foundation intact. Editing is valuable but risky enough to keep behind a spike until the reader experience is stronger.
 
 ## Gates For Any Next Feature
 

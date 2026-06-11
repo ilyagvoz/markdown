@@ -125,6 +125,15 @@ run_applescript "folder search and outline jump" '
   delay 0.3
   click at {1130, 382}
 '
+run_applescript "workspace search result jump" '
+  keystroke "f" using command down
+  delay 0.2
+  keystroke "a" using command down
+  delay 0.1
+  keystroke "swift"
+  delay 1.0
+  click at {620, 405}
+'
 run_applescript "reveal selected file shortcut" '
   keystroke "r" using command down
   delay 0.5
@@ -146,4 +155,4 @@ require_running "folder watcher delete"
 quit_app
 rm -rf "$WATCH_DIR"
 
-echo "UI smoke passed: file/folder open, shortcuts, search, outline, folder watching, and crash checks."
+echo "UI smoke passed: file/folder open, shortcuts, current/workspace search, outline, folder watching, and crash checks."

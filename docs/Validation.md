@@ -13,8 +13,8 @@ Run:
 Latest result:
 
 - Passed.
-- 16 unit tests.
-- Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, WebView JavaScript string/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
+- 18 unit tests.
+- Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, WebView JavaScript string/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
 
 Run:
 
@@ -48,7 +48,7 @@ Latest result:
 
 - Passed.
 - Launches the installed app against a single file, a folder, and a temporary watched folder.
-- Drives `Cmd+O`, `Cmd+F`, `Cmd+/`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, outline clicks, search-result clicks, and folder add/delete events.
+- Drives `Cmd+O`, `Cmd+F`, `Cmd+/`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, outline clicks, current-document search-result clicks, workspace search-result clicks, and folder add/delete events.
 - Fails if the app exits unexpectedly or a new `Markdown-*.ips` report appears.
 
 See `docs/Test-Coverage.md` for the user-focused coverage matrix.
@@ -64,8 +64,9 @@ Latest release-profile result:
 | Metric | Observation |
 |---|---:|
 | Settled idle CPU | 0.0-0.1% on later samples |
-| Settled RSS | about 92.4-92.5 MB |
-| Launch/render RSS range | about 92.4-92.5 MB in the latest release-profile run |
+| Fixture settled RSS | about 91.6 MB |
+| Larger-folder settled RSS | about 116.6 MB against `~/dev/distill-v3/docs` |
+| Launch/render RSS range | about 91.6-122.8 MB in the latest release-profile runs |
 | Virtual size | very large, expected for modern macOS/WebKit process address space and not useful as real memory pressure |
 
 In the managed Codex sandbox, SwiftPM may warn that user-level SwiftPM configuration/security paths under `~/Library` are not writable. The project scripts keep scratch space and caches inside the workspace; those warnings do not fail the gate.
@@ -93,7 +94,6 @@ Assessment:
 
 Known UX follow-ups:
 
-- Add workspace-wide search.
 - Add the editing/update-mode spike.
 - Add fuller first-responder keyboard navigation for folder rows and plain arrows.
 - Add a first-run empty-state screenshot pass once the app has an icon and final window sizing.
@@ -113,6 +113,8 @@ Keyboard/search:
 
 - `Cmd+F` opened the current-document search UI and accepted typed input.
 - Search results showed heading context and snippets.
+- Workspace search showed file paths, heading context, and snippets across an opened folder.
+- Clicking a workspace search result selected the target file and ran the existing preview find action.
 - `Cmd+Right Arrow` hid the right outline panel while search focus was active.
 - `Cmd+/` opened the keyboard shortcut reference sheet.
 

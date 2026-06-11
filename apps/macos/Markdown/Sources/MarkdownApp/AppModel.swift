@@ -21,6 +21,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var recentDocuments: [RecentDocument] = []
     @Published private(set) var documentOutline: [DocumentOutlineItem] = []
     @Published private(set) var searchResults: [DocumentSearchResult] = []
+    @Published private(set) var workspaceSearchResults: [WorkspaceSearchResult] = []
+    @Published private(set) var isWorkspaceSearchRunning = false
     @Published private(set) var pendingPreviewAction: PreviewAction?
     @Published var searchQuery = "" {
         didSet { updateSearchResults() }
@@ -83,6 +85,7 @@ final class AppModel: ObservableObject {
     private var previewActionToken = 0
     private var resourceTimer: Timer?
     private var resourceSampleTask: Task<Void, Never>?
+    private var workspaceSearchTask: Task<Void, Never>?
     private var isApplyingRestoredState = false
 
     func openLaunchArgumentIfPresent() async {
@@ -166,6 +169,7 @@ final class AppModel: ObservableObject {
                 documentOutline = []
                 currentMarkdown = ""
                 searchResults = []
+                workspaceSearchResults = []
                 statusText = "\(workspace.root.name) has no Markdown files"
                 persistState()
             }
@@ -178,6 +182,7 @@ final class AppModel: ObservableObject {
             documentOutline = []
             currentMarkdown = ""
             searchResults = []
+            workspaceSearchResults = []
             statusText = "Could not open \(url.lastPathComponent)"
         }
     }
@@ -253,6 +258,17 @@ final class AppModel: ObservableObject {
         )
     }
 
+    func selectWorkspaceSearchResult(_ result: WorkspaceSearchResult) {
+        Task {
+            await selectFile(result.fileURL)
+            previewActionToken += 1
+            pendingPreviewAction = PreviewAction(
+                token: previewActionToken,
+                kind: .findText(query: searchQuery, occurrence: result.occurrence)
+            )
+        }
+    }
+
     func refreshSelectedFile(reason: String? = nil) async {
         guard let selectedFileURL else { return }
         await renderFile(selectedFileURL, statusReason: reason)
@@ -281,6 +297,7 @@ final class AppModel: ObservableObject {
             documentOutline = []
             currentMarkdown = ""
             searchResults = []
+            workspaceSearchResults = []
 
             if let first = firstMarkdownFile(in: refreshed.root) {
                 await selectFile(first.url)
@@ -298,6 +315,7 @@ final class AppModel: ObservableObject {
             documentOutline = []
             currentMarkdown = ""
             searchResults = []
+            workspaceSearchResults = []
             statusText = "Could not refresh workspace"
         }
     }
@@ -322,12 +340,14 @@ final class AppModel: ObservableObject {
             documentOutline = []
             currentMarkdown = ""
             searchResults = []
+            workspaceSearchResults = []
             statusText = "Could not render \(url.lastPathComponent)"
         }
     }
 
     private func updateSearchResults() {
         searchResults = analyzer.search(markdown: currentMarkdown, query: searchQuery)
+        scheduleWorkspaceSearch()
     }
 
     private func status(for workspace: Workspace) -> String {
@@ -369,6 +389,76 @@ final class AppModel: ObservableObject {
             return []
         }
         return node.children.flatMap { visibleMarkdownFiles(in: $0, expandedNodeIDs: expandedNodeIDs) }
+    }
+
+    private func allMarkdownFiles(in node: WorkspaceNode) -> [WorkspaceNode] {
+        if node.kind == .markdownFile {
+            return [node]
+        }
+        return node.children.flatMap { allMarkdownFiles(in: $0) }
+    }
+
+    private func scheduleWorkspaceSearch() {
+        workspaceSearchTask?.cancel()
+        workspaceSearchResults = []
+        isWorkspaceSearchRunning = false
+
+        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty,
+              let workspace,
+              workspace.root.kind == .folder
+        else {
+            return
+        }
+
+        let rootURL = workspace.rootURL.standardizedFileURL
+        let files = allMarkdownFiles(in: workspace.root)
+        guard !files.isEmpty else { return }
+
+        isWorkspaceSearchRunning = true
+        let analyzer = self.analyzer
+        workspaceSearchTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(180))
+            guard !Task.isCancelled else { return }
+
+            let results = await Task.detached(priority: .userInitiated) {
+                var collected: [WorkspaceSearchResult] = []
+                for file in files {
+                    guard !Task.isCancelled else { return collected }
+                    guard let markdown = try? String(contentsOf: file.url, encoding: .utf8) else { continue }
+                    let relativePath = Self.relativeDisplayPath(for: file.url, rootURL: rootURL)
+                    collected.append(contentsOf: analyzer.searchWorkspaceFile(
+                        fileURL: file.url,
+                        relativePath: relativePath,
+                        markdown: markdown,
+                        query: query,
+                        limit: 6
+                    ))
+                    if collected.count >= 120 {
+                        return Array(collected.prefix(120))
+                    }
+                }
+                return collected
+            }.value
+
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard self?.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines) == query else { return }
+                self?.workspaceSearchResults = results
+                self?.isWorkspaceSearchRunning = false
+            }
+        }
+    }
+
+    private nonisolated static func relativeDisplayPath(for fileURL: URL, rootURL: URL) -> String {
+        let rootPath = rootURL.standardizedFileURL.path
+        let filePath = fileURL.standardizedFileURL.path
+        guard filePath.hasPrefix(rootPath) else {
+            return fileURL.lastPathComponent
+        }
+        let startIndex = filePath.index(filePath.startIndex, offsetBy: rootPath.count)
+        let relative = filePath[startIndex...].trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        return relative.isEmpty ? fileURL.lastPathComponent : relative
     }
 
     private func rememberRecent(url: URL, workspace: Workspace) {

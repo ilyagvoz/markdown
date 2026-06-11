@@ -32,6 +32,7 @@ Run for performance-sensitive changes:
 | Build folder tree | Unit tests | Covers Markdown filtering, hidden files, single-file workspaces, unsupported files, and symlink skipping. |
 | Sidebar file selection via keyboard | UI smoke | Uses `Cmd+Down` and `Cmd+Up` across visible Markdown files. |
 | Search current document | Unit tests and UI smoke | Unit tests verify matching/context; UI smoke opens `Cmd+F`, types queries, and clicks results. |
+| Search workspace | Unit tests and UI smoke | Unit tests verify file metadata, snippets, limits, and occurrence numbers; UI smoke searches an opened folder and clicks a cross-file result. |
 | Jump from search result into preview | UI smoke | Exercises WebView JavaScript bridge and crash-report checks. |
 | Right outline panel | Unit tests and UI smoke | Unit tests verify outline extraction; UI smoke clicks outline landmarks. |
 | Toggle left sidebar | UI smoke | Uses `Cmd+Left Arrow`. |

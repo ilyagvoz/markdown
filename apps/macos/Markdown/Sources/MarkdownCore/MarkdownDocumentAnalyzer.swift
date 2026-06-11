@@ -41,6 +41,37 @@ public struct DocumentSearchResult: Identifiable, Equatable, Sendable {
     }
 }
 
+public struct WorkspaceSearchResult: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let fileURL: URL
+    public let fileName: String
+    public let relativePath: String
+    public let lineNumber: Int
+    public let headingContext: String?
+    public let snippet: String
+    public let occurrence: Int
+
+    public init(
+        id: String,
+        fileURL: URL,
+        fileName: String,
+        relativePath: String,
+        lineNumber: Int,
+        headingContext: String?,
+        snippet: String,
+        occurrence: Int
+    ) {
+        self.id = id
+        self.fileURL = fileURL
+        self.fileName = fileName
+        self.relativePath = relativePath
+        self.lineNumber = lineNumber
+        self.headingContext = headingContext
+        self.snippet = snippet
+        self.occurrence = occurrence
+    }
+}
+
 public struct MarkdownDocumentAnalyzer: Sendable {
     public init() {}
 
@@ -151,6 +182,27 @@ public struct MarkdownDocumentAnalyzer: Sendable {
         }
 
         return results
+    }
+
+    public func searchWorkspaceFile(
+        fileURL: URL,
+        relativePath: String,
+        markdown: String,
+        query: String,
+        limit: Int = 12
+    ) -> [WorkspaceSearchResult] {
+        search(markdown: markdown, query: query, limit: limit).map { result in
+            WorkspaceSearchResult(
+                id: "\(fileURL.standardizedFileURL.path)-\(result.lineNumber)-\(result.occurrence)",
+                fileURL: fileURL.standardizedFileURL,
+                fileName: fileURL.lastPathComponent,
+                relativePath: relativePath,
+                lineNumber: result.lineNumber,
+                headingContext: result.headingContext,
+                snippet: result.snippet,
+                occurrence: result.occurrence
+            )
+        }
     }
 
     private func item(

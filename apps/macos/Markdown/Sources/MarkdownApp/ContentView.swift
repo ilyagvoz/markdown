@@ -424,7 +424,7 @@ struct SearchPanel: View {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                TextField("Search current document", text: $model.searchQuery)
+                TextField("Search current document or workspace", text: $model.searchQuery)
                     .textFieldStyle(.plain)
                     .focused($isFocused)
                 if !model.searchQuery.isEmpty {
@@ -441,50 +441,126 @@ struct SearchPanel: View {
             .padding(.vertical, 10)
 
             if !model.searchQuery.isEmpty {
-                if model.searchResults.isEmpty {
-                    Text("No matches")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 10)
-                } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(model.searchResults) { result in
-                                Button {
-                                    model.selectSearchResult(result)
-                                } label: {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(result.headingContext ?? "Line \(result.lineNumber)")
-                                            .font(.caption)
-                                            .fontWeight(.semibold)
-                                            .lineLimit(1)
-                                        Text(result.snippet)
-                                            .font(.caption2)
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(1)
-                                    }
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 7)
-                                    .frame(width: 220, alignment: .leading)
-                                    .background {
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .fill(AppColors.sidebarBackground)
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 10)
-                    }
-                }
+                currentDocumentResults
+                workspaceResults
             }
         }
         .background(AppColors.previewBackground)
         .onAppear {
             isFocused = true
+        }
+    }
+
+    @ViewBuilder
+    private var currentDocumentResults: some View {
+        if model.searchResults.isEmpty {
+            Text("No matches in current document")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 10)
+        } else {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Current Document")
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .padding(.horizontal, 16)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(model.searchResults) { result in
+                            Button {
+                                model.selectSearchResult(result)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(result.headingContext ?? "Line \(result.lineNumber)")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .lineLimit(1)
+                                    Text(result.snippet)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 7)
+                                .frame(width: 220, alignment: .leading)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(AppColors.sidebarBackground)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 10)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var workspaceResults: some View {
+        if model.isWorkspaceSearchRunning {
+            HStack(spacing: 8) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Searching workspace")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 10)
+        } else if !model.workspaceSearchResults.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Workspace")
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .padding(.horizontal, 16)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(model.workspaceSearchResults) { result in
+                            Button {
+                                model.selectWorkspaceSearchResult(result)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(result.relativePath)
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Text(result.headingContext ?? "Line \(result.lineNumber)")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                    Text(result.snippet)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 7)
+                                .frame(width: 240, alignment: .leading)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(AppColors.outlineBackground)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+                }
+            }
         }
     }
 }
