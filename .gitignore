@@ -1,0 +1,11 @@
+.DS_Store
+.build/
+DerivedData/
+*.xcuserdata/
+*.xcuserstate
+
+# Swift Package Manager build output inside spikes or packages.
+**/.build/
+
+# Generated macOS app bundle. Screenshots under artifacts/ are kept for QA.
+artifacts/Markdown.app/
