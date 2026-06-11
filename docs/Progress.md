@@ -98,7 +98,6 @@ Visual polish is product work, not garnish. The app should remain light, quiet, 
 ## Deferred But Important
 
 - Production editing/update mode.
-- Accessibility pass, especially VoiceOver labels and focus behavior.
-- App icon and final bundle identity.
+- Broader accessibility pass before distribution.
 - Signed/notarized distribution.
 - Large-file screenshot/performance smoke.

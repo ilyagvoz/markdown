@@ -109,8 +109,7 @@ Complete:
 
 Remaining:
 
-- App icon.
-- Accessibility pass.
+- Broader accessibility pass before distribution.
 
 ## Non-Goals For MVP
 
