@@ -25,7 +25,7 @@ When the user opens a single Markdown file, the app displays the rendered docume
 
 When the user opens a folder, the app shows a left sidebar tree containing folders and Markdown files. Folders can be expanded and collapsed. Selecting a Markdown file renders it in the main pane.
 
-When the user edits, the rendered surface should preserve the current line's presentation by default. Intentional type changes should be fast: moving to the start of a formatted line and pressing Left Arrow selects the Markdown marker so it can be replaced immediately.
+When the user edits, the rendered surface should preserve the current line's presentation by default. Normal reading/editing view should hide Markdown block syntax so the document still feels rendered. Intentional type changes should be fast: moving to the start of a formatted line and pressing Left Arrow reveals and selects the Markdown marker for that line so it can be replaced immediately.
 
 The app should preserve enough window and navigation state to feel calm between launches, but it should not build a separate library database or indexing system until evidence shows that is needed.
 

@@ -45,29 +45,19 @@ public enum MarkdownEditorHTML {
             }
 
             .editor-block {
-              display: grid;
-              grid-template-columns: 44px minmax(0, 1fr);
-              gap: 14px;
-              align-items: baseline;
-              margin: 0.18em 0;
+              display: block;
+              margin: 0 0 1.05em;
             }
 
             .editor-marker {
-              min-height: 1em;
-              color: var(--accent);
-              opacity: 0.78;
-              font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-              font-size: 0.72rem;
-              font-weight: 720;
-              text-align: right;
-              user-select: none;
+              display: none;
             }
 
             .editor-content {
               min-height: 1.35em;
               outline: none;
               border-radius: 7px;
-              padding: 0.08em 0.22em;
+              padding: 0.04em 0.2em;
               white-space: pre-wrap;
               overflow-wrap: anywhere;
             }
@@ -81,6 +71,20 @@ public enum MarkdownEditorHTML {
               color: var(--accent);
               text-decoration-thickness: 0.08em;
               text-underline-offset: 0.18em;
+            }
+
+            .editor-block-blank {
+              min-height: 0.95em;
+              margin-bottom: 0.55em;
+            }
+
+            .editor-block-heading {
+              margin: 1.65em 0 0.45em;
+            }
+
+            .editor-block-heading[data-level="1"] {
+              margin-top: 0;
+              margin-bottom: 0.62em;
             }
 
             .editor-block-heading .editor-content {
@@ -97,10 +101,44 @@ public enum MarkdownEditorHTML {
             .editor-block-heading[data-level="5"] .editor-content,
             .editor-block-heading[data-level="6"] .editor-content { font-size: 1.05rem; }
 
+            .editor-block-unordered-list,
+            .editor-block-ordered-list {
+              margin: 0.18em 0 0.18em 1.45em;
+            }
+
+            .editor-block-unordered-list .editor-content,
+            .editor-block-ordered-list .editor-content {
+              position: relative;
+            }
+
+            .editor-block-unordered-list .editor-content::before {
+              content: "\\2022";
+              position: absolute;
+              left: -1.1em;
+              color: var(--text);
+            }
+
+            .editor-block-ordered-list .editor-content::before {
+              content: attr(data-marker-view);
+              position: absolute;
+              left: -1.75em;
+              min-width: 1.35em;
+              text-align: right;
+              color: var(--text);
+            }
+
             .editor-block-quote .editor-content {
               color: var(--muted);
               border-left: 4px solid var(--quote);
               padding-left: 1.05em;
+            }
+
+            .editor-block-fence:not(.editor-block-unlocked) {
+              display: none;
+            }
+
+            .editor-block-code {
+              margin: 0;
             }
 
             .editor-block-code .editor-content,
@@ -111,8 +149,44 @@ public enum MarkdownEditorHTML {
               border: 1px solid var(--rule);
             }
 
+            .editor-block-code .editor-content {
+              border-radius: 0;
+              border-bottom-width: 0;
+            }
+
+            .editor-block-code:not(.editor-block-code-start) .editor-content {
+              border-top-width: 0;
+            }
+
+            .editor-block-code-start {
+              margin-top: 0.55em;
+            }
+
+            .editor-block-code-end {
+              margin-bottom: 1.2em;
+            }
+
+            .editor-block-code-start .editor-content {
+              border-top-left-radius: 7px;
+              border-top-right-radius: 7px;
+            }
+
+            .editor-block-code-end .editor-content {
+              border-bottom-width: 1px;
+              border-bottom-left-radius: 7px;
+              border-bottom-right-radius: 7px;
+            }
+
             .editor-block-fence .editor-content {
               color: var(--muted);
+            }
+
+            .editor-block-unlocked {
+              margin: 0.18em 0 1.05em;
+            }
+
+            .editor-block-unlocked .editor-content::before {
+              content: none;
             }
 
             .md-search-hit {
@@ -125,11 +199,6 @@ public enum MarkdownEditorHTML {
               body {
                 padding: 28px 24px 56px;
                 font-size: 17px;
-              }
-
-              .editor-block {
-                grid-template-columns: 34px minmax(0, 1fr);
-                gap: 10px;
               }
 
               .editor-block-heading[data-level="1"] .editor-content { font-size: 2rem; }
@@ -229,6 +298,13 @@ public enum MarkdownEditorHTML {
     for (const block of blocks) {
       const row = document.createElement("div");
       row.className = `editor-block editor-block-${block.type}`;
+      if (block.unlocked) row.classList.add("editor-block-unlocked");
+      if (block.type === "code") {
+        const previous = blocks[block.index - 1];
+        const next = blocks[block.index + 1];
+        if (previous?.type !== "code") row.classList.add("editor-block-code-start");
+        if (next?.type !== "code") row.classList.add("editor-block-code-end");
+      }
       row.dataset.blockId = block.id;
       row.dataset.type = block.type;
       row.dataset.level = String(block.level || 0);
@@ -243,6 +319,7 @@ public enum MarkdownEditorHTML {
       content.contentEditable = "true";
       content.spellcheck = true;
       content.dataset.raw = block.visibleText;
+      content.dataset.markerView = markerViewText(block);
       renderBlockContent(content, block);
       content.setAttribute("aria-label", `${block.type} line ${block.index + 1}`);
 
@@ -504,6 +581,11 @@ public enum MarkdownEditorHTML {
       case "code": return "code";
       default: return "";
     }
+  }
+
+  function markerViewText(block) {
+    if (block.type === "ordered-list") return block.marker;
+    return "";
   }
 
   function renderBlockContent(element, block) {

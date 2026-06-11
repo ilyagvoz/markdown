@@ -124,12 +124,13 @@ Validated screenshots:
 - `artifacts/screenshots/markdown-polish-01-default.png` - current default three-pane layout.
 - `artifacts/screenshots/markdown-polish-02-small.png` - current small-window layout.
 - `artifacts/screenshots/markdown-polish-03-workspace-search.png` - workspace search UI with cross-file results.
-- `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing branch with inline Markdown rendered in read mode.
+- `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing branch with inline Markdown rendered in read mode and block syntax hidden.
+- `artifacts/screenshots/markdown-editing-branch-code-preview.png` - live-preview editing branch code-block view with fences and syntax gutter hidden.
 
 Assessment:
 
 - Function: single-file and folder-open flows work.
-- Usability: sidebar hierarchy is clear, selected row is obvious, current/workspace search is discoverable, the outline panel is useful without overpowering the reading/editing surface, live-preview editing keeps block markers subtle, and status text remains unobtrusive.
+- Usability: sidebar hierarchy is clear, selected row is obvious, current/workspace search is discoverable, the outline panel is useful without overpowering the reading/editing surface, live-preview editing keeps block markers hidden until intentional marker editing, and status text remains unobtrusive.
 - Joy: the light-only palette, warm paper reading surface, teal selection, calm three-pane layout, comfortable typography, and new app icon are directionally right for daily use.
 
 Known UX follow-ups:
