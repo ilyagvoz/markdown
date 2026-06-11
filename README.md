@@ -27,7 +27,7 @@ The product should feel like a simplified Obsidian focused on preview-first read
 
 ## Current Focus
 
-The first polished MVP foundation is built under [`apps/macos/Markdown`](apps/macos/Markdown). It is a light-mode-only SwiftUI macOS app with WebView-backed Markdown preview, file/folder open flows, collapsible sidebar navigation, current-document and workspace search, a right-side outline, pane persistence, file watching, and user-focused smoke coverage.
+The first polished MVP foundation is built under [`apps/macos/Markdown`](apps/macos/Markdown). It is a light-mode-only SwiftUI macOS app with WebView-backed Markdown preview, file/folder open flows, collapsible sidebar navigation, current-document and workspace search, a right-side outline, pane persistence, file watching, selected-file churn handling, and user-focused smoke coverage.
 
 ## Run It
 
@@ -56,7 +56,7 @@ The release app bundle is generated at `artifacts/Markdown.app`. After install, 
 
 Latest verified gates:
 
-- `./scripts/test-macos.sh` - 20 tests passing.
+- `./scripts/test-macos.sh` - 24 tests passing.
 - `./scripts/build-macos-app.sh` - builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` - installs `/Applications/Markdown.app`.
 - `./scripts/smoke-macos-ui.sh` - drives installed-app file/folder, current/workspace search, outline, shortcut, watcher, and crash-report checks.

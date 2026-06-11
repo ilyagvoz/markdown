@@ -12,23 +12,7 @@ Recommended next stage: make Markdown useful for daily reading across real local
 
 ## Stage Candidates
 
-### 1. File Deletion And Rename UX
-
-Goal: handle real-world file churn gracefully.
-
-Scope:
-
-- If the selected file is deleted, show a quiet missing-file state and select a sensible nearby file when possible.
-- If the selected file is renamed, refresh the tree and avoid showing stale content.
-- Preserve expanded folders during rebuilds.
-- Avoid surprising automatic jumps when the user's reading context is still available.
-
-Validation:
-
-- Unit-test workspace rebuild behavior around selected-file preservation and removal.
-- UI smoke: delete the selected file in an opened folder and verify no crash report appears.
-
-### 2. Visual Polish Pass
+### 1. Visual Polish Pass
 
 Goal: keep the app clean, readable, and pleasant for everyday use before adding larger features.
 
@@ -46,7 +30,7 @@ Validation:
 - Save screenshots under `artifacts/screenshots`.
 - Record assessment in `docs/Validation.md`.
 
-### 3. App Identity
+### 2. App Identity
 
 Goal: make the installed app feel real.
 
@@ -62,7 +46,7 @@ Validation:
 - Build and install the app.
 - Confirm the app icon appears in Finder, Dock, App Switcher, and Launchpad/Spotlight where available.
 
-### 4. Editing / Update Mode Spike
+### 3. Editing / Update Mode Spike
 
 Goal: decide whether live-preview editing is feasible without corrupting Markdown or degrading the reading experience.
 
@@ -98,12 +82,11 @@ Validation:
 
 ## Suggested Order
 
-1. File deletion/rename UX.
-2. Visual polish pass.
-3. App identity.
-4. Editing/update-mode spike.
+1. Visual polish pass.
+2. App identity.
+3. Editing/update-mode spike.
 
-Reasoning: workspace-wide search and sidebar keyboard navigation are complete. File churn is the next reader-usefulness gap while keeping the stable preview-first foundation intact. Editing is valuable but risky enough to keep behind a spike until the reader experience is stronger.
+Reasoning: workspace-wide search, sidebar keyboard navigation, and selected-file churn handling are complete. Visual polish and app identity are the remaining reader-MVP hardening work before the editing spike.
 
 ## Gates For Any Next Feature
 

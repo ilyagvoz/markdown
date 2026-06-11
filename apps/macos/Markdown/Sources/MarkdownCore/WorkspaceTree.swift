@@ -98,6 +98,31 @@ public struct WorkspaceTreeNavigator: Sendable {
         return nil
     }
 
+    public func markdownFiles(root: WorkspaceNode) -> [WorkspaceNode] {
+        if root.kind == .markdownFile {
+            return [root]
+        }
+        return root.children.flatMap { markdownFiles(root: $0) }
+    }
+
+    public func replacementMarkdownFile(
+        previousRoot: WorkspaceNode,
+        selectedFileURL: URL,
+        newRoot: WorkspaceNode
+    ) -> WorkspaceNode? {
+        let selectedPath = selectedFileURL.standardizedFileURL.path
+        let newFiles = markdownFiles(root: newRoot)
+        if let existing = newFiles.first(where: { $0.url.standardizedFileURL.path == selectedPath }) {
+            return existing
+        }
+        guard !newFiles.isEmpty else { return nil }
+
+        let previousFiles = markdownFiles(root: previousRoot)
+        let previousIndex = previousFiles.firstIndex { $0.url.standardizedFileURL.path == selectedPath } ?? 0
+        let replacementIndex = min(previousIndex, newFiles.count - 1)
+        return newFiles[replacementIndex]
+    }
+
     private func flatten(
         node: WorkspaceNode,
         depth: Int,

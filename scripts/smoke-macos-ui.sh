@@ -164,8 +164,17 @@ require_running "folder watcher add"
 rm -f "$WATCH_DIR/added-later.md"
 sleep 2
 require_running "folder watcher delete"
+mv "$WATCH_DIR/notes/nested.md" "$WATCH_DIR/notes/renamed.md"
+sleep 2
+require_running "selected file rename"
+rm -f "$WATCH_DIR/notes/renamed.md"
+sleep 2
+require_running "selected file delete"
+rm -f "$WATCH_DIR/alpha.md"
+sleep 2
+require_running "last markdown file delete"
 
 quit_app
 rm -rf "$WATCH_DIR"
 
-echo "UI smoke passed: file/folder open, shortcuts, current/workspace search, outline, folder watching, and crash checks."
+echo "UI smoke passed: file/folder open, shortcuts, current/workspace search, outline, folder watching, selected-file churn, and crash checks."

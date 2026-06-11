@@ -20,6 +20,7 @@ Complete capabilities:
 - Last-opened workspace/file restoration.
 - Selected-file live refresh when the Markdown file changes on disk.
 - Folder watching for added/deleted Markdown files in opened folders.
+- Selected-file rename/delete handling that avoids stale preview content and picks a nearby Markdown file when possible.
 - Current-document search with `Cmd+F`.
 - Workspace-wide search across opened folders, without a persistent index.
 - Right-side document outline with heading and landmark jumps.
@@ -47,7 +48,7 @@ Durable decisions live in `docs/Architecture-Decisions.md`.
 
 Current verified gates:
 
-- `./scripts/test-macos.sh` passes with 20 tests.
+- `./scripts/test-macos.sh` passes with 24 tests.
 - `./scripts/build-macos-app.sh` builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` installs `/Applications/Markdown.app`.
 - `./scripts/smoke-macos-ui.sh` passes against the installed app.
@@ -66,6 +67,7 @@ Current UI smoke coverage includes:
 - document navigation shortcuts
 - reveal in Finder
 - watched-folder add/delete
+- selected-file rename/delete and final-file deletion
 - crash-report checks
 
 See `docs/Validation.md` and `docs/Test-Coverage.md` for the latest details.
@@ -91,7 +93,6 @@ Visual polish is product work, not garnish. The app should remain light, quiet, 
 ## Deferred But Important
 
 - Production editing/update mode.
-- Selected-file deletion/rename UX.
 - Accessibility pass, especially VoiceOver labels and focus behavior.
 - App icon and final bundle identity.
 - Signed/notarized distribution.

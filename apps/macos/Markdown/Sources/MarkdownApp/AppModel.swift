@@ -364,6 +364,7 @@ final class AppModel: ObservableObject {
         guard let lastOpenedURL else { return }
         let selected = selectedFileURL
         let savedExpanded = expandedNodeIDs
+        let previousRoot = workspace?.root
 
         do {
             let refreshed = try treeBuilder.build(from: lastOpenedURL)
@@ -372,10 +373,21 @@ final class AppModel: ObservableObject {
             preserveExpandedNodes(savedExpanded, for: refreshed)
             watchDirectories(in: refreshed)
 
-            if let selected, containsFile(selected, in: refreshed.root) {
-                selectedFileURL = selected
-                sidebarSelectionID = selected.standardizedFileURL.path
-                persistState()
+            if let selected,
+               let previousRoot,
+               let replacement = treeNavigator.replacementMarkdownFile(
+                   previousRoot: previousRoot,
+                   selectedFileURL: selected,
+                   newRoot: refreshed.root
+               ) {
+                if replacement.url.standardizedFileURL.path == selected.standardizedFileURL.path {
+                    selectedFileURL = selected
+                    sidebarSelectionID = selected.standardizedFileURL.path
+                    persistState()
+                    return
+                }
+
+                await selectFile(replacement.url)
                 return
             }
 
@@ -391,7 +403,7 @@ final class AppModel: ObservableObject {
                 await selectFile(first.url)
             } else {
                 previewState = .empty
-                statusText = "\(refreshed.root.name) has no Markdown files"
+                statusText = selected == nil ? "\(refreshed.root.name) has no Markdown files" : "Selected file was removed"
                 persistState()
             }
         } catch {

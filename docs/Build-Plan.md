@@ -109,7 +109,6 @@ Complete:
 
 Remaining:
 
-- File deletion/rename UX.
 - App icon.
 - Accessibility pass.
 

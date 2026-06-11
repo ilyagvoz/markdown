@@ -13,8 +13,8 @@ Run:
 Latest result:
 
 - Passed.
-- 20 unit tests.
-- Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, WebView JavaScript string/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
+- 24 unit tests.
+- Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
 
 Run:
 
@@ -48,7 +48,7 @@ Latest result:
 
 - Passed.
 - Launches the installed app against a single file, a folder, and a temporary watched folder.
-- Drives `Cmd+O`, `Cmd+F`, `Cmd+/`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, and folder add/delete events.
+- Drives `Cmd+O`, `Cmd+F`, `Cmd+/`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, folder add/delete events, selected-file rename/delete, and final Markdown-file deletion.
 - Fails if the app exits unexpectedly or a new `Markdown-*.ips` report appears.
 
 See `docs/Test-Coverage.md` for the user-focused coverage matrix.
@@ -106,6 +106,9 @@ Folder watch:
 - Verified `added-later.md` appeared in the sidebar without reopening.
 - Deleted `added-later.md` on disk.
 - Verified it disappeared from the sidebar without reopening.
+- Renamed the selected Markdown file on disk and verified the app stayed alive without stale-preview crashes.
+- Deleted the selected Markdown file on disk and verified the app selected a nearby file when possible.
+- Deleted the final Markdown file in the folder and verified the app stayed alive with no crash report.
 - Verified the app process stayed alive.
 
 Keyboard/search:

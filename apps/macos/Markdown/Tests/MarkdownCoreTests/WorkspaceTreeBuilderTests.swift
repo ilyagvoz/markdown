@@ -103,6 +103,79 @@ final class WorkspaceTreeBuilderTests: XCTestCase {
         XCTAssertEqual(found?.kind, .markdownFile)
     }
 
+    func testReplacementPreservesSelectedFileWhenStillPresent() throws {
+        let first = tempDirectory.appendingPathComponent("A.md")
+        let second = tempDirectory.appendingPathComponent("B.md")
+        try write("A", to: first)
+        try write("B", to: second)
+
+        let workspace = try WorkspaceTreeBuilder().build(from: tempDirectory)
+        let replacement = WorkspaceTreeNavigator().replacementMarkdownFile(
+            previousRoot: workspace.root,
+            selectedFileURL: second,
+            newRoot: workspace.root
+        )
+
+        XCTAssertEqual(replacement?.url, second.standardizedFileURL)
+    }
+
+    func testReplacementChoosesNearbyFileWhenSelectedFileIsRemoved() throws {
+        let first = tempDirectory.appendingPathComponent("A.md")
+        let second = tempDirectory.appendingPathComponent("B.md")
+        let third = tempDirectory.appendingPathComponent("C.md")
+        try write("A", to: first)
+        try write("B", to: second)
+        try write("C", to: third)
+
+        let previous = try WorkspaceTreeBuilder().build(from: tempDirectory)
+        try FileManager.default.removeItem(at: second)
+        let refreshed = try WorkspaceTreeBuilder().build(from: tempDirectory)
+
+        let replacement = WorkspaceTreeNavigator().replacementMarkdownFile(
+            previousRoot: previous.root,
+            selectedFileURL: second,
+            newRoot: refreshed.root
+        )
+
+        XCTAssertEqual(replacement?.url, third.standardizedFileURL)
+    }
+
+    func testReplacementChoosesPreviousFileWhenLastFileIsRemoved() throws {
+        let first = tempDirectory.appendingPathComponent("A.md")
+        let second = tempDirectory.appendingPathComponent("B.md")
+        try write("A", to: first)
+        try write("B", to: second)
+
+        let previous = try WorkspaceTreeBuilder().build(from: tempDirectory)
+        try FileManager.default.removeItem(at: second)
+        let refreshed = try WorkspaceTreeBuilder().build(from: tempDirectory)
+
+        let replacement = WorkspaceTreeNavigator().replacementMarkdownFile(
+            previousRoot: previous.root,
+            selectedFileURL: second,
+            newRoot: refreshed.root
+        )
+
+        XCTAssertEqual(replacement?.url, first.standardizedFileURL)
+    }
+
+    func testReplacementReturnsNilWhenNoMarkdownFilesRemain() throws {
+        let selected = tempDirectory.appendingPathComponent("A.md")
+        try write("A", to: selected)
+
+        let previous = try WorkspaceTreeBuilder().build(from: tempDirectory)
+        try FileManager.default.removeItem(at: selected)
+        let refreshed = try WorkspaceTreeBuilder().build(from: tempDirectory)
+
+        let replacement = WorkspaceTreeNavigator().replacementMarkdownFile(
+            previousRoot: previous.root,
+            selectedFileURL: selected,
+            newRoot: refreshed.root
+        )
+
+        XCTAssertNil(replacement)
+    }
+
     private func write(_ text: String, to url: URL) throws {
         try text.write(to: url, atomically: true, encoding: .utf8)
     }

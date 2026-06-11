@@ -43,6 +43,7 @@ Run for performance-sensitive changes:
 | Help keyboard shortcut reference | UI smoke | Uses `Cmd+/` and dismisses the sheet. |
 | Reveal selected file in Finder | UI smoke | Uses `Cmd+R`; smoke checks app survival and crash reports. |
 | Folder change awareness | UI smoke | Adds and deletes a Markdown file in an opened folder. |
+| Selected-file rename/delete | Unit tests and UI smoke | Unit tests verify replacement selection during rebuilds; UI smoke renames and deletes the selected file and deletes the final Markdown file. |
 | File change awareness | Manual smoke currently | Needs an automated smoke that edits the selected file and verifies app survival/no crash report. |
 | Resource readout | Manual/profile currently | Profile gate covers idle CPU/RSS; formatting/throttling should get unit tests when extracted. |
 | Crash report regression | UI smoke | Fails if a new `Markdown-*.ips` appears during the run. |
