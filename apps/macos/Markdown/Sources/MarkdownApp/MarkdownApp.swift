@@ -29,6 +29,11 @@ struct MarkdownApplication: App {
             }
 
             CommandGroup(after: .saveItem) {
+                Button("Save") {
+                    model.saveSelectedFile()
+                }
+                .keyboardShortcut("s", modifiers: [.command])
+
                 Button("Reveal in Finder") {
                     model.revealSelectedFileInFinder()
                 }

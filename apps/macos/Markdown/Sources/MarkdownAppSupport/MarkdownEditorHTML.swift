@@ -1,0 +1,701 @@
+import Foundation
+
+public enum MarkdownEditorHTML {
+    public static func document(markdown: String, title: String) -> String {
+        """
+        <!doctype html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>\(escapeHTML(title))</title>
+          <style>
+            :root {
+              color-scheme: light;
+              --page: #fbfaf6;
+              --text: #24231f;
+              --muted: #6d6a61;
+              --rule: rgba(36, 35, 31, 0.14);
+              --code-bg: #f1eee7;
+              --quote: #3a6b68;
+              --accent: #006b7a;
+              --focus: rgba(0, 107, 122, 0.14);
+              --focus-strong: rgba(0, 107, 122, 0.22);
+            }
+
+            html {
+              background: var(--page);
+              text-rendering: optimizeLegibility;
+              -webkit-font-smoothing: antialiased;
+            }
+
+            body {
+              margin: 0;
+              padding: 46px 56px 78px;
+              color: var(--text);
+              background: var(--page);
+              font-family: "New York", "Iowan Old Style", Charter, ui-serif, Georgia, serif;
+              font-size: 18px;
+              line-height: 1.72;
+            }
+
+            main {
+              max-width: 820px;
+              margin: 0 auto;
+            }
+
+            .editor-block {
+              display: grid;
+              grid-template-columns: 44px minmax(0, 1fr);
+              gap: 14px;
+              align-items: baseline;
+              margin: 0.18em 0;
+            }
+
+            .editor-marker {
+              min-height: 1em;
+              color: var(--accent);
+              opacity: 0.78;
+              font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+              font-size: 0.72rem;
+              font-weight: 720;
+              text-align: right;
+              user-select: none;
+            }
+
+            .editor-content {
+              min-height: 1.35em;
+              outline: none;
+              border-radius: 7px;
+              padding: 0.08em 0.22em;
+              white-space: pre-wrap;
+              overflow-wrap: anywhere;
+            }
+
+            .editor-content:focus {
+              background: var(--focus);
+              box-shadow: 0 0 0 2px var(--focus-strong);
+            }
+
+            .editor-content a {
+              color: var(--accent);
+              text-decoration-thickness: 0.08em;
+              text-underline-offset: 0.18em;
+            }
+
+            .editor-block-heading .editor-content {
+              font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+              line-height: 1.18;
+              color: var(--text);
+              font-weight: 730;
+            }
+
+            .editor-block-heading[data-level="1"] .editor-content { font-size: 2.4rem; }
+            .editor-block-heading[data-level="2"] .editor-content { font-size: 1.62rem; }
+            .editor-block-heading[data-level="3"] .editor-content { font-size: 1.28rem; }
+            .editor-block-heading[data-level="4"] .editor-content,
+            .editor-block-heading[data-level="5"] .editor-content,
+            .editor-block-heading[data-level="6"] .editor-content { font-size: 1.05rem; }
+
+            .editor-block-quote .editor-content {
+              color: var(--muted);
+              border-left: 4px solid var(--quote);
+              padding-left: 1.05em;
+            }
+
+            .editor-block-code .editor-content,
+            .editor-block-fence .editor-content {
+              font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+              font-size: 0.88em;
+              background: var(--code-bg);
+              border: 1px solid var(--rule);
+            }
+
+            .editor-block-fence .editor-content {
+              color: var(--muted);
+            }
+
+            .md-search-hit {
+              border-radius: 4px;
+              background: rgba(255, 214, 102, 0.58);
+              box-shadow: 0 0 0 2px rgba(255, 214, 102, 0.32);
+            }
+
+            @media (max-width: 720px) {
+              body {
+                padding: 28px 24px 56px;
+                font-size: 17px;
+              }
+
+              .editor-block {
+                grid-template-columns: 34px minmax(0, 1fr);
+                gap: 10px;
+              }
+
+              .editor-block-heading[data-level="1"] .editor-content { font-size: 2rem; }
+              .editor-block-heading[data-level="2"] .editor-content { font-size: 1.45rem; }
+            }
+          </style>
+        </head>
+        <body>
+          <main>
+            <div class="editor" data-editor aria-label="Markdown live preview editor"></div>
+          </main>
+          <script>
+            window.initialMarkdown = \(javaScriptString(markdown));
+          </script>
+          <script>
+        \(editorScript)
+          </script>
+        </body>
+        </html>
+        """
+    }
+
+    private static func javaScriptString(_ value: String) -> String {
+        guard let data = try? JSONEncoder().encode(value),
+              let encoded = String(data: data, encoding: .utf8)
+        else {
+            return "\"\""
+        }
+        return encoded
+    }
+
+    private static func escapeHTML(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
+    private static let editorScript = #"""
+(() => {
+  let blocks = parseMarkdown(window.initialMarkdown || "");
+  let pendingCommitTimer = null;
+  let pendingMarkerSelection = null;
+  const editor = document.querySelector("[data-editor]");
+
+  render();
+  post("ready");
+
+  window.markdownClearSearchHighlights = function() {
+    document.querySelectorAll(".md-search-hit").forEach(function(node) {
+      const parent = node.parentNode;
+      while (node.firstChild) parent.insertBefore(node.firstChild, node);
+      parent.removeChild(node);
+      parent.normalize();
+    });
+  };
+
+  window.markdownJumpTo = function(id) {
+    const target = document.getElementById(id);
+    if (!target) return false;
+    target.scrollIntoView({ block: "start", behavior: "smooth" });
+    return true;
+  };
+
+  window.markdownFindText = function(query, occurrence) {
+    window.markdownClearSearchHighlights();
+    if (!query) return false;
+    const needle = query.toLocaleLowerCase();
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let node;
+    let index = 0;
+    while ((node = walker.nextNode())) {
+      const haystack = node.nodeValue.toLocaleLowerCase();
+      const found = haystack.indexOf(needle);
+      if (found === -1) continue;
+      if (index !== occurrence) {
+        index += 1;
+        continue;
+      }
+      const range = document.createRange();
+      range.setStart(node, found);
+      range.setEnd(node, found + query.length);
+      const mark = document.createElement("mark");
+      mark.className = "md-search-hit";
+      range.surroundContents(mark);
+      mark.scrollIntoView({ block: "center", behavior: "smooth" });
+      return true;
+    }
+    return false;
+  };
+
+  function render(focusID = null, selectionRange = null, caretEnd = false) {
+    editor.innerHTML = "";
+    blocks = reindexBlocks(blocks);
+
+    for (const block of blocks) {
+      const row = document.createElement("div");
+      row.className = `editor-block editor-block-${block.type}`;
+      row.dataset.blockId = block.id;
+      row.dataset.type = block.type;
+      row.dataset.level = String(block.level || 0);
+      if (block.anchorID) row.id = block.anchorID;
+
+      const marker = document.createElement("span");
+      marker.className = "editor-marker";
+      marker.textContent = markerText(block);
+
+      const content = document.createElement("div");
+      content.className = "editor-content";
+      content.contentEditable = "true";
+      content.spellcheck = true;
+      content.dataset.raw = block.visibleText;
+      renderBlockContent(content, block);
+      content.setAttribute("aria-label", `${block.type} line ${block.index + 1}`);
+
+      content.addEventListener("focus", () => {
+        if (block.unlocked || isRawDisplayType(block)) return;
+        const currentText = content.textContent;
+        content.textContent = block.visibleText;
+        if (currentText === block.visibleText) return;
+        moveCaretToEnd(content);
+      });
+
+      content.addEventListener("input", () => {
+        const rawText = content.textContent;
+        if (block.unlocked) {
+          blocks = updateUnlockedDraft(blocks, block.id, rawText);
+          scheduleUnlockedCommit(block.id);
+        } else if (shouldParseTypedSource(block, rawText) || shouldReplaceFormattedTypedSource(block, rawText)) {
+          blocks = replaceBlockWithSource(blocks, block.id, rawText);
+          render(block.id, null, true);
+        } else {
+          blocks = editVisibleText(blocks, block.id, rawText);
+        }
+        post("documentChanged");
+      });
+
+      content.addEventListener("keydown", (event) => {
+        const route = classifyShortcut(event);
+        if (route === "save") {
+          event.preventDefault();
+          post("saveRequested", { key: event.key, route });
+          return;
+        }
+        if (route !== "editor") {
+          post("shortcut", { key: event.key, route });
+          return;
+        }
+
+        if (block.unlocked && pendingMarkerSelection?.id === block.id && isMarkerReplacementKey(event)) {
+          event.preventDefault();
+          const replacement = event.key === "Backspace" || event.key === "Delete" ? "" : event.key;
+          replaceRangeInContent(content, pendingMarkerSelection.start, pendingMarkerSelection.end, replacement);
+          pendingMarkerSelection = null;
+          blocks = updateUnlockedDraft(blocks, block.id, content.textContent);
+          scheduleUnlockedCommit(block.id);
+          post("documentChanged");
+          return;
+        }
+
+        if (block.unlocked && normalizedKey(event.key) === "Enter") {
+          event.preventDefault();
+          clearPendingMarkerSelection();
+          blocks = commitUnlockedSource(blocks, block.id, true);
+          render(block.id, null, true);
+          post("documentChanged");
+          return;
+        }
+
+        if (!block.unlocked && normalizedKey(event.key) === "Enter") {
+          event.preventDefault();
+          const nextID = splitBlockAtCaret(block.id, currentCaretOffset());
+          render(nextID, null, true);
+          post("documentChanged");
+          return;
+        }
+
+        const caretOffset = currentCaretOffset();
+        if (!block.unlocked && shouldUnlockFromKey(event, caretOffset)) {
+          const markerRange = markerSelectionRange(block);
+          blocks = unlockBlock(blocks, block.id);
+          event.preventDefault();
+          render(block.id, markerRange);
+          post("blockUnlocked", { blockID: block.id });
+        }
+      });
+
+      content.addEventListener("blur", () => {
+        clearPendingCommit();
+        clearPendingMarkerSelection();
+        const current = findBlock(block.id);
+        if (current?.unlocked) {
+          blocks = commitUnlockedSource(blocks, block.id, true);
+        }
+        render();
+        post("documentChanged");
+      });
+
+      row.append(marker, content);
+      editor.append(row);
+    }
+
+    if (focusID) {
+      const target = editor.querySelector(`[data-block-id="${focusID}"] .editor-content`);
+      target?.focus();
+      if (selectionRange) {
+        pendingMarkerSelection = { id: focusID, ...selectionRange };
+        setTextSelection(target, selectionRange.start, selectionRange.end);
+        window.setTimeout(() => {
+          if (pendingMarkerSelection?.id === focusID) {
+            target?.focus();
+            setTextSelection(target, selectionRange.start, selectionRange.end);
+          }
+        }, 0);
+      } else if (caretEnd) {
+        moveCaretToEnd(target);
+      } else {
+        clearPendingMarkerSelection();
+        moveCaretToStart(target);
+      }
+    }
+  }
+
+  function post(type, payload = {}) {
+    window.webkit?.messageHandlers?.editor?.postMessage({
+      type,
+      markdown: serializeBlocks(blocks),
+      ...payload,
+    });
+  }
+
+  function parseMarkdown(markdown) {
+    const lines = markdown.split("\n");
+    const parsedBlocks = [];
+    let inFence = false;
+    const anchorCounts = new Map();
+
+    lines.forEach((source, index) => {
+      const parsed = parseLine(source, { index, inFence });
+      if (parsed.type === "heading") parsed.anchorID = nextAnchor(parsed.visibleText, anchorCounts);
+      parsedBlocks.push(parsed);
+      if (parsed.type === "fence") inFence = !inFence;
+    });
+
+    return parsedBlocks;
+  }
+
+  function serializeBlocks(sourceBlocks) {
+    return sourceBlocks.map(serializeBlock).join("\n");
+  }
+
+  function editVisibleText(sourceBlocks, id, visibleText) {
+    return sourceBlocks.map((block) => {
+      if (block.id !== id) return block;
+      return { ...block, visibleText, source: block.prefix + visibleText + block.suffix };
+    });
+  }
+
+  function replaceBlockWithSource(sourceBlocks, id, source) {
+    return sourceBlocks.map((block) => {
+      if (block.id !== id) return block;
+      return { ...parseLine(source, { index: block.index, inFence: block.type === "code" }), id: block.id };
+    });
+  }
+
+  function unlockBlock(sourceBlocks, id) {
+    return sourceBlocks.map((block) => {
+      if (block.id !== id) return block;
+      return { ...block, unlocked: true, visibleText: serializeBlock(block), prefix: "", suffix: "" };
+    });
+  }
+
+  function updateUnlockedDraft(sourceBlocks, id, source) {
+    return sourceBlocks.map((block) => {
+      if (block.id !== id) return block;
+      return { ...block, source, visibleText: source, prefix: "", suffix: "", unlocked: true };
+    });
+  }
+
+  function commitUnlockedSource(sourceBlocks, id, force = false) {
+    const block = sourceBlocks.find((candidate) => candidate.id === id);
+    if (!block) return sourceBlocks;
+    if (!force && shouldWaitForMoreMarkerInput(block.visibleText)) return sourceBlocks;
+    return replaceBlockWithSource(sourceBlocks, id, block.visibleText);
+  }
+
+  function splitBlockAtCaret(id, offset) {
+    const index = blocks.findIndex((block) => block.id === id);
+    if (index === -1) return id;
+    const block = blocks[index];
+    const before = block.visibleText.slice(0, offset);
+    const after = block.visibleText.slice(offset);
+    const current = editVisibleText([block], block.id, before)[0];
+    const nextSource = continuationSource(block, after);
+    const next = parseLine(nextSource, { index: index + 1, inFence: block.type === "code" });
+    blocks = reindexBlocks([...blocks.slice(0, index), current, next, ...blocks.slice(index + 1)]);
+    return blocks[index + 1].id;
+  }
+
+  function continuationSource(block, after) {
+    if (block.type === "unordered-list" && block.visibleText.trim() !== "") return `${block.marker} ${after}`;
+    if (block.type === "ordered-list" && block.visibleText.trim() !== "") return `${block.marker} ${after}`;
+    if (block.type === "quote" && block.visibleText.trim() !== "") return `> ${after}`;
+    return after;
+  }
+
+  function parseLine(source, { index, inFence }) {
+    if (source.length === 0) return block({ index, source, type: "blank", visibleText: "", prefix: "", suffix: "" });
+    if (inFence && !isFence(source)) return block({ index, source, type: "code", visibleText: source, prefix: "", suffix: "" });
+    return parseFence(source, index)
+      || parseHeading(source, index)
+      || parseUnorderedList(source, index)
+      || parseOrderedList(source, index)
+      || parseQuote(source, index)
+      || block({ index, source, type: "paragraph", visibleText: source, prefix: "", suffix: "" });
+  }
+
+  function parseFence(source, index) {
+    const [, leading = "", marker = "", language = ""] = source.match(/^(\s*)(```|~~~)(.*)$/) ?? [];
+    if (!marker) return null;
+    return block({ index, source, type: "fence", marker, visibleText: language.trim(), prefix: leading + marker, suffix: "" });
+  }
+
+  function parseHeading(source, index) {
+    const [, leading = "", marker = "", body = ""] = source.match(/^(\s{0,3})(#{1,6})\s+(.*)$/) ?? [];
+    if (!marker) return null;
+    const visibleText = body.replace(/\s+#+\s*$/, "");
+    const suffix = body.slice(visibleText.length);
+    return block({ index, source, type: "heading", level: marker.length, visibleText, prefix: leading + marker + " ", suffix });
+  }
+
+  function parseUnorderedList(source, index) {
+    const [, leading = "", marker = "", body = ""] = source.match(/^(\s*)([-+*])\s+(.*)$/) ?? [];
+    if (!marker) return null;
+    return block({ index, source, type: "unordered-list", marker, visibleText: body, prefix: leading + marker + " ", suffix: "" });
+  }
+
+  function parseOrderedList(source, index) {
+    const [, leading = "", marker = "", body = ""] = source.match(/^(\s*)(\d+[.)])\s+(.*)$/) ?? [];
+    if (!marker) return null;
+    return block({ index, source, type: "ordered-list", marker, visibleText: body, prefix: leading + marker + " ", suffix: "" });
+  }
+
+  function parseQuote(source, index) {
+    const [, leading = "", body = ""] = source.match(/^(\s*)>\s?(.*)$/) ?? [];
+    if (!source.trimStart().startsWith(">")) return null;
+    return block({ index, source, type: "quote", visibleText: body, prefix: leading + "> ", suffix: "" });
+  }
+
+  function block(values) {
+    return { id: `line-${values.index}`, index: values.index, marker: "", level: 0, unlocked: false, anchorID: "", ...values };
+  }
+
+  function serializeBlock(block) {
+    if (block.unlocked) return block.visibleText;
+    return block.prefix + block.visibleText + block.suffix;
+  }
+
+  function reindexBlocks(sourceBlocks) {
+    return sourceBlocks.map((block, index) => ({ ...block, id: `line-${index}`, index }));
+  }
+
+  function markerText(block) {
+    if (block.unlocked) return "raw";
+    switch (block.type) {
+      case "heading": return "#".repeat(block.level);
+      case "unordered-list":
+      case "ordered-list": return block.marker;
+      case "quote": return ">";
+      case "fence": return block.marker;
+      case "code": return "code";
+      default: return "";
+    }
+  }
+
+  function renderBlockContent(element, block) {
+    if (block.unlocked || isRawDisplayType(block)) {
+      element.textContent = block.visibleText;
+      return;
+    }
+    element.innerHTML = inlineMarkdownHTML(block.visibleText);
+  }
+
+  function isRawDisplayType(block) {
+    return block.type === "code" || block.type === "fence";
+  }
+
+  function inlineMarkdownHTML(value) {
+    const placeholders = [];
+    let html = escapeHTML(value);
+
+    html = html.replace(/`([^`]+)`/g, (_match, code) => placeholder(placeholders, `<code>${code}</code>`));
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, href) => {
+      return placeholder(placeholders, `<a href="${escapeAttribute(href)}">${label}</a>`);
+    });
+    html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/__([^_]+)__/g, "<strong>$1</strong>");
+    html = html.replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
+    html = html.replace(/(^|[^_])_([^_]+)_/g, "$1<em>$2</em>");
+
+    placeholders.forEach((value, index) => {
+      html = html.split(`%%MDPH${index}%%`).join(value);
+    });
+    return html;
+  }
+
+  function placeholder(values, value) {
+    const token = `%%MDPH${values.length}%%`;
+    values.push(value);
+    return token;
+  }
+
+  function escapeHTML(value) {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function escapeAttribute(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function shouldParseTypedSource(block, source) {
+    if (block.type !== "blank" && block.type !== "paragraph") return false;
+    const parsed = parseLine(source, { index: block.index, inFence: false });
+    return parsed.type !== "blank" && parsed.type !== "paragraph";
+  }
+
+  function shouldReplaceFormattedTypedSource(block, source) {
+    if (!["unordered-list", "ordered-list", "quote", "heading"].includes(block.type)) return false;
+    const parsed = parseLine(source, { index: block.index, inFence: false });
+    return parsed.type !== "blank" && parsed.type !== "paragraph";
+  }
+
+  function shouldWaitForMoreMarkerInput(source) {
+    return /^(#{1,6}|[-+*]|>\s*)$/.test(source);
+  }
+
+  function markerSelectionRange(block) {
+    const source = serializeBlock(block);
+    const leadingLength = source.match(/^\s*/)?.[0]?.length ?? 0;
+    return { start: leadingLength, end: leadingLength + markerTokenLength(block) };
+  }
+
+  function markerTokenLength(block) {
+    switch (block.type) {
+      case "heading": return block.level;
+      case "unordered-list":
+      case "ordered-list":
+      case "fence": return block.marker.length;
+      case "quote": return 1;
+      default: return 0;
+    }
+  }
+
+  function findBlock(id) {
+    return blocks.find((block) => block.id === id);
+  }
+
+  function currentCaretOffset() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return 0;
+    return selection.getRangeAt(0).startOffset;
+  }
+
+  function setTextSelection(element, start, end) {
+    if (!element) return;
+    const textNode = element.firstChild;
+    const safeStart = Math.max(0, Math.min(start, element.textContent.length));
+    const safeEnd = Math.max(safeStart, Math.min(end, element.textContent.length));
+    const range = document.createRange();
+    range.setStart(textNode ?? element, textNode ? safeStart : 0);
+    range.setEnd(textNode ?? element, textNode ? safeEnd : 0);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  function moveCaretToStart(element) {
+    setTextSelection(element, 0, 0);
+  }
+
+  function moveCaretToEnd(element) {
+    if (!element) return;
+    setTextSelection(element, element.textContent.length, element.textContent.length);
+  }
+
+  function replaceRangeInContent(element, start, end, replacement) {
+    const value = element.textContent;
+    const safeStart = Math.max(0, Math.min(start, value.length));
+    const safeEnd = Math.max(safeStart, Math.min(end, value.length));
+    element.textContent = value.slice(0, safeStart) + replacement + value.slice(safeEnd);
+    setTextSelection(element, safeStart + replacement.length, safeStart + replacement.length);
+  }
+
+  function scheduleUnlockedCommit(id) {
+    clearPendingCommit();
+    pendingCommitTimer = window.setTimeout(() => {
+      pendingCommitTimer = null;
+      const current = findBlock(id);
+      if (!current?.unlocked || shouldWaitForMoreMarkerInput(current.visibleText)) return;
+      blocks = commitUnlockedSource(blocks, id);
+      render(id, null, true);
+      post("documentChanged");
+    }, 140);
+  }
+
+  function clearPendingCommit() {
+    if (!pendingCommitTimer) return;
+    window.clearTimeout(pendingCommitTimer);
+    pendingCommitTimer = null;
+  }
+
+  function clearPendingMarkerSelection() {
+    pendingMarkerSelection = null;
+  }
+
+  function isMarkerReplacementKey(event) {
+    if (event.metaKey || event.ctrlKey || event.altKey) return false;
+    return event.key.length === 1 || event.key === "Backspace" || event.key === "Delete";
+  }
+
+  function shouldUnlockFromKey(eventLike, caretOffset) {
+    return normalizedKey(eventLike.key) === "ArrowLeft" && caretOffset === 0 && !eventLike.metaKey;
+  }
+
+  function classifyShortcut(eventLike) {
+    const meta = Boolean(eventLike.metaKey);
+    const key = normalizedKey(eventLike.key);
+    if (!meta) return "editor";
+    if (key === "s") return "save";
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) return "native-navigation";
+    if (key === "o" || key === "f" || key === "/" || key === "r") return "native-command";
+    return "editor";
+  }
+
+  function isFence(source) {
+    return /^\s*(```|~~~)/.test(source);
+  }
+
+  function normalizedKey(key) {
+    if (!key) return "";
+    return key.length === 1 ? key.toLowerCase() : key;
+  }
+
+  function nextAnchor(title, counts) {
+    const base = slug(title || "section");
+    const count = counts.get(base) || 0;
+    counts.set(base, count + 1);
+    return count === 0 ? base : `${base}-${count + 1}`;
+  }
+
+  function slug(value) {
+    const collapsed = value.toLocaleLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return collapsed || "section";
+  }
+})();
+"""#
+}

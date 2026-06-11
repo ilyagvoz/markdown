@@ -149,7 +149,7 @@ struct SidebarView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Markdown")
                         .font(.headline)
-                    Text("Preview reader")
+                    Text("Live preview editor")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -408,11 +408,19 @@ struct PreviewPane: View {
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-        case let .rendered(fileURL, _, html):
-            MarkdownWebPreview(
-                html: html,
+        case let .rendered(fileURL, title, markdown, _):
+            MarkdownEditorView(
+                markdown: markdown,
+                title: title,
+                documentURL: fileURL,
                 baseURL: fileURL.deletingLastPathComponent(),
-                action: model.pendingPreviewAction
+                action: model.pendingPreviewAction,
+                onChange: { markdown in
+                    model.editorDocumentChanged(markdown)
+                },
+                onSave: {
+                    model.saveSelectedFile()
+                }
             )
         case let .failure(message):
             ContentUnavailableView(
@@ -425,8 +433,8 @@ struct PreviewPane: View {
 
     private var title: String {
         switch model.previewState {
-        case let .rendered(_, title, _):
-            return title
+        case let .rendered(_, title, _, _):
+            return model.isDocumentDirty ? "\(title) *" : title
         case .empty:
             return "No document selected"
         case let .loading(name):
@@ -690,6 +698,7 @@ struct OutlinePanel: View {
 struct ShortcutHelpView: View {
     private let shortcuts: [(String, String)] = [
         ("Open file or folder", "Cmd O"),
+        ("Save current document", "Cmd S"),
         ("Search current document", "Cmd F"),
         ("Previous Markdown file", "Cmd Up"),
         ("Next Markdown file", "Cmd Down"),
@@ -738,7 +747,7 @@ struct EmptyPreviewView: View {
                 .foregroundStyle(.tertiary)
             Text("Ready for Markdown")
                 .font(.system(size: 28, weight: .semibold, design: .rounded))
-            Text("Open a file or folder and the rendered preview will appear here.")
+            Text("Open a file or folder and the live preview editor will appear here.")
                 .font(.title3)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

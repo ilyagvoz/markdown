@@ -152,6 +152,62 @@ run_applescript "reveal selected file shortcut" '
   delay 0.5
 '
 
+echo "UI smoke: live preview editing"
+EDIT_DIR="$(mktemp -d /tmp/markdown-ui-edit.XXXXXX)"
+EDIT_FILE="$EDIT_DIR/edit.md"
+printf 'Hello\n' > "$EDIT_FILE"
+launch_app "$EDIT_FILE"
+run_applescript "edit new bullet content" '
+  tell process "Markdown"
+    set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "paragraph line 1"
+    click targetArea
+  end tell
+  delay 0.2
+  keystroke "a" using command down
+  delay 0.1
+  keystroke "Here is a list with a bunch of bullet points:"
+  key code 36
+  keystroke "* One"
+  key code 36
+  keystroke "* Two"
+  delay 1.0
+  keystroke "s" using command down
+  delay 1
+'
+EXPECTED_EDIT=$'Here is a list with a bunch of bullet points:\n* One\n* Two'
+if [[ "$(cat "$EDIT_FILE")" != "$EXPECTED_EDIT" ]]; then
+  echo "Live editing smoke failed: unexpected saved Markdown" >&2
+  cat "$EDIT_FILE" >&2
+  exit 1
+fi
+rm -rf "$EDIT_DIR"
+
+MARKER_DIR="$(mktemp -d /tmp/markdown-ui-marker.XXXXXX)"
+MARKER_FILE="$MARKER_DIR/marker.md"
+printf '* One\n' > "$MARKER_FILE"
+launch_app "$MARKER_FILE"
+run_applescript "edit marker replacement" '
+  tell process "Markdown"
+    set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "unordered-list line 1"
+    click targetArea
+  end tell
+  delay 0.2
+  repeat 8 times
+    key code 123
+  end repeat
+  delay 0.2
+  keystroke ">"
+  delay 1.0
+  keystroke "s" using command down
+  delay 1
+'
+if [[ "$(cat "$MARKER_FILE")" != "> One" ]]; then
+  echo "Marker editing smoke failed: unexpected saved Markdown" >&2
+  cat "$MARKER_FILE" >&2
+  exit 1
+fi
+rm -rf "$MARKER_DIR"
+
 echo "UI smoke: folder watcher add/delete"
 WATCH_DIR="$(mktemp -d /tmp/markdown-ui-watch.XXXXXX)"
 mkdir -p "$WATCH_DIR/notes"
@@ -177,4 +233,4 @@ require_running "last markdown file delete"
 quit_app
 rm -rf "$WATCH_DIR"
 
-echo "UI smoke passed: file/folder open, shortcuts, current/workspace search, outline, folder watching, selected-file churn, and crash checks."
+echo "UI smoke passed: file/folder open, shortcuts, current/workspace search, outline, live editing, folder watching, selected-file churn, and crash checks."

@@ -13,8 +13,8 @@ Run:
 Latest result:
 
 - Passed.
-- 24 unit tests.
-- Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
+- 26 unit tests.
+- Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, live-preview editor HTML/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
 
 Run:
 
@@ -48,7 +48,7 @@ Latest result:
 
 - Passed.
 - Launches the installed app against a single file, a folder, and a temporary watched folder.
-- Drives `Cmd+O`, `Cmd+F`, `Cmd+/`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, folder add/delete events, selected-file rename/delete, and final Markdown-file deletion.
+- Drives `Cmd+O`, `Cmd+F`, `Cmd+/`, `Cmd+S`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, live-preview editing, saved Markdown assertions, folder add/delete events, selected-file rename/delete, and final Markdown-file deletion.
 - Fails if the app exits unexpectedly or a new `Markdown-*.ips` report appears.
 
 See `docs/Test-Coverage.md` for the user-focused coverage matrix.
@@ -100,9 +100,9 @@ Latest release-profile result:
 | Metric | Observation |
 |---|---:|
 | Settled idle CPU | 0.0-0.1% on later samples |
-| Fixture settled RSS | about 91.7 MB |
+| Fixture settled RSS | about 92.1 MB after live-preview editor integration |
 | Larger-folder settled RSS | about 116.6 MB against `~/dev/distill-v3/docs` |
-| Launch/render RSS range | about 91.7-122.8 MB in the latest release-profile runs |
+| Launch/render RSS range | about 92.1-122.8 MB in the latest release-profile runs |
 | Virtual size | very large, expected for modern macOS/WebKit process address space and not useful as real memory pressure |
 
 In the managed Codex sandbox, SwiftPM may warn that user-level SwiftPM configuration/security paths under `~/Library` are not writable. The project scripts keep scratch space and caches inside the workspace; those warnings do not fail the gate.
@@ -124,11 +124,12 @@ Validated screenshots:
 - `artifacts/screenshots/markdown-polish-01-default.png` - current default three-pane layout.
 - `artifacts/screenshots/markdown-polish-02-small.png` - current small-window layout.
 - `artifacts/screenshots/markdown-polish-03-workspace-search.png` - workspace search UI with cross-file results.
+- `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing branch with inline Markdown rendered in read mode.
 
 Assessment:
 
 - Function: single-file and folder-open flows work.
-- Usability: sidebar hierarchy is clear, selected row is obvious, current/workspace search is discoverable, the outline panel is useful without overpowering the reading surface, and status text remains unobtrusive.
+- Usability: sidebar hierarchy is clear, selected row is obvious, current/workspace search is discoverable, the outline panel is useful without overpowering the reading/editing surface, live-preview editing keeps block markers subtle, and status text remains unobtrusive.
 - Joy: the light-only palette, warm paper reading surface, teal selection, calm three-pane layout, comfortable typography, and new app icon are directionally right for daily use.
 
 Known UX follow-ups:
@@ -148,6 +149,25 @@ Folder watch:
 - Deleted the selected Markdown file on disk and verified the app selected a nearby file when possible.
 - Deleted the final Markdown file in the folder and verified the app stayed alive with no crash report.
 - Verified the app process stayed alive.
+
+Live-preview editing:
+
+- Opened a temporary Markdown file containing `Hello`.
+- Focused the first editable paragraph through accessibility.
+- Replaced it with a paragraph plus two typed bullet lines using `Return`.
+- Saved with `Cmd+S`.
+- Verified the file on disk was exactly:
+
+```text
+Here is a list with a bunch of bullet points:
+* One
+* Two
+```
+
+- Opened a temporary Markdown file containing `* One`.
+- Focused the first unordered-list item.
+- Pressed Left Arrow repeatedly to reach marker replacement, typed `>`, and saved with `Cmd+S`.
+- Verified the file on disk was exactly `> One`.
 
 Keyboard/search:
 

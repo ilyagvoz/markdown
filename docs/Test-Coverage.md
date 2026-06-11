@@ -36,6 +36,8 @@ Run for performance-sensitive changes:
 | Search current document | Unit tests and UI smoke | Unit tests verify matching/context; UI smoke opens `Cmd+F`, types queries, and clicks results. |
 | Search workspace | Unit tests and UI smoke | Unit tests verify file metadata, snippets, limits, and occurrence numbers; UI smoke searches an opened folder and clicks a cross-file result. |
 | Jump from search result into preview | UI smoke | Exercises WebView JavaScript bridge and crash-report checks. |
+| Live-preview editing | Unit tests and UI smoke | Unit tests cover editor HTML/script generation; UI smoke edits a paragraph into bullet lines, saves with `Cmd+S`, and verifies the Markdown file on disk. |
+| Marker replacement editing | UI smoke | Focuses a list item, uses Left Arrow marker replacement, saves, and verifies `* One` becomes `> One` on disk. |
 | Right outline panel | Unit tests and UI smoke | Unit tests verify outline extraction; UI smoke clicks outline landmarks. |
 | Toggle left sidebar | UI smoke | Uses `Cmd+Left Arrow`. |
 | Toggle right outline | UI smoke | Uses `Cmd+Right Arrow`. |
@@ -44,7 +46,7 @@ Run for performance-sensitive changes:
 | Reveal selected file in Finder | UI smoke | Uses `Cmd+R`; smoke checks app survival and crash reports. |
 | Folder change awareness | UI smoke | Adds and deletes a Markdown file in an opened folder. |
 | Selected-file rename/delete | Unit tests and UI smoke | Unit tests verify replacement selection during rebuilds; UI smoke renames and deletes the selected file and deletes the final Markdown file. |
-| File change awareness | Manual smoke currently | Needs an automated smoke that edits the selected file and verifies app survival/no crash report. |
+| File change awareness | UI smoke | Adds/deletes files in opened folders and guards selected-file churn; dirty same-file external conflict behavior remains a hardening gap. |
 | Resource readout | Manual/profile currently | Profile gate covers idle CPU/RSS; formatting/throttling should get unit tests when extracted. |
 | Editing/update-mode spike | Spike unit tests | `swift test --package-path spikes/spike2-editing-update-mode` covers line-model round-trip and marker-preserving edits. |
 | Candidate A WebView editor spike | Spike unit tests | `node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs` covers browser-model round-trip, marker-preserving edits, unlock, type changes, and shortcut classification. |
@@ -60,7 +62,7 @@ Run for performance-sensitive changes:
 - Resource readout formatting and throttling should be moved into a testable support module.
 - Pane dragging itself is manual QA; the persisted layout state has automated coverage.
 - Visual polish remains screenshot/manual QA rather than pixel-diff automation.
-- Production editing still needs automated coverage for IME/input, undo/redo, paste, selection, save/writeback, file-conflict handling, accessibility, and large-file behavior.
+- Live-preview editing still needs automated coverage for IME/input, undo/redo, paste normalization, richer selection behavior, external file-conflict handling, accessibility, and large-file behavior.
 
 ## Standard For New User-Facing Features
 

@@ -39,11 +39,13 @@ markdown/
 │           │   │   ├── FileWatcher.swift
 │           │   │   ├── KeyboardShortcutMonitor.swift
 │           │   │   ├── MarkdownApp.swift
+│           │   │   ├── MarkdownEditorView.swift
 │           │   │   ├── MarkdownWebPreview.swift
 │           │   │   ├── PreviewAction.swift
 │           │   │   └── ProcessResourceSampler.swift
 │           │   ├── MarkdownAppSupport/
 │           │   │   ├── AppSettings.swift
+│           │   │   ├── MarkdownEditorHTML.swift
 │           │   │   └── PreviewJavaScript.swift
 │           │   └── MarkdownCore/
 │           │       ├── MarkdownDocumentAnalyzer.swift
@@ -52,6 +54,7 @@ markdown/
 │           └── Tests/
 │               ├── MarkdownAppSupportTests/
 │               │   ├── AppSettingsTests.swift
+│               │   ├── MarkdownEditorHTMLTests.swift
 │               │   └── PreviewJavaScriptTests.swift
 │               └── MarkdownCoreTests/
 │                   ├── MarkdownDocumentAnalyzerTests.swift
@@ -110,7 +113,7 @@ Generated build folders such as `.build/` and `apps/macos/Markdown/.build/` are 
 
 ### `apps/macos/Markdown/Sources/MarkdownApp`
 
-Owns the app shell, SwiftUI/AppKit UI, user intents, app model, WebView integration, file watching, keyboard shortcuts, and resource sampling.
+Owns the app shell, SwiftUI/AppKit UI, user intents, app model, WebView preview/editor integration, file watching, keyboard shortcuts, and resource sampling.
 
 Rules:
 
@@ -126,6 +129,7 @@ Owns testable support code used by the app target but not tied to SwiftUI view r
 Current responsibilities:
 
 - restored app settings and pane layout persistence
+- live-preview editor HTML/script generation
 - JavaScript string/script generation for preview actions
 
 Rules:

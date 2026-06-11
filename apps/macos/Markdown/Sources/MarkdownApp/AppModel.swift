@@ -9,7 +9,7 @@ final class AppModel: ObservableObject {
     enum PreviewState: Equatable {
         case empty
         case loading(String)
-        case rendered(fileURL: URL, title: String, html: String)
+        case rendered(fileURL: URL, title: String, markdown: String, html: String)
         case failure(String)
     }
 
@@ -25,6 +25,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var workspaceSearchResults: [WorkspaceSearchResult] = []
     @Published private(set) var isWorkspaceSearchRunning = false
     @Published private(set) var pendingPreviewAction: PreviewAction?
+    @Published private(set) var isDocumentDirty = false
     @Published var searchQuery = "" {
         didSet { updateSearchResults() }
     }
@@ -197,7 +198,7 @@ final class AppModel: ObservableObject {
         previewState = .loading(url.lastPathComponent)
         selectedFileWatcher.watch(url: url) { [weak self] in
             Task {
-                await self?.refreshSelectedFile(reason: "updated on disk")
+                await self?.handleSelectedFileChangedOnDisk()
             }
         }
         persistState()
@@ -331,6 +332,29 @@ final class AppModel: ObservableObject {
         NSWorkspace.shared.activateFileViewerSelecting([selectedFileURL])
     }
 
+    func saveSelectedFile() {
+        guard let selectedFileURL else { return }
+        do {
+            try currentMarkdown.write(to: selectedFileURL, atomically: true, encoding: .utf8)
+            isDocumentDirty = false
+            statusText = "\(selectedFileURL.lastPathComponent) saved"
+            scheduleResourceSample()
+        } catch {
+            statusText = "Could not save \(selectedFileURL.lastPathComponent)"
+        }
+    }
+
+    func editorDocumentChanged(_ markdown: String) {
+        guard markdown != currentMarkdown else { return }
+        currentMarkdown = markdown
+        isDocumentDirty = true
+        documentOutline = analyzer.outline(for: markdown)
+        updateSearchResults()
+
+        guard let selectedFileURL else { return }
+        statusText = "\(selectedFileURL.lastPathComponent) edited"
+    }
+
     func jump(to item: DocumentOutlineItem) {
         previewActionToken += 1
         pendingPreviewAction = PreviewAction(token: previewActionToken, kind: .jumpToAnchor(item.id))
@@ -358,6 +382,22 @@ final class AppModel: ObservableObject {
     func refreshSelectedFile(reason: String? = nil) async {
         guard let selectedFileURL else { return }
         await renderFile(selectedFileURL, statusReason: reason)
+    }
+
+    private func handleSelectedFileChangedOnDisk() async {
+        guard let selectedFileURL else { return }
+
+        if let diskMarkdown = try? String(contentsOf: selectedFileURL, encoding: .utf8),
+           diskMarkdown == currentMarkdown {
+            return
+        }
+
+        guard !isDocumentDirty else {
+            statusText = "\(selectedFileURL.lastPathComponent) changed on disk while unsaved"
+            return
+        }
+
+        await refreshSelectedFile(reason: "updated on disk")
     }
 
     func refreshWorkspaceFromDisk() async {
@@ -429,9 +469,10 @@ final class AppModel: ObservableObject {
             let elapsedMs = Double(DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
             let title = rendered.title ?? url.deletingPathExtension().lastPathComponent
             currentMarkdown = markdown
+            isDocumentDirty = false
             documentOutline = rendered.outline
             updateSearchResults()
-            previewState = .rendered(fileURL: url, title: title, html: rendered.html)
+            previewState = .rendered(fileURL: url, title: title, markdown: markdown, html: rendered.html)
             let suffix = statusReason.map { " (\($0))" } ?? ""
             statusText = "\(url.lastPathComponent) rendered in \(String(format: "%.1f", elapsedMs)) ms\(suffix)"
             scheduleResourceSample()
@@ -440,6 +481,7 @@ final class AppModel: ObservableObject {
             selectedFileWatcher.stop()
             documentOutline = []
             currentMarkdown = ""
+            isDocumentDirty = false
             searchResults = []
             workspaceSearchResults = []
             statusText = "Could not render \(url.lastPathComponent)"

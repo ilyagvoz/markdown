@@ -92,3 +92,21 @@ Consequences:
 - The SwiftUI app should force Aqua/light appearance for the MVP.
 - Generated preview HTML should use `color-scheme: light`.
 - Dark mode support is a future feature, not part of the first polished MVP.
+
+## ADR 007: Live Preview Editing Surface
+
+Status: accepted for branch implementation.
+
+Decision: Use a WebView-backed live-preview editor for production editing, while keeping Markdown source serialization app-owned and saved back to local files with `Cmd+S`.
+
+Context: Spike 2 proved a Markdown line model can preserve presentation markers during ordinary edits. Spike 3 proved the Candidate A browser interaction model. Spike 4 proved the same model inside a native AppKit + `WKWebView` host, including marker preselection and automated smoke validation. The `feature/live-preview-editing` branch integrates that direction into the macOS app.
+
+Consequences:
+
+- The main document surface is editable while remaining preview-first.
+- Ordinary line edits preserve the current Markdown presentation.
+- Pressing Left Arrow at the start of a formatted line selects the Markdown marker for fast type changes.
+- Pressing Return creates a new editable block; typed markers such as `*`, `>`, and `#` convert the new block.
+- `Cmd+S` writes the current Markdown source back to the selected local file.
+- The editor bridge must remain small, defensive, and covered by UI smoke because WebKit interaction bugs are easy to miss with unit tests alone.
+- Undo/redo, paste normalization, IME/input methods, external file conflicts, accessibility, and large-file editing remain hardening areas.

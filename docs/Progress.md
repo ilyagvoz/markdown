@@ -36,6 +36,7 @@ Complete capabilities:
 - Editing/update-mode spike with tested Markdown line-model prototype and recommendation.
 - Candidate A WebView editor spike with tested marker-preserving browser model prototype.
 - Native WebView editor spike with a Swift/AppKit host, WebKit bridge, and automated native smoke validation.
+- Production live-preview editing branch with WebView-backed editable Markdown blocks, `Cmd+S` save, marker replacement, new-line block creation, inline read-mode rendering, and smoke coverage for saved Markdown output.
 - Focused accessibility spot check with explicit labels added for icon-only controls.
 - Release build, install, profile, and UI smoke scripts.
 
@@ -54,7 +55,7 @@ Durable decisions live in `docs/Architecture-Decisions.md`.
 
 Current verified gates:
 
-- `./scripts/test-macos.sh` passes with 24 tests.
+- `./scripts/test-macos.sh` passes with 26 tests.
 - `./scripts/build-macos-app.sh` builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` installs `/Applications/Markdown.app`.
 - `./scripts/smoke-macos-ui.sh` passes against the installed app.
@@ -77,6 +78,7 @@ Current UI smoke coverage includes:
 - reveal in Finder
 - watched-folder add/delete
 - selected-file rename/delete and final-file deletion
+- live-preview editing, saving, new bullet creation, and marker replacement
 - crash-report checks
 
 See `docs/Validation.md` and `docs/Test-Coverage.md` for the latest details.
@@ -99,11 +101,11 @@ Pane dragging itself should remain manual QA for now. Synthetic macOS drag-coord
 
 Visual polish is product work, not garnish. The app should remain light, quiet, readable, and joyful. Avoid heavy visible divider lines; invisible resize hit targets fit the current design better.
 
-Native WebView editing is viable, but not production-ready yet. Spike 4 proved the Candidate A interaction model inside AppKit + `WKWebView`, including marker-preserving edits, intentional unlock, Swift bridge state, and automated WebKit smoke. Production editing still needs Swift-owned canonical state, save/writeback safety, undo/redo, IME/input, paste, selection, accessibility, file-conflict, and large-file validation.
+Native WebView editing is viable and now has a first production branch implementation. Spike 4 proved the Candidate A interaction model inside AppKit + `WKWebView`; the branch moved that into the app with saved Markdown smoke coverage. Editing still needs hardening around undo/redo, IME/input, paste, large files, accessibility, and external file-conflict handling.
 
 ## Deferred But Important
 
-- Production editing/update mode.
+- Live-preview editing hardening.
 - Broader accessibility pass before distribution.
 - Signed/notarized distribution.
 - Large-file screenshot/performance smoke.

@@ -2,17 +2,17 @@
 
 ## Product Vision
 
-Markdown is a fast, focused macOS Markdown reader. It should make local Markdown folders feel immediately readable without becoming a full knowledge-management system.
+Markdown is a fast, focused macOS Markdown reader and live-preview editor. It should make local Markdown folders feel immediately readable and lightly editable without becoming a full knowledge-management system.
 
-The app opens in preview mode by default. The main experience is a native-feeling three-part reading workflow:
+The app opens in preview mode by default. The main experience is a native-feeling three-part reading and editing workflow:
 
 - Choose a file or folder.
 - Navigate Markdown files from a collapsible sidebar tree.
-- Read rendered Markdown quickly, comfortably, and predictably.
+- Read and lightly edit rendered Markdown quickly, comfortably, and predictably.
 
 ## Product Principles
 
-- Preview-first reading, not editing-first writing.
+- Preview-first reading, with lightweight live-preview editing.
 - Local files are the source of truth.
 - Common Markdown only for MVP.
 - Fast launch, fast folder load, fast file switching.
@@ -25,6 +25,8 @@ When the user opens a single Markdown file, the app displays the rendered docume
 
 When the user opens a folder, the app shows a left sidebar tree containing folders and Markdown files. Folders can be expanded and collapsed. Selecting a Markdown file renders it in the main pane.
 
+When the user edits, the rendered surface should preserve the current line's presentation by default. Intentional type changes should be fast: moving to the start of a formatted line and pressing Left Arrow selects the Markdown marker so it can be replaced immediately.
+
 The app should preserve enough window and navigation state to feel calm between launches, but it should not build a separate library database or indexing system until evidence shows that is needed.
 
 ## MVP User Stories
@@ -35,6 +37,8 @@ The app should preserve enough window and navigation state to feel calm between 
 - As a reader, I can use keyboard navigation to move through the sidebar and open files.
 - As a reader, I can use standard macOS open/recent-document workflows.
 - As a reader, the app renders with a polished light theme and comfortable reading defaults.
+- As an editor, I can make quick changes directly in the rendered document and save with `Cmd+S`.
+- As an editor, I can create new Markdown blocks with `Return` and typed markers like `*`, `>`, or `#`.
 
 ## MVP Markdown Scope
 

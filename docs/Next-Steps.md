@@ -15,22 +15,25 @@ Complete:
 - App icon and bundle metadata.
 - Editing/update-mode spike and recommendation.
 - Native WebView editing spike and recommendation.
+- Production live-preview editing branch implementation.
 - Focused accessibility spot check.
 
 ## Future Candidates
 
 These are not active backlog items for the completed reader-MVP checklist.
 
-### Production Editing / Update Mode
+### Live Preview Editing Hardening
 
-Use the Spike 2 and Candidate A recommendations:
+The `feature/live-preview-editing` branch implements the first production live-preview editor pass.
 
-- prototype a WebView-backed live-preview editor first;
-- keep Markdown serialization in an app-owned Swift line/block model;
-- use the Candidate A browser model in `spikes/spike3-candidate-a-webview-editor` as the starting point;
-- use the native `WKWebView` proof in `spikes/spike4-native-webview-editor` as implementation evidence;
-- next concrete step is a production integration plan for editing inside `apps/macos/Markdown`;
-- do not ship editing until the production gates in `spikes/spike2-editing-update-mode/RESULTS.md` are proven.
+Remaining hardening candidates:
+
+- improve inline editing caret preservation when a focused line reveals raw inline Markdown;
+- add undo/redo validation;
+- add paste normalization tests;
+- add IME/input-method validation;
+- add large-file editing profile and screenshot coverage;
+- decide how to handle unsaved local edits when the same file changes externally.
 
 ### Broader Accessibility Pass
 
