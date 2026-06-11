@@ -15,7 +15,7 @@ Complete:
 - App icon and bundle metadata.
 - Editing/update-mode spike and recommendation.
 - Native WebView editing spike and recommendation.
-- Production live-preview editing branch implementation.
+- Production live-preview editing implementation.
 - Focused accessibility spot check.
 
 ## Future Candidates
@@ -24,12 +24,11 @@ These are not active backlog items for the completed reader-MVP checklist.
 
 ### Live Preview Editing Hardening
 
-The `feature/live-preview-editing` branch implements the first production live-preview editor pass.
+The app implements the first production live-preview editor pass.
 
 Remaining hardening candidates:
 
 - improve inline editing caret preservation when a focused line reveals raw inline Markdown;
-- add undo/redo validation;
 - add paste normalization tests;
 - add IME/input-method validation;
 - add large-file editing profile and screenshot coverage;

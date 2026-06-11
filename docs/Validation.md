@@ -124,9 +124,9 @@ Validated screenshots:
 - `artifacts/screenshots/markdown-polish-01-default.png` - current default three-pane layout.
 - `artifacts/screenshots/markdown-polish-02-small.png` - current small-window layout.
 - `artifacts/screenshots/markdown-polish-03-workspace-search.png` - workspace search UI with cross-file results.
-- `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing branch with inline Markdown rendered in read mode and block syntax hidden.
-- `artifacts/screenshots/markdown-editing-branch-code-preview.png` - live-preview editing branch code-block view with fences and syntax gutter hidden.
-- `artifacts/screenshots/markdown-editing-branch-restored-preview-spacing.png` - live-preview editing branch after restoring preview-like spacing by hiding source-only blank lines in read mode.
+- `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing with inline Markdown rendered in read mode and block syntax hidden.
+- `artifacts/screenshots/markdown-editing-branch-code-preview.png` - live-preview editing code-block view with fences and syntax gutter hidden.
+- `artifacts/screenshots/markdown-editing-branch-restored-preview-spacing.png` - live-preview editing after restoring preview-like spacing by hiding source-only blank lines in read mode.
 
 Assessment:
 
@@ -166,13 +166,12 @@ Here is a list with a bunch of bullet points:
 * Two
 ```
 
-- Opened a temporary Markdown file containing `Hello`.
-- Replaced it with `Steps:`, then typed `1. One`, `Return`, `Two`, `Return`, `Three`.
+- Opened a temporary Markdown file containing `1. One`.
+- Focused the first ordered-list item, then typed `Return`, `Two`, `Return`, `Three`.
 - Saved with `Cmd+S`.
 - Verified the file on disk was exactly:
 
 ```text
-Steps:
 1. One
 2. Two
 3. Three
@@ -216,7 +215,7 @@ Editing/update-mode spike:
 - Added `spikes/spike2-editing-update-mode` Swift package.
 - Added a tested Markdown line-model prototype for preserving presentation markers during ordinary visible-text edits.
 - Recommendation: prototype production editing with a WebView-backed live-preview editor first, while keeping Markdown serialization in an app-owned Swift line/block model.
-- Production editing remains deferred until broader round-trip, input, undo/redo, shortcut, large-file, and file-conflict gates are proven.
+- Production editing has since shipped its first implementation; remaining hardening now lives in `docs/Next-Steps.md`.
 
 Candidate A WebView editor spike:
 
@@ -233,7 +232,7 @@ Native Candidate A WebView editor spike:
 - Added `--smoke` mode that loads WebKit, edits a heading while preserving `#`, unlocks a list item, changes it to a quote, verifies serialized Markdown and rendered block type from Swift, and terminates.
 - Refined raw-marker editing after manual UX feedback: Left Arrow now preselects the Markdown marker, typed marker replacement can apply quickly without cursor repositioning, unlocked lines commit and re-render on Return/blur/live-edit debounce, and smoke coverage verifies list-to-quote conversion renders as a quote rather than remaining raw.
 - Found that local ES module imports from the SwiftPM resource bundle did not initialize reliably in native smoke; the spike uses a self-contained classic script for the native WebView resource.
-- Recommendation: production editing can proceed to integration design, but only with Swift-owned canonical Markdown state and the remaining editing gates proven.
+- Recommendation was accepted: production editing proceeded with app-owned canonical Markdown state and WebView interaction state.
 
 Accessibility spot check:
 

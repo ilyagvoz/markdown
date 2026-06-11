@@ -95,11 +95,11 @@ Consequences:
 
 ## ADR 007: Live Preview Editing Surface
 
-Status: accepted for branch implementation.
+Status: accepted.
 
 Decision: Use a WebView-backed live-preview editor for production editing, while keeping Markdown source serialization app-owned and saved back to local files with `Cmd+S`.
 
-Context: Spike 2 proved a Markdown line model can preserve presentation markers during ordinary edits. Spike 3 proved the Candidate A browser interaction model. Spike 4 proved the same model inside a native AppKit + `WKWebView` host, including marker preselection and automated smoke validation. The `feature/live-preview-editing` branch integrates that direction into the macOS app.
+Context: Spike 2 proved a Markdown line model can preserve presentation markers during ordinary edits. Spike 3 proved the Candidate A browser interaction model. Spike 4 proved the same model inside a native AppKit + `WKWebView` host, including marker preselection and automated smoke validation. The macOS app integrates that direction in its production editing surface.
 
 Consequences:
 

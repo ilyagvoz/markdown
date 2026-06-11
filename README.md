@@ -57,7 +57,7 @@ The release app bundle is generated at `artifacts/Markdown.app`. After install, 
 
 Latest verified gates:
 
-- `./scripts/test-macos.sh` - 26 tests passing.
+- `./scripts/test-macos.sh` - 27 tests passing.
 - `./scripts/build-macos-app.sh` - builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` - installs `/Applications/Markdown.app`.
 - `./scripts/smoke-macos-ui.sh` - drives installed-app file/folder, current/workspace search, outline, shortcut, live editing/save, watcher, and crash-report checks.
@@ -66,6 +66,7 @@ Latest verified gates:
   - `artifacts/screenshots/markdown-next-06-final-fixtures.png` - final three-pane fixture flow.
   - `artifacts/screenshots/markdown-next-07-shortcuts-help.png` - keyboard shortcuts help.
   - `artifacts/screenshots/markdown-pane-persistence-invisible-dividers.png` - pane persistence build with invisible resize hit targets.
-  - `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing branch.
+  - `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing with block syntax hidden in read mode.
+  - `artifacts/screenshots/markdown-editing-branch-restored-preview-spacing.png` - live-preview editing with preview-like spacing restored.
 
 The first rendering spike recommends a WebView-backed preview for MVP, fed by a Markdown parser/HTML renderer behind an adapter. See [`spikes/spike1-rendering-engine/RESULTS.md`](spikes/spike1-rendering-engine/RESULTS.md).
