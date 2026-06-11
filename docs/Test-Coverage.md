@@ -48,7 +48,7 @@ Run for performance-sensitive changes:
 | Resource readout | Manual/profile currently | Profile gate covers idle CPU/RSS; formatting/throttling should get unit tests when extracted. |
 | Editing/update-mode spike | Spike unit tests | `swift test --package-path spikes/spike2-editing-update-mode` covers line-model round-trip and marker-preserving edits. |
 | Candidate A WebView editor spike | Spike unit tests | `node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs` covers browser-model round-trip, marker-preserving edits, unlock, type changes, and shortcut classification. |
-| Native Candidate A WebView editor spike | Spike unit tests and native smoke | `spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh` covers Swift bridge parsing plus native `WKWebView` load/edit/unlock/serialize behavior. |
+| Native Candidate A WebView editor spike | Spike unit tests and native smoke | `spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh` covers Swift bridge parsing plus native `WKWebView` load/edit/unlock/commit/re-render/serialize behavior. |
 | Focused accessibility spot check | Manual/AX smoke | Confirms standard accessibility window, keyboard-only sidebar path, and explicit labels for icon-only controls. Broader VoiceOver audit remains future distribution work. |
 | Crash report regression | UI smoke | Fails if a new `Markdown-*.ips` appears during the run. |
 

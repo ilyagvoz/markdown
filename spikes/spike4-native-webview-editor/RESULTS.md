@@ -10,6 +10,7 @@ The spike proves a macOS `WKWebView` can host the live-preview editor interactio
 
 - ordinary visible-text edits preserve Markdown presentation markers;
 - unlocking a line exposes raw Markdown source for intentional type changes;
+- pressing Return or leaving an unlocked line commits the raw source back into the newly parsed rendered type;
 - JavaScript editor state can be serialized and sent to Swift through a small WebKit bridge;
 - a native smoke mode can load the WebView, mutate the document, verify serialization, and terminate automatically.
 
@@ -40,6 +41,7 @@ SMOKE_OK native WebView editor preserved style until explicit unlock
 - Local ES module imports from the SwiftPM resource bundle did not initialize reliably in smoke mode. The native spike uses a self-contained classic script instead.
 - The current JavaScript model remains useful for interaction behavior, but production should keep canonical Markdown state in Swift and treat DOM state as editable presentation state.
 - The native smoke test is valuable because it catches WebKit resource-loading failures that pure unit tests cannot see.
+- Raw-marker editing needs an explicit commit moment. A user-observed issue showed that changing `- Item` to `> Item` updated serialized Markdown but stayed visually raw. The spike now commits unlocked source on Return or blur and smoke-tests list-to-quote re-rendering.
 
 ## Recommendation
 
@@ -51,4 +53,3 @@ Proceed toward production editing with this shape:
 4. Add native smoke coverage before merging editing into the production app.
 
 Do not ship editing yet. Production gates still need to prove IME/input correctness, undo/redo, selection, paste behavior, save/writeback safety, file-change conflict behavior, accessibility, and large-file performance.
-

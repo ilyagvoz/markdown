@@ -43,7 +43,7 @@ let value = 1
 
       content.addEventListener("input", () => {
         if (block.unlocked) {
-          blocks = applyUnlockedSource(blocks, block.id, content.textContent);
+          blocks = updateUnlockedDraft(blocks, block.id, content.textContent);
         } else {
           blocks = editVisibleText(blocks, block.id, content.textContent);
         }
@@ -65,6 +65,14 @@ let value = 1
           return;
         }
 
+        if (block.unlocked && normalizedKey(event.key) === "Enter") {
+          event.preventDefault();
+          blocks = commitUnlockedSource(blocks, block.id);
+          render(block.id);
+          post("documentChanged");
+          return;
+        }
+
         const caretOffset = currentCaretOffset();
         if (!block.unlocked && shouldUnlockFromKey(event, caretOffset)) {
           blocks = unlockBlock(blocks, block.id);
@@ -73,6 +81,14 @@ let value = 1
           render(block.id);
           post("blockUnlocked", { blockID: block.id });
         }
+      });
+
+      content.addEventListener("blur", () => {
+        const current = findBlock(block.id);
+        if (!current?.unlocked) return;
+        blocks = commitUnlockedSource(blocks, block.id);
+        render();
+        post("documentChanged");
       });
 
       row.append(marker, content);
@@ -106,7 +122,7 @@ let value = 1
       case "documentChanged":
         return "Document state synced to Swift.";
       case "blockUnlocked":
-        return `Unlocked ${message.blockID}.`;
+        return "Raw marker unlocked. Press Return or leave the line to apply.";
       case "saveRequested":
         return "Save routed to Swift.";
       case "shortcut":
@@ -169,10 +185,21 @@ let value = 1
       return serializeBlocks(blocks);
     },
     rawLine(id, source) {
-      blocks = applyUnlockedSource(blocks, id, source);
+      blocks = updateUnlockedDraft(blocks, id, source);
+      blocks = commitUnlockedSource(blocks, id);
       render(id);
       post("documentChanged");
       return serializeBlocks(blocks);
+    },
+    blockType(id) {
+      return findBlock(id)?.type ?? "";
+    },
+    marker(id) {
+      const block = findBlock(id);
+      return block ? markerText(block) : "";
+    },
+    isUnlocked(id) {
+      return Boolean(findBlock(id)?.unlocked);
     },
     focusLine(id) {
       const target = editor.querySelector(`[data-block-id="${id}"] .editor-content`);
@@ -233,6 +260,30 @@ let value = 1
         id: block.id,
       };
     });
+  }
+
+  function updateUnlockedDraft(sourceBlocks, id, source) {
+    return sourceBlocks.map((block) => {
+      if (block.id !== id) return block;
+      return {
+        ...block,
+        source,
+        visibleText: source,
+        prefix: "",
+        suffix: "",
+        unlocked: true,
+      };
+    });
+  }
+
+  function commitUnlockedSource(sourceBlocks, id) {
+    const block = sourceBlocks.find((candidate) => candidate.id === id);
+    if (!block) return sourceBlocks;
+    return applyUnlockedSource(sourceBlocks, id, block.visibleText);
+  }
+
+  function findBlock(id) {
+    return blocks.find((block) => block.id === id);
   }
 
   function classifyShortcut(eventLike) {
