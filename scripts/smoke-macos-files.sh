@@ -22,6 +22,8 @@ fi
 run_applescript "edit newly created blank markdown file with autosave" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "blank line 1"
+    set targetSize to size of targetArea
+    if item 2 of targetSize < 300 then error "Blank document text area was not tall enough to click comfortably."
     click targetArea
   end tell
   delay 0.2

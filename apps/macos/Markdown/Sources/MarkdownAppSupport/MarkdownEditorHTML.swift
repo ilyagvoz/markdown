@@ -43,6 +43,11 @@ public enum MarkdownEditorHTML {
             main {
               max-width: 780px;
               margin: 0 auto;
+              min-height: calc(100vh - 124px);
+            }
+
+            .editor {
+              min-height: calc(100vh - 124px);
             }
 
             .editor-block {
@@ -148,9 +153,10 @@ public enum MarkdownEditorHTML {
 
             .editor-block-empty-document {
               height: auto;
-              min-height: 1.35em;
+              min-height: calc(100vh - 124px);
               margin-bottom: 1.05em;
               overflow: visible;
+              cursor: text;
             }
 
             .editor-block-blank:focus-within .editor-content {
@@ -158,7 +164,12 @@ public enum MarkdownEditorHTML {
             }
 
             .editor-block-empty-document .editor-content {
-              min-height: 1.35em;
+              min-height: calc(100vh - 124px);
+            }
+
+            .editor-block-empty-document .editor-content:focus {
+              background: linear-gradient(var(--focus), var(--focus)) left top / 100% 1.72em no-repeat;
+              box-shadow: inset 0 0 0 2px transparent;
             }
 
             .editor-block-heading {
@@ -355,6 +366,7 @@ public enum MarkdownEditorHTML {
   render();
   post("ready");
   installFormattingMenu();
+  installBlankDocumentClickTarget();
 
   window.markdownClearSearchHighlights = function() {
     document.querySelectorAll(".md-search-hit").forEach(function(node) {
@@ -415,6 +427,18 @@ public enum MarkdownEditorHTML {
       if (!button) return;
       event.preventDefault();
       applyFormatting(button.dataset.format);
+    });
+  }
+
+  function installBlankDocumentClickTarget() {
+    document.addEventListener("click", (event) => {
+      const emptyRow = editor.querySelector(".editor-block-empty-document");
+      if (!emptyRow) return;
+      if (formattingMenu?.contains(event.target)) return;
+      const content = emptyRow.querySelector(".editor-content");
+      if (!content) return;
+      content.focus();
+      moveCaretToEnd(content);
     });
   }
 
