@@ -26,6 +26,7 @@ Complete capabilities:
 - Left and right pane toggles with `Cmd+Left Arrow` and `Cmd+Right Arrow`.
 - Pane size and visibility persistence for the left sidebar and right outline.
 - App-level command-arrow routing so `Cmd+Up` and `Cmd+Down` continue to change documents when focus is in preview/search/outline.
+- Sidebar row keyboard navigation for folders and files with plain arrows, `Return`, and `Space`.
 - `Cmd+R` reveal in Finder.
 - Help menu keyboard shortcut reference.
 - Lightweight CPU/RSS readout in the status area.
@@ -46,7 +47,7 @@ Durable decisions live in `docs/Architecture-Decisions.md`.
 
 Current verified gates:
 
-- `./scripts/test-macos.sh` passes with 18 tests.
+- `./scripts/test-macos.sh` passes with 20 tests.
 - `./scripts/build-macos-app.sh` builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` installs `/Applications/Markdown.app`.
 - `./scripts/smoke-macos-ui.sh` passes against the installed app.
@@ -61,6 +62,7 @@ Current UI smoke coverage includes:
 - workspace-wide search
 - outline jumps
 - pane visibility toggles
+- plain-key sidebar navigation
 - document navigation shortcuts
 - reveal in Finder
 - watched-folder add/delete
@@ -89,7 +91,6 @@ Visual polish is product work, not garnish. The app should remain light, quiet, 
 ## Deferred But Important
 
 - Production editing/update mode.
-- Fuller first-responder sidebar keyboard navigation for plain arrows, folder selection, `Return`, and `Space`.
 - Selected-file deletion/rename UX.
 - Accessibility pass, especially VoiceOver labels and focus behavior.
 - App icon and final bundle identity.

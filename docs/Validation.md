@@ -13,8 +13,8 @@ Run:
 Latest result:
 
 - Passed.
-- 18 unit tests.
-- Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, WebView JavaScript string/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
+- 20 unit tests.
+- Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, WebView JavaScript string/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
 
 Run:
 
@@ -48,7 +48,7 @@ Latest result:
 
 - Passed.
 - Launches the installed app against a single file, a folder, and a temporary watched folder.
-- Drives `Cmd+O`, `Cmd+F`, `Cmd+/`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, outline clicks, current-document search-result clicks, workspace search-result clicks, and folder add/delete events.
+- Drives `Cmd+O`, `Cmd+F`, `Cmd+/`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, and folder add/delete events.
 - Fails if the app exits unexpectedly or a new `Markdown-*.ips` report appears.
 
 See `docs/Test-Coverage.md` for the user-focused coverage matrix.
@@ -95,7 +95,6 @@ Assessment:
 Known UX follow-ups:
 
 - Add the editing/update-mode spike.
-- Add fuller first-responder keyboard navigation for folder rows and plain arrows.
 - Add a first-run empty-state screenshot pass once the app has an icon and final window sizing.
 
 ## Feature Smoke
@@ -115,6 +114,7 @@ Keyboard/search:
 - Search results showed heading context and snippets.
 - Workspace search showed file paths, heading context, and snippets across an opened folder.
 - Clicking a workspace search result selected the target file and ran the existing preview find action.
+- Plain sidebar keys moved the highlighted row, toggled folder expansion, and activated a highlighted Markdown file while the app stayed alive.
 - `Cmd+Right Arrow` hid the right outline panel while search focus was active.
 - `Cmd+/` opened the keyboard shortcut reference sheet.
 

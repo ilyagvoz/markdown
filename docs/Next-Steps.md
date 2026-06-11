@@ -12,29 +12,7 @@ Recommended next stage: make Markdown useful for daily reading across real local
 
 ## Stage Candidates
 
-### 1. Sidebar Keyboard Navigation
-
-Goal: make the folder tree feel native and reliable without needing the mouse.
-
-Scope:
-
-- Introduce a sidebar selection model separate from `selectedFileURL`.
-- Allow folders and files to be highlighted.
-- Plain `Up` and `Down` move through visible tree rows when the sidebar has focus.
-- `Left` collapses an expanded folder or moves to the parent.
-- `Right` expands a collapsed folder or moves to the first child.
-- `Return` opens/renders the highlighted Markdown file.
-- `Space` toggles folder expansion.
-- Keep `Cmd+Up` and `Cmd+Down` as global previous/next Markdown file commands.
-- Keep mouse selection and keyboard selection in sync.
-
-Validation:
-
-- Unit-test visible-tree flattening, parent/child movement, expansion, and file activation.
-- UI smoke: exercise focused sidebar navigation and verify app survival/crash reports.
-- Manual VoiceOver spot check once labels are in place.
-
-### 2. File Deletion And Rename UX
+### 1. File Deletion And Rename UX
 
 Goal: handle real-world file churn gracefully.
 
@@ -50,7 +28,7 @@ Validation:
 - Unit-test workspace rebuild behavior around selected-file preservation and removal.
 - UI smoke: delete the selected file in an opened folder and verify no crash report appears.
 
-### 3. Visual Polish Pass
+### 2. Visual Polish Pass
 
 Goal: keep the app clean, readable, and pleasant for everyday use before adding larger features.
 
@@ -60,6 +38,7 @@ Scope:
 - Review sidebar density, typography, header treatment, empty states, search UI, outline panel, status readout, and pane resizing.
 - Confirm light-only styling remains consistent across app chrome and WebView preview.
 - Keep resize dividers invisible; avoid heavy pane boundary lines.
+- Include a focused accessibility/VoiceOver spot check for sidebar rows and main navigation.
 - Iterate until the app feels calm, native, and joyful to launch.
 
 Validation:
@@ -67,7 +46,7 @@ Validation:
 - Save screenshots under `artifacts/screenshots`.
 - Record assessment in `docs/Validation.md`.
 
-### 4. App Identity
+### 3. App Identity
 
 Goal: make the installed app feel real.
 
@@ -83,7 +62,7 @@ Validation:
 - Build and install the app.
 - Confirm the app icon appears in Finder, Dock, App Switcher, and Launchpad/Spotlight where available.
 
-### 5. Editing / Update Mode Spike
+### 4. Editing / Update Mode Spike
 
 Goal: decide whether live-preview editing is feasible without corrupting Markdown or degrading the reading experience.
 
@@ -119,13 +98,12 @@ Validation:
 
 ## Suggested Order
 
-1. Sidebar keyboard navigation.
-2. File deletion/rename UX.
-3. Visual polish pass.
-4. App identity.
-5. Editing/update-mode spike.
+1. File deletion/rename UX.
+2. Visual polish pass.
+3. App identity.
+4. Editing/update-mode spike.
 
-Reasoning: workspace-wide search is complete. Navigation and file churn are the next reader-usefulness gaps while keeping the stable preview-first foundation intact. Editing is valuable but risky enough to keep behind a spike until the reader experience is stronger.
+Reasoning: workspace-wide search and sidebar keyboard navigation are complete. File churn is the next reader-usefulness gap while keeping the stable preview-first foundation intact. Editing is valuable but risky enough to keep behind a spike until the reader experience is stronger.
 
 ## Gates For Any Next Feature
 

@@ -109,6 +109,19 @@ run_applescript "open panel shortcut" '
 
 echo "UI smoke: folder open, navigation, search, outline"
 launch_app "$FIXTURE_DIR"
+run_applescript "sidebar plain-key navigation" '
+  key code 126
+  delay 0.2
+  key code 49
+  delay 0.2
+  key code 49
+  delay 0.2
+  key code 125
+  delay 0.2
+  key code 125
+  delay 0.2
+  key code 36
+'
 run_applescript "folder navigation shortcuts" '
   key code 125 using command down
   delay 0.2

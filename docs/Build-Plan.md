@@ -109,7 +109,6 @@ Complete:
 
 Remaining:
 
-- Fuller first-responder keyboard navigation for folder rows and plain arrows.
 - File deletion/rename UX.
 - App icon.
 - Accessibility pass.

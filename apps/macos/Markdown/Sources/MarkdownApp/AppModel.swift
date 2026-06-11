@@ -15,6 +15,7 @@ final class AppModel: ObservableObject {
 
     @Published private(set) var workspace: Workspace?
     @Published private(set) var selectedFileURL: URL?
+    @Published private(set) var sidebarSelectionID: String?
     @Published private(set) var previewState: PreviewState = .empty
     @Published private(set) var statusText = "Open a Markdown file or folder"
     @Published private(set) var resourceText = ""
@@ -71,6 +72,7 @@ final class AppModel: ObservableObject {
     }
 
     private let treeBuilder = WorkspaceTreeBuilder()
+    private let treeNavigator = WorkspaceTreeNavigator()
     private let renderer = MarkdownHTMLRenderer()
     private let analyzer = MarkdownDocumentAnalyzer()
     private let settings = AppSettings()
@@ -164,6 +166,7 @@ final class AppModel: ObservableObject {
                 await selectFile(first.url)
             } else {
                 selectedFileURL = nil
+                sidebarSelectionID = workspace.root.id
                 previewState = .empty
                 selectedFileWatcher.stop()
                 documentOutline = []
@@ -176,6 +179,7 @@ final class AppModel: ObservableObject {
         } catch {
             workspace = nil
             selectedFileURL = nil
+            sidebarSelectionID = nil
             previewState = .failure(error.localizedDescription)
             selectedFileWatcher.stop()
             directoryWatcher.stop()
@@ -189,6 +193,7 @@ final class AppModel: ObservableObject {
 
     func selectFile(_ url: URL) async {
         selectedFileURL = url
+        sidebarSelectionID = url.standardizedFileURL.path
         previewState = .loading(url.lastPathComponent)
         selectedFileWatcher.watch(url: url) { [weak self] in
             Task {
@@ -211,6 +216,87 @@ final class AppModel: ObservableObject {
 
         let nextIndex = min(max(currentIndex + delta, 0), files.count - 1)
         await selectFile(files[nextIndex].url)
+    }
+
+    func visibleSidebarRows() -> [VisibleWorkspaceRow] {
+        guard let workspace else { return [] }
+        return treeNavigator.visibleRows(root: workspace.root, expandedNodeIDs: expandedNodeIDs)
+    }
+
+    func selectSidebarNode(_ node: WorkspaceNode) {
+        sidebarSelectionID = node.id
+    }
+
+    func isSidebarNodeSelected(_ node: WorkspaceNode) -> Bool {
+        sidebarSelectionID == node.id
+    }
+
+    func moveSidebarSelection(delta: Int) {
+        let rows = visibleSidebarRows()
+        guard !rows.isEmpty else { return }
+        let currentID = sidebarSelectionID ?? selectedFileURL?.standardizedFileURL.path
+        let currentIndex = currentID.flatMap { id in rows.firstIndex { $0.id == id } } ?? 0
+        let nextIndex = min(max(currentIndex + delta, 0), rows.count - 1)
+        sidebarSelectionID = rows[nextIndex].id
+    }
+
+    func collapseOrMoveSidebarSelection() {
+        guard let workspace else { return }
+        ensureSidebarSelection()
+        guard let selectedID = sidebarSelectionID,
+              let row = visibleSidebarRows().first(where: { $0.id == selectedID })
+        else { return }
+
+        if row.kind == .folder, expandedNodeIDs.contains(row.id) {
+            expandedNodeIDs.remove(row.id)
+        } else if let parentID = row.parentID {
+            sidebarSelectionID = parentID
+        } else if let selectedFileURL {
+            sidebarSelectionID = selectedFileURL.standardizedFileURL.path
+        } else {
+            sidebarSelectionID = workspace.root.id
+        }
+    }
+
+    func expandOrEnterSidebarSelection() {
+        guard let workspace else { return }
+        ensureSidebarSelection()
+        guard let selectedID = sidebarSelectionID,
+              let node = treeNavigator.node(id: selectedID, in: workspace.root),
+              node.kind == .folder
+        else { return }
+
+        if !expandedNodeIDs.contains(node.id) {
+            expandedNodeIDs.insert(node.id)
+        } else if let firstChild = node.children.first {
+            sidebarSelectionID = firstChild.id
+        }
+    }
+
+    func toggleSidebarFolderExpansion() {
+        guard let workspace else { return }
+        ensureSidebarSelection()
+        guard let selectedID = sidebarSelectionID,
+              let node = treeNavigator.node(id: selectedID, in: workspace.root),
+              node.kind == .folder
+        else { return }
+
+        if expandedNodeIDs.contains(node.id) {
+            expandedNodeIDs.remove(node.id)
+        } else {
+            expandedNodeIDs.insert(node.id)
+        }
+    }
+
+    func activateSidebarSelection() async {
+        guard let workspace else { return }
+        ensureSidebarSelection()
+        guard let selectedID = sidebarSelectionID,
+              let node = treeNavigator.node(id: selectedID, in: workspace.root),
+              node.kind == .markdownFile
+        else { return }
+
+        await selectFile(node.url)
     }
 
     func toggleSearch() {
@@ -288,12 +374,14 @@ final class AppModel: ObservableObject {
 
             if let selected, containsFile(selected, in: refreshed.root) {
                 selectedFileURL = selected
+                sidebarSelectionID = selected.standardizedFileURL.path
                 persistState()
                 return
             }
 
             selectedFileWatcher.stop()
             selectedFileURL = nil
+            sidebarSelectionID = refreshed.root.id
             documentOutline = []
             currentMarkdown = ""
             searchResults = []
@@ -309,6 +397,7 @@ final class AppModel: ObservableObject {
         } catch {
             workspace = nil
             selectedFileURL = nil
+            sidebarSelectionID = nil
             previewState = .failure(error.localizedDescription)
             selectedFileWatcher.stop()
             directoryWatcher.stop()
@@ -389,6 +478,15 @@ final class AppModel: ObservableObject {
             return []
         }
         return node.children.flatMap { visibleMarkdownFiles(in: $0, expandedNodeIDs: expandedNodeIDs) }
+    }
+
+    private func ensureSidebarSelection() {
+        guard sidebarSelectionID == nil else { return }
+        if let selectedFileURL {
+            sidebarSelectionID = selectedFileURL.standardizedFileURL.path
+        } else if let workspace {
+            sidebarSelectionID = workspace.root.id
+        }
     }
 
     private func allMarkdownFiles(in node: WorkspaceNode) -> [WorkspaceNode] {

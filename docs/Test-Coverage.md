@@ -31,6 +31,8 @@ Run for performance-sensitive changes:
 | Render common Markdown | Unit tests | Verifies headings, emphasis, code, lists, tables, light CSS, and wrapped HTML. |
 | Build folder tree | Unit tests | Covers Markdown filtering, hidden files, single-file workspaces, unsupported files, and symlink skipping. |
 | Sidebar file selection via keyboard | UI smoke | Uses `Cmd+Down` and `Cmd+Up` across visible Markdown files. |
+| Sidebar visible row model | Unit tests | Verifies visible ordering, depth, parent IDs, expansion behavior, and node lookup. |
+| Sidebar plain-key navigation | Unit tests and UI smoke | Unit tests cover the visible row model; UI smoke drives plain arrows, `Space`, and `Return` in the sidebar. |
 | Search current document | Unit tests and UI smoke | Unit tests verify matching/context; UI smoke opens `Cmd+F`, types queries, and clicks results. |
 | Search workspace | Unit tests and UI smoke | Unit tests verify file metadata, snippets, limits, and occurrence numbers; UI smoke searches an opened folder and clicks a cross-file result. |
 | Jump from search result into preview | UI smoke | Exercises WebView JavaScript bridge and crash-report checks. |

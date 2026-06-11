@@ -51,6 +51,79 @@ public struct WorkspaceScanIssue: Equatable, Sendable {
     }
 }
 
+public struct VisibleWorkspaceRow: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let name: String
+    public let url: URL
+    public let kind: WorkspaceNodeKind
+    public let depth: Int
+    public let parentID: String?
+    public let hasChildren: Bool
+
+    public init(
+        id: String,
+        name: String,
+        url: URL,
+        kind: WorkspaceNodeKind,
+        depth: Int,
+        parentID: String?,
+        hasChildren: Bool
+    ) {
+        self.id = id
+        self.name = name
+        self.url = url
+        self.kind = kind
+        self.depth = depth
+        self.parentID = parentID
+        self.hasChildren = hasChildren
+    }
+}
+
+public struct WorkspaceTreeNavigator: Sendable {
+    public init() {}
+
+    public func visibleRows(root: WorkspaceNode, expandedNodeIDs: Set<String>) -> [VisibleWorkspaceRow] {
+        flatten(node: root, depth: 0, parentID: nil, expandedNodeIDs: expandedNodeIDs)
+    }
+
+    public func node(id: String, in root: WorkspaceNode) -> WorkspaceNode? {
+        if root.id == id {
+            return root
+        }
+        for child in root.children {
+            if let found = node(id: id, in: child) {
+                return found
+            }
+        }
+        return nil
+    }
+
+    private func flatten(
+        node: WorkspaceNode,
+        depth: Int,
+        parentID: String?,
+        expandedNodeIDs: Set<String>
+    ) -> [VisibleWorkspaceRow] {
+        let row = VisibleWorkspaceRow(
+            id: node.id,
+            name: node.name,
+            url: node.url,
+            kind: node.kind,
+            depth: depth,
+            parentID: parentID,
+            hasChildren: !node.children.isEmpty
+        )
+
+        guard node.kind == .folder, expandedNodeIDs.contains(node.id) else {
+            return [row]
+        }
+
+        return [row] + node.children.flatMap {
+            flatten(node: $0, depth: depth + 1, parentID: node.id, expandedNodeIDs: expandedNodeIDs)
+        }
+    }
+}
+
 public enum WorkspaceBuildError: LocalizedError, Equatable {
     case unsupportedFile(URL)
     case missingResource(URL)

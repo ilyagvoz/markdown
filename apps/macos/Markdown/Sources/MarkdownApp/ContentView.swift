@@ -77,6 +77,7 @@ struct PaneDivider: View {
 
 struct SidebarView: View {
     @EnvironmentObject private var model: AppModel
+    @FocusState private var isSidebarFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -95,17 +96,36 @@ struct SidebarView: View {
                 .background(AppColors.sidebarBackground)
                 .focusable()
                 .focusEffectDisabled()
+                .focused($isSidebarFocused)
+                .onTapGesture {
+                    isSidebarFocused = true
+                }
                 .onMoveCommand { direction in
                     Task {
                         switch direction {
                         case .up:
-                            await model.moveSelection(delta: -1, expandedNodeIDs: model.expandedNodeIDs)
+                            model.moveSidebarSelection(delta: -1)
                         case .down:
-                            await model.moveSelection(delta: 1, expandedNodeIDs: model.expandedNodeIDs)
+                            model.moveSidebarSelection(delta: 1)
+                        case .left:
+                            model.collapseOrMoveSidebarSelection()
+                        case .right:
+                            model.expandOrEnterSidebarSelection()
                         default:
                             break
                         }
                     }
+                }
+                .onKeyPress(.return) {
+                    Task { await model.activateSidebarSelection() }
+                    return .handled
+                }
+                .onKeyPress(.space) {
+                    model.toggleSidebarFolderExpansion()
+                    return .handled
+                }
+                .onAppear {
+                    isSidebarFocused = true
                 }
             } else {
                 EmptySidebarView()
@@ -254,24 +274,30 @@ struct TreeNodeView: View {
                     TreeNodeView(node: child, depth: depth + 1)
                 }
             } label: {
-                rowLabel(icon: "folder", title: node.name, isSelected: false)
+                rowLabel(icon: "folder", title: node.name, isSelected: model.isSidebarNodeSelected(node))
+                    .onTapGesture {
+                        model.selectSidebarNode(node)
+                    }
             }
             .disclosureGroupStyle(.automatic)
             .padding(.leading, CGFloat(depth) * 12)
+            .accessibilityLabel("\(node.name), \(expandedBinding.wrappedValue ? "expanded" : "collapsed") folder")
         } else {
             Button {
                 Task {
+                    model.selectSidebarNode(node)
                     await model.selectFile(node.url)
                 }
             } label: {
                 rowLabel(
                     icon: "doc.text",
                     title: node.name,
-                    isSelected: model.selectedFileURL?.standardizedFileURL.path == node.url.standardizedFileURL.path
+                    isSelected: model.isSidebarNodeSelected(node)
                 )
             }
             .buttonStyle(.plain)
             .padding(.leading, CGFloat(depth) * 12 + 20)
+            .accessibilityLabel("\(node.name), Markdown file")
         }
     }
 

@@ -67,6 +67,42 @@ final class WorkspaceTreeBuilderTests: XCTestCase {
         XCTAssertTrue(workspace.issues[0].message.contains("symbolic link"))
     }
 
+    func testVisibleRowsFollowExpansionStateWithDepthAndParents() throws {
+        try write("Root", to: tempDirectory.appendingPathComponent("README.md"))
+        let notes = tempDirectory.appendingPathComponent("Notes", isDirectory: true)
+        try FileManager.default.createDirectory(at: notes, withIntermediateDirectories: true)
+        try write("Nested", to: notes.appendingPathComponent("Nested.md"))
+
+        let workspace = try WorkspaceTreeBuilder().build(from: tempDirectory)
+        let navigator = WorkspaceTreeNavigator()
+        let collapsedRows = navigator.visibleRows(root: workspace.root, expandedNodeIDs: [])
+
+        XCTAssertEqual(collapsedRows.map(\.name), [tempDirectory.lastPathComponent])
+        XCTAssertEqual(collapsedRows[0].depth, 0)
+        XCTAssertNil(collapsedRows[0].parentID)
+
+        let notesID = workspace.root.children.first { $0.name == "Notes" }!.id
+        let expandedRows = navigator.visibleRows(root: workspace.root, expandedNodeIDs: [workspace.root.id, notesID])
+
+        XCTAssertEqual(expandedRows.map(\.name), [tempDirectory.lastPathComponent, "Notes", "Nested.md", "README.md"])
+        XCTAssertEqual(expandedRows.map(\.depth), [0, 1, 2, 1])
+        XCTAssertEqual(expandedRows.first { $0.name == "Nested.md" }?.parentID, notesID)
+        XCTAssertEqual(expandedRows.first { $0.name == "README.md" }?.parentID, workspace.root.id)
+    }
+
+    func testNavigatorFindsNodeByID() throws {
+        let notes = tempDirectory.appendingPathComponent("Notes", isDirectory: true)
+        try FileManager.default.createDirectory(at: notes, withIntermediateDirectories: true)
+        let nested = notes.appendingPathComponent("Nested.md")
+        try write("Nested", to: nested)
+
+        let workspace = try WorkspaceTreeBuilder().build(from: tempDirectory)
+        let found = WorkspaceTreeNavigator().node(id: nested.standardizedFileURL.path, in: workspace.root)
+
+        XCTAssertEqual(found?.name, "Nested.md")
+        XCTAssertEqual(found?.kind, .markdownFile)
+    }
+
     private func write(_ text: String, to url: URL) throws {
         try text.write(to: url, atomically: true, encoding: .utf8)
     }
