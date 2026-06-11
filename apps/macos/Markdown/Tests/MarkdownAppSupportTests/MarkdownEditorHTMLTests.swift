@@ -20,6 +20,18 @@ final class MarkdownEditorHTMLTests: XCTestCase {
         XCTAssertTrue(html.contains("restoreHistorySnapshot"))
         XCTAssertTrue(html.contains("function nextOrderedListMarker"))
         XCTAssertTrue(html.contains("Number(number) + 1"))
+        XCTAssertTrue(html.contains("function shouldExitEmptyContinuationBlock"))
+        XCTAssertTrue(html.contains("function shouldPromoteBlankTypedText"))
+        XCTAssertTrue(html.contains("editor-block-empty-document"))
+        XCTAssertTrue(html.contains("data-formatting-menu"))
+        XCTAssertTrue(html.contains("function applyFormatting"))
+        XCTAssertTrue(html.contains("function toggleInlineWrapper"))
+        XCTAssertTrue(html.contains("data-format=\"code\""))
+        XCTAssertTrue(html.contains("data-format=\"link\""))
+        XCTAssertTrue(html.contains("format-code"))
+        XCTAssertTrue(html.contains("format-link"))
+        XCTAssertTrue(html.contains("selectURLPlaceholder"))
+        XCTAssertTrue(html.contains("&lt;mark&gt;([\\s\\S]*?)&lt;\\/mark&gt;"))
         XCTAssertTrue(html.contains("saveRequested"))
     }
 

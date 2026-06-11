@@ -89,7 +89,12 @@ final class AppModel: ObservableObject {
     private var resourceTimer: Timer?
     private var resourceSampleTask: Task<Void, Never>?
     private var workspaceSearchTask: Task<Void, Never>?
+    private var autosaveTask: Task<Void, Never>?
     private var isApplyingRestoredState = false
+    private var lastSidebarClickID: String?
+    private var lastSidebarClickAt: Date?
+    private let sidebarRenameDelay: TimeInterval = 0.55
+    private let autosaveDelay: Duration = .milliseconds(1_500)
 
     func openLaunchArgumentIfPresent() async {
         restoredState = settings.load()
@@ -146,6 +151,7 @@ final class AppModel: ObservableObject {
     }
 
     func open(url: URL, preferredSelectedFile: URL? = nil) async {
+        flushAutosaveIfNeeded()
         statusText = "Opening \(url.lastPathComponent)..."
         previewState = .loading(url.lastPathComponent)
 
@@ -193,6 +199,7 @@ final class AppModel: ObservableObject {
     }
 
     func selectFile(_ url: URL) async {
+        flushAutosaveIfNeeded()
         selectedFileURL = url
         sidebarSelectionID = url.standardizedFileURL.path
         previewState = .loading(url.lastPathComponent)
@@ -226,6 +233,101 @@ final class AppModel: ObservableObject {
 
     func selectSidebarNode(_ node: WorkspaceNode) {
         sidebarSelectionID = node.id
+    }
+
+    func handleSidebarNodeClick(_ node: WorkspaceNode) {
+        let now = Date()
+        defer {
+            lastSidebarClickID = node.id
+            lastSidebarClickAt = now
+        }
+
+        guard node.kind == .markdownFile else {
+            selectSidebarNode(node)
+            return
+        }
+
+        if sidebarSelectionID == node.id,
+           lastSidebarClickID == node.id,
+           let lastSidebarClickAt,
+           now.timeIntervalSince(lastSidebarClickAt) >= sidebarRenameDelay {
+            beginRenaming(node)
+            return
+        }
+
+        Task {
+            selectSidebarNode(node)
+            await selectFile(node.url)
+        }
+    }
+
+    func beginRenaming(_ node: WorkspaceNode) {
+        guard node.kind == .markdownFile else { return }
+        statusText = "Renaming \(node.name)"
+        presentRenamePanel(for: node)
+    }
+
+    private func presentRenamePanel(for node: WorkspaceNode) {
+        let input = NSTextField(string: node.url.deletingPathExtension().lastPathComponent)
+        input.frame = NSRect(x: 0, y: 0, width: 280, height: 24)
+        input.lineBreakMode = .byTruncatingMiddle
+
+        let alert = NSAlert()
+        alert.messageText = "Rename \(node.name)"
+        alert.informativeText = "Enter a new Markdown file name."
+        alert.alertStyle = .informational
+        alert.accessoryView = input
+        alert.addButton(withTitle: "Rename")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = input
+
+        input.selectText(nil)
+        let response = alert.runModal()
+        guard response == .alertFirstButtonReturn else {
+            statusText = selectedFileURL.map { "\($0.lastPathComponent) selected" } ?? statusText
+            return
+        }
+
+        Task { @MainActor in
+            await rename(node, to: input.stringValue)
+        }
+    }
+
+    private func rename(_ node: WorkspaceNode, to proposedName: String) async {
+        let trimmed = proposedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return
+        }
+
+        flushAutosaveIfNeeded()
+
+        let sanitizedName = trimmed.replacingOccurrences(of: "/", with: "-")
+        let typedExtension = URL(fileURLWithPath: sanitizedName).pathExtension.lowercased()
+        let fileName = typedExtension == "md" || typedExtension == "markdown"
+            ? sanitizedName
+            : "\(sanitizedName).\(node.url.pathExtension.isEmpty ? "md" : node.url.pathExtension)"
+        let destination = node.url
+            .deletingLastPathComponent()
+            .appendingPathComponent(fileName)
+            .standardizedFileURL
+
+        if destination.path == node.url.standardizedFileURL.path {
+            return
+        }
+
+        guard !FileManager.default.fileExists(atPath: destination.path) else {
+            statusText = "\(destination.lastPathComponent) already exists"
+            return
+        }
+
+        do {
+            try FileManager.default.moveItem(at: node.url, to: destination)
+            await refreshWorkspaceFromDisk(preferredSelectedFile: destination)
+            await selectFile(destination)
+            statusText = "\(destination.lastPathComponent) renamed"
+        } catch {
+            statusText = "Could not rename \(node.name)"
+        }
     }
 
     func isSidebarNodeSelected(_ node: WorkspaceNode) -> Bool {
@@ -332,16 +434,41 @@ final class AppModel: ObservableObject {
         NSWorkspace.shared.activateFileViewerSelecting([selectedFileURL])
     }
 
-    func saveSelectedFile() {
-        guard let selectedFileURL else { return }
+    var canCreateMarkdownFile: Bool {
+        workspace?.root.kind == .folder
+    }
+
+    var canRenameSelectedFile: Bool {
+        selectedRenameNode() != nil
+    }
+
+    func beginRenamingSelectedFile() {
+        guard let node = selectedRenameNode() else { return }
+        beginRenaming(node)
+    }
+
+    func createMarkdownFileInFolderView() async {
+        guard let workspace,
+              workspace.root.kind == .folder
+        else { return }
+
+        let targetDirectory = targetDirectoryForNewMarkdownFile(in: workspace)
+        let newFileURL = uniqueMarkdownFileURL(in: targetDirectory)
+
         do {
-            try currentMarkdown.write(to: selectedFileURL, atomically: true, encoding: .utf8)
-            isDocumentDirty = false
-            statusText = "\(selectedFileURL.lastPathComponent) saved"
-            scheduleResourceSample()
+            try Data().write(to: newFileURL, options: .withoutOverwriting)
+            expandedNodeIDs.insert(targetDirectory.standardizedFileURL.path)
+            await refreshWorkspaceFromDisk()
+            await selectFile(newFileURL)
+            statusText = "\(newFileURL.lastPathComponent) created"
         } catch {
-            statusText = "Could not save \(selectedFileURL.lastPathComponent)"
+            statusText = "Could not create \(newFileURL.lastPathComponent)"
         }
+    }
+
+    func saveSelectedFile() {
+        autosaveTask?.cancel()
+        writeCurrentDocumentToDisk(statusVerb: "saved")
     }
 
     func editorDocumentChanged(_ markdown: String) {
@@ -353,6 +480,7 @@ final class AppModel: ObservableObject {
 
         guard let selectedFileURL else { return }
         statusText = "\(selectedFileURL.lastPathComponent) edited"
+        scheduleAutosave()
     }
 
     func jump(to item: DocumentOutlineItem) {
@@ -400,7 +528,7 @@ final class AppModel: ObservableObject {
         await refreshSelectedFile(reason: "updated on disk")
     }
 
-    func refreshWorkspaceFromDisk() async {
+    func refreshWorkspaceFromDisk(preferredSelectedFile: URL? = nil) async {
         guard let lastOpenedURL else { return }
         let selected = selectedFileURL
         let savedExpanded = expandedNodeIDs
@@ -412,6 +540,12 @@ final class AppModel: ObservableObject {
             statusText = status(for: refreshed)
             preserveExpandedNodes(savedExpanded, for: refreshed)
             watchDirectories(in: refreshed)
+
+            if let preferredSelectedFile,
+               containsFile(preferredSelectedFile, in: refreshed.root) {
+                await selectFile(preferredSelectedFile)
+                return
+            }
 
             if let selected,
                let previousRoot,
@@ -462,6 +596,7 @@ final class AppModel: ObservableObject {
     }
 
     private func renderFile(_ url: URL, statusReason: String?) async {
+        autosaveTask?.cancel()
         do {
             let markdown = try String(contentsOf: url, encoding: .utf8)
             let start = DispatchTime.now().uptimeNanoseconds
@@ -485,6 +620,34 @@ final class AppModel: ObservableObject {
             searchResults = []
             workspaceSearchResults = []
             statusText = "Could not render \(url.lastPathComponent)"
+        }
+    }
+
+    private func scheduleAutosave() {
+        autosaveTask?.cancel()
+        guard selectedFileURL != nil else { return }
+        autosaveTask = Task { @MainActor in
+            try? await Task.sleep(for: autosaveDelay)
+            guard !Task.isCancelled else { return }
+            writeCurrentDocumentToDisk(statusVerb: "autosaved")
+        }
+    }
+
+    private func flushAutosaveIfNeeded() {
+        autosaveTask?.cancel()
+        guard isDocumentDirty else { return }
+        writeCurrentDocumentToDisk(statusVerb: "autosaved")
+    }
+
+    private func writeCurrentDocumentToDisk(statusVerb: String) {
+        guard let selectedFileURL else { return }
+        do {
+            try currentMarkdown.write(to: selectedFileURL, atomically: true, encoding: .utf8)
+            isDocumentDirty = false
+            statusText = "\(selectedFileURL.lastPathComponent) \(statusVerb)"
+            scheduleResourceSample()
+        } catch {
+            statusText = "Could not save \(selectedFileURL.lastPathComponent)"
         }
     }
 
@@ -548,6 +711,47 @@ final class AppModel: ObservableObject {
             return [node]
         }
         return node.children.flatMap { allMarkdownFiles(in: $0) }
+    }
+
+    private func targetDirectoryForNewMarkdownFile(in workspace: Workspace) -> URL {
+        if let selectedID = sidebarSelectionID,
+           let selectedNode = treeNavigator.node(id: selectedID, in: workspace.root) {
+            if selectedNode.kind == .folder {
+                return selectedNode.url.standardizedFileURL
+            }
+            return selectedNode.url.deletingLastPathComponent().standardizedFileURL
+        }
+
+        if let selectedFileURL {
+            return selectedFileURL.deletingLastPathComponent().standardizedFileURL
+        }
+
+        return workspace.rootURL.standardizedFileURL
+    }
+
+    private func uniqueMarkdownFileURL(in directory: URL) -> URL {
+        let fileManager = FileManager.default
+        let baseName = "Untitled"
+        let fileExtension = "md"
+        var candidate = directory.appendingPathComponent("\(baseName).\(fileExtension)")
+        var suffix = 2
+
+        while fileManager.fileExists(atPath: candidate.path) {
+            candidate = directory.appendingPathComponent("\(baseName) \(suffix).\(fileExtension)")
+            suffix += 1
+        }
+
+        return candidate.standardizedFileURL
+    }
+
+    private func selectedRenameNode() -> WorkspaceNode? {
+        guard let workspace else { return nil }
+        let preferredID = sidebarSelectionID ?? selectedFileURL?.standardizedFileURL.path
+        guard let preferredID,
+              let node = treeNavigator.node(id: preferredID, in: workspace.root),
+              node.kind == .markdownFile
+        else { return nil }
+        return node
     }
 
     private func scheduleWorkspaceSearch() {

@@ -22,6 +22,12 @@ struct MarkdownApplication: App {
         }
         .commands {
             CommandGroup(replacing: .newItem) {
+                Button("New Markdown File") {
+                    Task { await model.createMarkdownFileInFolderView() }
+                }
+                .keyboardShortcut("n", modifiers: [.command])
+                .disabled(!model.canCreateMarkdownFile)
+
                 Button("Open...") {
                     model.presentOpenPanel()
                 }
@@ -38,6 +44,11 @@ struct MarkdownApplication: App {
                     model.revealSelectedFileInFinder()
                 }
                 .keyboardShortcut("r", modifiers: [.command])
+
+                Button("Rename Selected File") {
+                    model.beginRenamingSelectedFile()
+                }
+                .disabled(!model.canRenameSelectedFile)
             }
 
             CommandMenu("Open Recent") {

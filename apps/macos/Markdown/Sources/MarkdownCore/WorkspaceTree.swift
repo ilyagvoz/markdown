@@ -251,7 +251,10 @@ public struct WorkspaceTreeBuilder {
                     continue
                 }
                 if values.isDirectory == true {
-                    childNodes.append(scanDirectory(entry, issues: &issues, visitedDirectories: &visitedDirectories))
+                    let child = scanDirectory(entry, issues: &issues, visitedDirectories: &visitedDirectories)
+                    if containsMarkdownFile(child) {
+                        childNodes.append(child)
+                    }
                 } else if Self.isMarkdownFile(entry) {
                     childNodes.append(WorkspaceNode(name: entry.lastPathComponent, url: entry.standardizedFileURL, kind: .markdownFile))
                 }
@@ -273,6 +276,13 @@ public struct WorkspaceTreeBuilder {
             kind: .folder,
             children: childNodes
         )
+    }
+
+    private func containsMarkdownFile(_ node: WorkspaceNode) -> Bool {
+        if node.kind == .markdownFile {
+            return true
+        }
+        return node.children.contains { containsMarkdownFile($0) }
     }
 
     private func shouldConsider(_ url: URL) -> Bool {

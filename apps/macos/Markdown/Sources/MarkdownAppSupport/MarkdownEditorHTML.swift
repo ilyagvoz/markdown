@@ -21,6 +21,7 @@ public enum MarkdownEditorHTML {
               --accent: #006b7a;
               --focus: rgba(0, 107, 122, 0.14);
               --focus-strong: rgba(0, 107, 122, 0.22);
+              --highlight: rgba(255, 214, 102, 0.52);
             }
 
             html {
@@ -74,6 +75,63 @@ public enum MarkdownEditorHTML {
               text-underline-offset: 0.18em;
             }
 
+            .editor-content mark {
+              border-radius: 4px;
+              background: var(--highlight);
+              padding: 0.02em 0.14em;
+            }
+
+            .formatting-menu {
+              position: fixed;
+              z-index: 20;
+              display: flex;
+              align-items: center;
+              gap: 2px;
+              padding: 4px;
+              border: 1px solid rgba(36, 35, 31, 0.14);
+              border-radius: 8px;
+              background: rgba(251, 250, 246, 0.96);
+              box-shadow: 0 10px 28px rgba(36, 35, 31, 0.16);
+              backdrop-filter: blur(12px);
+            }
+
+            .formatting-menu[hidden] {
+              display: none;
+            }
+
+            .formatting-menu button {
+              min-width: 30px;
+              height: 28px;
+              border: 0;
+              border-radius: 6px;
+              color: var(--text);
+              background: transparent;
+              font: 700 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            }
+
+            .formatting-menu button:hover,
+            .formatting-menu button:focus-visible {
+              background: var(--focus);
+              outline: none;
+            }
+
+            .formatting-menu [data-format="italic"] {
+              font-style: italic;
+            }
+
+            .formatting-menu [data-format="highlight"] {
+              background: var(--highlight);
+            }
+
+            .formatting-menu [data-format="code"] {
+              font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+              font-weight: 800;
+            }
+
+            .formatting-menu [data-format="link"] {
+              min-width: 42px;
+            }
+
             .editor-block-blank {
               height: 0;
               min-height: 0;
@@ -88,7 +146,18 @@ public enum MarkdownEditorHTML {
               overflow: visible;
             }
 
+            .editor-block-empty-document {
+              height: auto;
+              min-height: 1.35em;
+              margin-bottom: 1.05em;
+              overflow: visible;
+            }
+
             .editor-block-blank:focus-within .editor-content {
+              min-height: 1.35em;
+            }
+
+            .editor-block-empty-document .editor-content {
               min-height: 1.35em;
             }
 
@@ -233,6 +302,13 @@ public enum MarkdownEditorHTML {
           <main>
             <div class="editor" data-editor aria-label="Markdown live preview editor"></div>
           </main>
+          <div class="formatting-menu" data-formatting-menu role="toolbar" aria-label="Formatting" hidden>
+            <button type="button" data-format="bold" aria-label="Bold">B</button>
+            <button type="button" data-format="italic" aria-label="Italic">I</button>
+            <button type="button" data-format="highlight" aria-label="Highlight">H</button>
+            <button type="button" data-format="code" aria-label="Inline code">`</button>
+            <button type="button" data-format="link" aria-label="Link">Link</button>
+          </div>
           <script>
             window.initialMarkdown = \(javaScriptString(markdown));
           </script>
@@ -273,9 +349,12 @@ public enum MarkdownEditorHTML {
   const undoStack = [];
   const redoStack = [];
   const editor = document.querySelector("[data-editor]");
+  const formattingMenu = document.querySelector("[data-formatting-menu]");
+  let lastFormattingSelection = null;
 
   render();
   post("ready");
+  installFormattingMenu();
 
   window.markdownClearSearchHighlights = function() {
     document.querySelectorAll(".md-search-hit").forEach(function(node) {
@@ -320,7 +399,27 @@ public enum MarkdownEditorHTML {
     return false;
   };
 
+  function installFormattingMenu() {
+    document.addEventListener("selectionchange", () => {
+      window.requestAnimationFrame(updateFormattingMenu);
+    });
+    window.addEventListener("resize", hideFormattingMenu);
+    window.addEventListener("scroll", hideFormattingMenu, true);
+
+    formattingMenu?.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+
+    formattingMenu?.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-format]");
+      if (!button) return;
+      event.preventDefault();
+      applyFormatting(button.dataset.format);
+    });
+  }
+
   function render(focusID = null, selectionRange = null, caretEnd = false, caretOffset = null) {
+    hideFormattingMenu();
     editor.innerHTML = "";
     blocks = reindexBlocks(blocks);
 
@@ -328,6 +427,7 @@ public enum MarkdownEditorHTML {
       const row = document.createElement("div");
       row.className = `editor-block editor-block-${block.type}`;
       if (block.unlocked) row.classList.add("editor-block-unlocked");
+      if (block.type === "blank" && blocks.length === 1) row.classList.add("editor-block-empty-document");
       if (block.type === "code") {
         const previous = blocks[block.index - 1];
         const next = blocks[block.index + 1];
@@ -370,6 +470,8 @@ public enum MarkdownEditorHTML {
         if (block.unlocked) {
           blocks = updateUnlockedDraft(blocks, block.id, rawText);
           scheduleUnlockedCommit(block.id);
+        } else if (shouldPromoteBlankTypedText(block, rawText)) {
+          blocks = replaceBlockWithSource(blocks, block.id, rawText);
         } else if (shouldParseTypedSource(block, rawText) || shouldReplaceFormattedTypedSource(block, rawText)) {
           blocks = replaceBlockWithSource(blocks, block.id, rawText);
           render(block.id, null, true);
@@ -394,6 +496,12 @@ public enum MarkdownEditorHTML {
         if (route === "redo") {
           event.preventDefault();
           redo();
+          return;
+        }
+        if (route.startsWith("format-")) {
+          event.preventDefault();
+          const format = route.replace("format-", "");
+          applyFormatting(format);
           return;
         }
         if (route !== "editor") {
@@ -490,6 +598,164 @@ public enum MarkdownEditorHTML {
       markdown: serializeBlocks(blocks),
       ...payload,
     });
+  }
+
+  function updateFormattingMenu() {
+    const state = selectedTextState();
+    if (!state || state.start === state.end || !canFormatBlock(state.block)) {
+      hideFormattingMenu();
+      return;
+    }
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      hideFormattingMenu();
+      return;
+    }
+
+    const rect = selection.getRangeAt(0).getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) {
+      hideFormattingMenu();
+      return;
+    }
+
+    lastFormattingSelection = state;
+    const menuWidth = formattingMenu.offsetWidth || 184;
+    const left = Math.min(Math.max(8, rect.left + rect.width / 2 - menuWidth / 2), window.innerWidth - menuWidth - 8);
+    const top = Math.max(8, rect.top - 42);
+    formattingMenu.style.left = `${left}px`;
+    formattingMenu.style.top = `${top}px`;
+    formattingMenu.hidden = false;
+  }
+
+  function hideFormattingMenu() {
+    if (formattingMenu) formattingMenu.hidden = true;
+  }
+
+  function applyFormatting(format) {
+    const state = selectedTextState() || lastFormattingSelection;
+    if (!state || state.start === state.end || !canFormatBlock(state.block)) return;
+
+    const spec = formattingSpec(format);
+    if (!spec) return;
+
+    const block = findBlock(state.block.id);
+    if (!block) return;
+
+    const start = Math.max(0, Math.min(state.start, block.visibleText.length));
+    const end = Math.max(start, Math.min(state.end, block.visibleText.length));
+    if (start === end) return;
+
+    recordUndoSnapshot(makeHistorySnapshot(block.id));
+    resetTypingSnapshot();
+    clearPendingMarkerSelection();
+
+    const formatted = toggleInlineWrapper(block.visibleText, start, end, spec);
+    blocks = editVisibleText(blocks, block.id, formatted.text);
+    state.content.focus();
+    state.content.textContent = formatted.text;
+    setTextSelection(state.content, formatted.selectionStart, formatted.selectionEnd);
+    lastFormattingSelection = {
+      content: state.content,
+      block: findBlock(block.id) || block,
+      start: formatted.selectionStart,
+      end: formatted.selectionEnd,
+    };
+    updateFormattingMenu();
+    post("documentChanged", { formatting: format });
+  }
+
+  function selectedTextState() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return null;
+
+    const range = selection.getRangeAt(0);
+    const content = closestEditorContent(range.commonAncestorContainer);
+    if (!content || !content.contains(range.startContainer) || !content.contains(range.endContainer)) return null;
+
+    const row = content.closest(".editor-block");
+    const block = row ? findBlock(row.dataset.blockId) : null;
+    if (!block) return null;
+
+    const start = textOffsetWithin(content, range.startContainer, range.startOffset);
+    const end = textOffsetWithin(content, range.endContainer, range.endOffset);
+    return {
+      content,
+      block,
+      start: Math.min(start, end),
+      end: Math.max(start, end),
+    };
+  }
+
+  function closestEditorContent(node) {
+    if (!node) return null;
+    if (node.nodeType === Node.ELEMENT_NODE) return node.closest(".editor-content");
+    return node.parentElement?.closest(".editor-content") || null;
+  }
+
+  function textOffsetWithin(root, targetNode, targetOffset) {
+    if (targetNode === root) {
+      return Array.from(root.childNodes)
+        .slice(0, targetOffset)
+        .reduce((total, node) => total + (node.textContent?.length || 0), 0);
+    }
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let offset = 0;
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node === targetNode) return offset + targetOffset;
+      offset += node.nodeValue.length;
+    }
+    return offset;
+  }
+
+  function canFormatBlock(block) {
+    return Boolean(block) && !block.unlocked && !isRawDisplayType(block);
+  }
+
+  function formattingSpec(format) {
+    switch (format) {
+      case "bold": return { prefix: "**", suffix: "**" };
+      case "italic": return { prefix: "*", suffix: "*" };
+      case "highlight": return { prefix: "<mark>", suffix: "</mark>" };
+      case "code": return { prefix: "`", suffix: "`" };
+      case "link": return { prefix: "[", suffix: "](https://)", selectURLPlaceholder: true };
+      default: return null;
+    }
+  }
+
+  function toggleInlineWrapper(value, start, end, spec) {
+    const { prefix, suffix } = spec;
+    const selected = value.slice(start, end);
+    const wrappedStart = start - prefix.length;
+    const wrappedEnd = end + suffix.length;
+    const hasWrapper = wrappedStart >= 0
+      && value.slice(wrappedStart, start) === prefix
+      && value.slice(end, wrappedEnd) === suffix;
+
+    if (hasWrapper) {
+      const selectionStart = wrappedStart;
+      const text = value.slice(0, wrappedStart) + selected + value.slice(wrappedEnd);
+      return {
+        text,
+        selectionStart,
+        selectionEnd: selectionStart + selected.length,
+      };
+    }
+
+    let selectionStart = start + prefix.length;
+    let selectionEnd = selectionStart + selected.length;
+    if (spec.selectURLPlaceholder) {
+      selectionStart = start + prefix.length + selected.length + 2;
+      selectionEnd = selectionStart + "https://".length;
+    }
+
+    return {
+      text: value.slice(0, start) + prefix + selected + suffix + value.slice(end),
+      selectionStart,
+      selectionEnd,
+    };
   }
 
   function captureUndoSnapshot(blockID, event) {
@@ -633,11 +899,23 @@ public enum MarkdownEditorHTML {
     const block = blocks[index];
     const before = block.visibleText.slice(0, offset);
     const after = block.visibleText.slice(offset);
+    if (shouldExitEmptyContinuationBlock(block, before, after)) {
+      const blank = parseLine("", { index, inFence: false });
+      blocks = reindexBlocks([...blocks.slice(0, index), { ...blank, id: block.id }, ...blocks.slice(index + 1)]);
+      return blocks[index].id;
+    }
     const current = editVisibleText([block], block.id, before)[0];
     const nextSource = continuationSource(block, after);
     const next = parseLine(nextSource, { index: index + 1, inFence: block.type === "code" });
     blocks = reindexBlocks([...blocks.slice(0, index), current, next, ...blocks.slice(index + 1)]);
     return blocks[index + 1].id;
+  }
+
+  function shouldExitEmptyContinuationBlock(block, before, after) {
+    return ["unordered-list", "ordered-list", "quote"].includes(block.type)
+      && block.visibleText.trim() === ""
+      && before === ""
+      && after === "";
   }
 
   function continuationSource(block, after) {
@@ -755,6 +1033,7 @@ public enum MarkdownEditorHTML {
     placeholders.forEach((value, index) => {
       html = html.split(`%%MDPH${index}%%`).join(value);
     });
+    html = html.replace(/&lt;mark&gt;([\s\S]*?)&lt;\/mark&gt;/g, "<mark>$1</mark>");
     return html;
   }
 
@@ -784,6 +1063,10 @@ public enum MarkdownEditorHTML {
     if (block.type !== "blank" && block.type !== "paragraph") return false;
     const parsed = parseLine(source, { index: block.index, inFence: false });
     return parsed.type !== "blank" && parsed.type !== "paragraph";
+  }
+
+  function shouldPromoteBlankTypedText(block, source) {
+    return block.type === "blank" && source.length > 0;
   }
 
   function shouldReplaceFormattedTypedSource(block, source) {
@@ -891,6 +1174,11 @@ public enum MarkdownEditorHTML {
     if (key === "z" && eventLike.shiftKey) return "redo";
     if (key === "z") return "undo";
     if (key === "y") return "redo";
+    if (key === "b") return "format-bold";
+    if (key === "i") return "format-italic";
+    if (key === "e") return "format-code";
+    if (key === "k") return "format-link";
+    if (key === "h" && eventLike.ctrlKey) return "format-highlight";
     if (key === "s") return "save";
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) return "native-navigation";
     if (key === "o" || key === "f" || key === "/" || key === "r") return "native-command";

@@ -15,6 +15,21 @@ Run before considering app behavior complete:
 ./scripts/smoke-macos-ui.sh
 ```
 
+Use focused smoke scripts while iterating:
+
+```sh
+./scripts/smoke-macos-navigation.sh
+./scripts/smoke-macos-files.sh
+./scripts/smoke-macos-editing.sh
+./scripts/smoke-macos-watch.sh
+```
+
+Recommended loop:
+
+- Use `./scripts/test-macos.sh` for pure logic and generated WebView/editor HTML changes.
+- Add the focused smoke script for the surface being changed.
+- Run `./scripts/smoke-macos-ui.sh` when a user-facing change is ready to call complete, before release/commit, or after touching shared app wiring.
+
 Run for performance-sensitive changes:
 
 ```sh
@@ -28,6 +43,9 @@ Run for performance-sensitive changes:
 | Open a single Markdown file | UI smoke | Launches installed app with `basic.md` and exercises file-level search/shortcuts. |
 | Open a folder | UI smoke | Launches installed app with fixture folder and exercises sidebar/navigation. |
 | Unified `Cmd+O` open command | UI smoke | Opens the native panel and dismisses it with Escape. |
+| Create a Markdown file in folder view | UI smoke | Opens a temporary empty folder, uses `Cmd+N`, verifies `Untitled.md`, repeats, and verifies `Untitled 2.md`. |
+| Hide folders with no Markdown descendants | Unit tests | Workspace tree builder verifies empty/non-Markdown-only child folders are pruned from the visible tree. |
+| Rename selected Markdown file | UI smoke | Uses the File menu rename command, edits the native rename prompt, and verifies the file is moved on disk. File rows also expose Rename in their context menu. |
 | Render common Markdown | Unit tests | Verifies headings, emphasis, code, lists, tables, light CSS, and wrapped HTML. |
 | Build folder tree | Unit tests | Covers Markdown filtering, hidden files, single-file workspaces, unsupported files, and symlink skipping. |
 | Sidebar file selection via keyboard | UI smoke | Uses `Cmd+Down` and `Cmd+Up` across visible Markdown files. |
@@ -37,6 +55,10 @@ Run for performance-sensitive changes:
 | Search workspace | Unit tests and UI smoke | Unit tests verify file metadata, snippets, limits, and occurrence numbers; UI smoke searches an opened folder and clicks a cross-file result. |
 | Jump from search result into preview | UI smoke | Exercises WebView JavaScript bridge and crash-report checks. |
 | Live-preview editing | Unit tests and UI smoke | Unit tests cover editor HTML/script generation; UI smoke edits a paragraph into bullet lines and ordered `1.` / `2.` / `3.` lines, saves with `Cmd+S`, and verifies the Markdown file on disk. |
+| Autosave while editing | UI smoke | Types into a newly-created blank file, waits for debounce, and verifies the Markdown file on disk without pressing `Cmd+S`. |
+| Ordered-list exit while editing | UI smoke | Presses `Return` twice after `1.` / `2.` / `3.`, types normal paragraph text, saves, and verifies no empty `4.` item is written. |
+| Blank-line paragraph editing | UI smoke | Types into an existing blank line, verifies text survives `Return`, and verifies text survives blur plus autosave. |
+| Selection formatting while editing | Unit tests and UI smoke | Unit tests cover formatting toolbar/script generation; UI smoke selects all text, applies bold with `Cmd+B`, inline code with `Cmd+E`, link with `Cmd+K`, highlight with `Cmd+Control+H`, saves, and verifies Markdown wrappers on disk. |
 | Live-preview undo/redo | Unit tests and UI smoke | Unit tests cover editor history script generation; UI smoke edits a paragraph, saves after `Cmd+Z`, verifies original file content, then saves after `Shift+Cmd+Z` and verifies redone content. |
 | Marker replacement editing | UI smoke | Focuses a list item, uses Left Arrow marker replacement, saves, and verifies `* One` becomes `> One` on disk. |
 | Right outline panel | Unit tests and UI smoke | Unit tests verify outline extraction; UI smoke clicks outline landmarks. |
@@ -63,7 +85,7 @@ Run for performance-sensitive changes:
 - Resource readout formatting and throttling should be moved into a testable support module.
 - Pane dragging itself is manual QA; the persisted layout state has automated coverage.
 - Visual polish remains screenshot/manual QA rather than pixel-diff automation.
-- Live-preview editing still needs automated coverage for IME/input, paste normalization, richer selection behavior, external file-conflict handling, accessibility, and large-file behavior.
+- Live-preview editing still needs automated coverage for IME/input, paste normalization, cross-block selection behavior, external file-conflict handling, accessibility, and large-file behavior.
 
 ## Standard For New User-Facing Features
 

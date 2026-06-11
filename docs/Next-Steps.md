@@ -17,6 +17,7 @@ Complete:
 - Native WebView editing spike and recommendation.
 - Production live-preview editing implementation.
 - Focused accessibility spot check.
+- Autosave, folder pruning, new-file creation, file rename, selection formatting, and split UI smoke coverage.
 
 ## Future Candidates
 
@@ -51,6 +52,15 @@ Run before marking future work complete:
 ./scripts/build-macos-app.sh
 ./scripts/install-macos-app.sh
 ./scripts/smoke-macos-ui.sh
+```
+
+Run focused UI smoke scripts during iteration:
+
+```sh
+./scripts/smoke-macos-navigation.sh
+./scripts/smoke-macos-files.sh
+./scripts/smoke-macos-editing.sh
+./scripts/smoke-macos-watch.sh
 ```
 
 Run for performance-sensitive changes:

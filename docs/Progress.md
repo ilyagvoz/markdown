@@ -37,6 +37,11 @@ Complete capabilities:
 - Candidate A WebView editor spike with tested marker-preserving browser model prototype.
 - Native WebView editor spike with a Swift/AppKit host, WebKit bridge, and automated native smoke validation.
 - Production live-preview editing with WebView-backed editable Markdown blocks, `Cmd+S` save, `Cmd+Z` / `Shift+Cmd+Z` undo/redo, marker replacement, new-line block creation, hidden block syntax in read mode, inline read-mode rendering, restored preview-like spacing, and smoke coverage for saved Markdown output.
+- Folder-view Markdown file creation with `Cmd+N`, unique `Untitled.md` naming, automatic sidebar refresh, and selection of the new file.
+- Debounced autosave after editing pauses, plus dirty-document flush before switching/opening files.
+- Sidebar pruning that hides child folders without Markdown descendants.
+- File rename from the File menu and file-row context menu, with a native rename prompt and safe extension handling.
+- Selection-based editor formatting with a floating formatting toolbar, `Cmd+B` bold, `Cmd+I` italic, `Cmd+E` inline code, `Cmd+K` links, and inline HTML `<mark>` highlighting.
 - Focused accessibility spot check with explicit labels added for icon-only controls.
 - Release build, install, profile, and UI smoke scripts.
 
@@ -58,7 +63,8 @@ Current verified gates:
 - `./scripts/test-macos.sh` passes with 27 tests.
 - `./scripts/build-macos-app.sh` builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` installs `/Applications/Markdown.app`.
-- `./scripts/smoke-macos-ui.sh` passes against the installed app.
+- Focused UI smoke scripts cover navigation, file actions, editing, and watcher behavior independently.
+- `./scripts/smoke-macos-ui.sh` orchestrates the focused UI smoke scripts and passes against the installed app.
 - `swift test --package-path spikes/spike2-editing-update-mode` passes with 7 tests.
 - `node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs` passes with 5 tests.
 - `spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh` passes with 4 Swift bridge tests plus native WebView smoke.
@@ -76,9 +82,12 @@ Current UI smoke coverage includes:
 - plain-key sidebar navigation
 - document navigation shortcuts
 - reveal in Finder
+- new Markdown file creation in an opened folder
+- debounced autosave for typed edits
+- selected-file rename
 - watched-folder add/delete
 - selected-file rename/delete and final-file deletion
-- live-preview editing, saving, undo/redo, new bullet creation, ordered-list continuation, and marker replacement
+- live-preview editing, saving, undo/redo, new bullet creation, ordered-list continuation, ordered-list exit, blank-line paragraph entry, marker replacement, bold/italic/code/link/highlight formatting
 - crash-report checks
 
 See `docs/Validation.md` and `docs/Test-Coverage.md` for the latest details.

@@ -32,6 +32,17 @@ Start with:
 ./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures
 ```
 
+For faster UI iteration, run the focused smoke script that matches the area being changed:
+
+```sh
+./scripts/smoke-macos-navigation.sh
+./scripts/smoke-macos-files.sh
+./scripts/smoke-macos-editing.sh
+./scripts/smoke-macos-watch.sh
+```
+
+Use `./scripts/smoke-macos-ui.sh` as the full battery before calling a user-facing change complete.
+
 Run the app against fixtures:
 
 ```sh

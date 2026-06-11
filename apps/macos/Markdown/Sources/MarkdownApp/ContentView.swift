@@ -164,6 +164,16 @@ struct SidebarView: View {
                 }
                 .help("Open a Markdown file or folder")
 
+                if model.canCreateMarkdownFile {
+                    Button {
+                        Task { await model.createMarkdownFileInFolderView() }
+                    } label: {
+                        Label("New", systemImage: "doc.badge.plus")
+                    }
+                    .help("Create a Markdown file in the selected folder")
+                    .accessibilityLabel("New Markdown file")
+                }
+
                 Button {
                     model.toggleSearch()
                 } label: {
@@ -277,27 +287,35 @@ struct TreeNodeView: View {
             } label: {
                 rowLabel(icon: "folder", title: node.name, isSelected: model.isSidebarNodeSelected(node))
                     .onTapGesture {
-                        model.selectSidebarNode(node)
+                        model.handleSidebarNodeClick(node)
+                    }
+                    .contextMenu {
+                        Button("New Markdown File") {
+                            model.selectSidebarNode(node)
+                            Task { await model.createMarkdownFileInFolderView() }
+                        }
                     }
             }
             .disclosureGroupStyle(.automatic)
             .padding(.leading, CGFloat(depth) * 12)
             .accessibilityLabel("\(node.name), \(expandedBinding.wrappedValue ? "expanded" : "collapsed") folder")
         } else {
-            Button {
-                Task {
-                    model.selectSidebarNode(node)
-                    await model.selectFile(node.url)
-                }
-            } label: {
-                rowLabel(
-                    icon: "doc.text",
-                    title: node.name,
-                    isSelected: model.isSidebarNodeSelected(node)
-                )
+            rowLabel(
+                icon: "doc.text",
+                title: node.name,
+                isSelected: model.isSidebarNodeSelected(node)
+            )
+            .onTapGesture {
+                model.handleSidebarNodeClick(node)
             }
-            .buttonStyle(.plain)
+            .contextMenu {
+                Button("Rename") {
+                    model.selectSidebarNode(node)
+                    model.beginRenaming(node)
+                }
+            }
             .padding(.leading, CGFloat(depth) * 12 + 20)
+            .accessibilityElement(children: .combine)
             .accessibilityLabel("\(node.name), Markdown file")
         }
     }
@@ -696,22 +714,35 @@ struct OutlinePanel: View {
 }
 
 struct ShortcutHelpView: View {
-    private let shortcuts: [(String, String)] = [
-        ("Open file or folder", "Cmd O"),
-        ("Save current document", "Cmd S"),
-        ("Undo edit", "Cmd Z"),
-        ("Redo edit", "Shift Cmd Z"),
-        ("Search current document", "Cmd F"),
-        ("Previous Markdown file", "Cmd Up"),
-        ("Next Markdown file", "Cmd Down"),
-        ("Toggle left sidebar", "Cmd Left Arrow"),
-        ("Toggle right outline", "Cmd Right Arrow"),
-        ("Reveal selected file in Finder", "Cmd R"),
-        ("Show keyboard shortcuts", "Cmd /"),
-        ("Move sidebar selection", "Up / Down"),
-        ("Expand or collapse folder", "Left / Right"),
-        ("Open highlighted file", "Return"),
-        ("Toggle folder expansion", "Space")
+    private let shortcutSections: [(String, [(String, String)])] = [
+        ("File", [
+            ("New Markdown file", "Cmd N"),
+            ("Open file or folder", "Cmd O"),
+            ("Save current document", "Cmd S"),
+            ("Rename selected file", "File > Rename Selected File"),
+            ("Reveal selected file in Finder", "Cmd R")
+        ]),
+        ("Editing", [
+            ("Undo edit", "Cmd Z"),
+            ("Redo edit", "Shift Cmd Z"),
+            ("Bold selection", "Cmd B"),
+            ("Italic selection", "Cmd I"),
+            ("Inline code selection", "Cmd E"),
+            ("Link selection", "Cmd K"),
+            ("Highlight selection", "Ctrl Cmd H")
+        ]),
+        ("Navigation", [
+            ("Search current document", "Cmd F"),
+            ("Previous Markdown file", "Cmd Up"),
+            ("Next Markdown file", "Cmd Down"),
+            ("Toggle left sidebar", "Cmd Left Arrow"),
+            ("Toggle right outline", "Cmd Right Arrow"),
+            ("Show keyboard shortcuts", "Cmd /"),
+            ("Move sidebar selection", "Up / Down"),
+            ("Expand or collapse folder", "Left / Right"),
+            ("Open highlighted file", "Return"),
+            ("Toggle folder expansion", "Space")
+        ])
     ]
 
     var body: some View {
@@ -723,20 +754,30 @@ struct ShortcutHelpView: View {
                 Spacer()
             }
 
-            Grid(alignment: .leading, horizontalSpacing: 28, verticalSpacing: 10) {
-                ForEach(shortcuts, id: \.0) { action, shortcut in
-                    GridRow {
-                        Text(action)
-                            .foregroundStyle(.primary)
-                        Text(shortcut)
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundStyle(.secondary)
+            ForEach(shortcutSections, id: \.0) { sectionTitle, shortcuts in
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(sectionTitle)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+
+                    Grid(alignment: .leading, horizontalSpacing: 28, verticalSpacing: 8) {
+                        ForEach(shortcuts, id: \.0) { action, shortcut in
+                            GridRow {
+                                Text(action)
+                                    .foregroundStyle(.primary)
+                                Text(shortcut)
+                                    .font(.system(.body, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
                 }
             }
         }
         .padding(26)
-        .frame(width: 460)
+        .frame(width: 520)
         .background(AppColors.previewBackground)
     }
 }

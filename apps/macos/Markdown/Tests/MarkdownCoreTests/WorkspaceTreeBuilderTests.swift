@@ -24,12 +24,19 @@ final class WorkspaceTreeBuilderTests: XCTestCase {
         let nested = tempDirectory.appendingPathComponent("Nested", isDirectory: true)
         try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: true)
         try write("Nested", to: nested.appendingPathComponent("Design.markdown"))
+        let empty = tempDirectory.appendingPathComponent("Empty", isDirectory: true)
+        try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: true)
+        let nonMarkdown = tempDirectory.appendingPathComponent("NonMarkdown", isDirectory: true)
+        try FileManager.default.createDirectory(at: nonMarkdown, withIntermediateDirectories: true)
+        try write("Nope", to: nonMarkdown.appendingPathComponent("Notes.txt"))
 
         let workspace = try WorkspaceTreeBuilder().build(from: tempDirectory)
 
         XCTAssertEqual(workspace.markdownFileCount, 2)
         XCTAssertEqual(workspace.root.children.map(\.name), ["Nested", "README.md"])
         XCTAssertEqual(workspace.root.children.first?.children.map(\.name), ["Design.markdown"])
+        XCTAssertFalse(workspace.root.children.map(\.name).contains("Empty"))
+        XCTAssertFalse(workspace.root.children.map(\.name).contains("NonMarkdown"))
     }
 
     func testBuildsSingleFileWorkspace() throws {

@@ -13,7 +13,7 @@ Run:
 Latest result:
 
 - Passed.
-- 26 unit tests.
+- 27 unit tests.
 - Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, live-preview editor HTML/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
 
 Run:
@@ -38,7 +38,23 @@ Latest result:
 - Passed.
 - Installs `/Applications/Markdown.app`.
 
-Run after interactive WebView/sidebar changes:
+Run targeted UI smoke scripts during iteration:
+
+```sh
+./scripts/smoke-macos-navigation.sh
+./scripts/smoke-macos-files.sh
+./scripts/smoke-macos-editing.sh
+./scripts/smoke-macos-watch.sh
+```
+
+Use the narrowest script that covers the area being changed:
+
+- `smoke-macos-navigation.sh` for opening, search, outline, pane toggles, sidebar keyboarding, and reveal.
+- `smoke-macos-files.sh` for new-file creation, autosave from a blank file, and rename.
+- `smoke-macos-editing.sh` for live-preview editing, list continuation/exit, blank-line editing, formatting, undo/redo, and marker replacement.
+- `smoke-macos-watch.sh` for folder watcher add/delete and selected-file churn.
+
+Run the full UI battery before calling a user-facing feature complete:
 
 ```sh
 ./scripts/smoke-macos-ui.sh
@@ -47,8 +63,8 @@ Run after interactive WebView/sidebar changes:
 Latest result:
 
 - Passed.
-- Launches the installed app against a single file, a folder, and a temporary watched folder.
-- Drives `Cmd+O`, `Cmd+F`, `Cmd+/`, `Cmd+S`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, live-preview editing, saved Markdown assertions, folder add/delete events, selected-file rename/delete, and final Markdown-file deletion.
+- Orchestrates the focused navigation, file, editing, and watcher smoke scripts against the installed app.
+- Drives `Cmd+O`, `Cmd+N`, `Cmd+F`, `Cmd+/`, `Cmd+S`, `Cmd+B`, `Cmd+I`, `Cmd+E`, `Cmd+K`, `Cmd+Control+H`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, folder-view file creation, native file rename prompt, debounced autosave, live-preview editing, selection formatting, saved Markdown assertions, folder add/delete events, selected-file rename/delete, and final Markdown-file deletion.
 - Fails if the app exits unexpectedly or a new `Markdown-*.ips` report appears.
 
 See `docs/Test-Coverage.md` for the user-focused coverage matrix.
@@ -140,6 +156,23 @@ Known UX follow-ups:
 
 ## Feature Smoke
 
+Folder new-file creation:
+
+- Opened a temporary empty folder.
+- Used `Cmd+N` to create a Markdown file in the folder view.
+- Verified `Untitled.md` was created.
+- Typed into the newly-created blank file, waited for autosave debounce without pressing `Cmd+S`, and verified the file on disk was exactly `From scratch` followed by `Second line`.
+- Used `Cmd+N` again.
+- Verified `Untitled 2.md` was created without overwriting the first file.
+
+Rename:
+
+- Opened a temporary folder containing `RenameMe.md`.
+- Used the File menu rename command to open the native rename prompt.
+- Entered `Renamed`.
+- Verified `RenameMe.md` moved to `Renamed.md`.
+- File rows also expose Rename from the right-click context menu.
+
 Folder watch:
 
 - Opened a temporary folder containing `alpha.md` and `notes/nested.md`.
@@ -177,10 +210,35 @@ Here is a list with a bunch of bullet points:
 3. Three
 ```
 
+- Opened a temporary Markdown file containing `1. One`, `2. Two`, and `3. Three`.
+- Focused the third ordered-list item, pressed `Return` twice, typed normal paragraph text, pressed `Return`, and typed another paragraph.
+- Saved with `Cmd+S`.
+- Verified the file on disk was exactly:
+
+```text
+1. One
+2. Two
+3. Three
+After list
+Next paragraph
+```
+
+- Opened a temporary Markdown file containing `Intro` plus a blank line.
+- Focused the blank line, typed `This paragraph should survive Return`, pressed `Return`, and typed `Next paragraph`.
+- Saved with `Cmd+S` and verified both paragraphs survived.
+- Repeated the blank-line path, clicked away instead of pressing `Return`, waited for autosave debounce, and verified the paragraph survived blur.
 - Opened a temporary Markdown file containing `* One`.
 - Focused the first unordered-list item.
 - Pressed Left Arrow repeatedly to reach marker replacement, typed `>`, and saved with `Cmd+S`.
 - Verified the file on disk was exactly `> One`.
+- Opened a temporary Markdown file containing `Format me`.
+- Selected the paragraph with `Cmd+A`, applied bold with `Cmd+B`, saved, and verified the file on disk was exactly `**Format me**`.
+- Opened a temporary Markdown file containing `Highlight me`.
+- Selected the paragraph with `Cmd+A`, applied highlight with `Cmd+Control+H`, saved, and verified the file on disk was exactly `<mark>Highlight me</mark>`.
+- Opened a temporary Markdown file containing `Code me`.
+- Selected the paragraph with `Cmd+A`, applied inline code with `Cmd+E`, saved, and verified the file on disk was exactly `` `Code me` ``.
+- Opened a temporary Markdown file containing `OpenAI`.
+- Selected the paragraph with `Cmd+A`, applied link formatting with `Cmd+K`, replaced the URL placeholder, saved, and verified the file on disk was exactly `[OpenAI](https://openai.com)`.
 - Opened a temporary Markdown file containing `Original`.
 - Replaced it with `Changed`, pressed `Cmd+Z`, saved, and verified the file on disk returned to `Original`.
 - Pressed `Shift+Cmd+Z`, saved, and verified the file on disk became `Changed`.
