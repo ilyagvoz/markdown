@@ -35,6 +35,7 @@ Complete capabilities:
 - App icon and Markdown document bundle metadata.
 - Editing/update-mode spike with tested Markdown line-model prototype and recommendation.
 - Candidate A WebView editor spike with tested marker-preserving browser model prototype.
+- Native WebView editor spike with a Swift/AppKit host, WebKit bridge, and automated native smoke validation.
 - Focused accessibility spot check with explicit labels added for icon-only controls.
 - Release build, install, profile, and UI smoke scripts.
 
@@ -59,6 +60,7 @@ Current verified gates:
 - `./scripts/smoke-macos-ui.sh` passes against the installed app.
 - `swift test --package-path spikes/spike2-editing-update-mode` passes with 7 tests.
 - `node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs` passes with 5 tests.
+- `spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh` passes with 4 Swift bridge tests plus native WebView smoke.
 - `./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures` shows settled idle CPU near 0% and RSS around 92-95 MB in release builds.
 
 Current UI smoke coverage includes:
@@ -96,6 +98,8 @@ User-facing automation matters. The smoke suite caught and now guards the import
 Pane dragging itself should remain manual QA for now. Synthetic macOS drag-coordinate tests were unreliable. The saved pane layout state is unit-tested, and pane visibility is covered by UI smoke.
 
 Visual polish is product work, not garnish. The app should remain light, quiet, readable, and joyful. Avoid heavy visible divider lines; invisible resize hit targets fit the current design better.
+
+Native WebView editing is viable, but not production-ready yet. Spike 4 proved the Candidate A interaction model inside AppKit + `WKWebView`, including marker-preserving edits, intentional unlock, Swift bridge state, and automated WebKit smoke. Production editing still needs Swift-owned canonical state, save/writeback safety, undo/redo, IME/input, paste, selection, accessibility, file-conflict, and large-file validation.
 
 ## Deferred But Important
 

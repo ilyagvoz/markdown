@@ -14,6 +14,7 @@ Complete:
 - Visual polish screenshot pass.
 - App icon and bundle metadata.
 - Editing/update-mode spike and recommendation.
+- Native WebView editing spike and recommendation.
 - Focused accessibility spot check.
 
 ## Future Candidates
@@ -27,7 +28,8 @@ Use the Spike 2 and Candidate A recommendations:
 - prototype a WebView-backed live-preview editor first;
 - keep Markdown serialization in an app-owned Swift line/block model;
 - use the Candidate A browser model in `spikes/spike3-candidate-a-webview-editor` as the starting point;
-- next concrete step is a native macOS `WKWebView` editor spike or debug view;
+- use the native `WKWebView` proof in `spikes/spike4-native-webview-editor` as implementation evidence;
+- next concrete step is a production integration plan for editing inside `apps/macos/Markdown`;
 - do not ship editing until the production gates in `spikes/spike2-editing-update-mode/RESULTS.md` are proven.
 
 ### Broader Accessibility Pass
@@ -60,6 +62,7 @@ Run for editing-spike changes:
 ```sh
 swift test --package-path spikes/spike2-editing-update-mode
 node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs
+spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh
 ```
 
 Update the relevant docs in the same change:

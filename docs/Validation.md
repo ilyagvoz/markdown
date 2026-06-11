@@ -77,6 +77,18 @@ Latest result:
 - 5 spike tests.
 - Coverage areas: no-edit round-trip, marker-preserving visible edits, marker unlock, intentional presentation-type change from unlocked source, and native shortcut routing classification.
 
+Run for the native Candidate A WebView editor spike:
+
+```sh
+spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh
+```
+
+Latest result:
+
+- Passed.
+- 4 Swift bridge tests plus native `WKWebView` smoke.
+- Coverage areas: bridge message parsing/status text, native WebView resource load, marker-preserving visible edit, explicit unlock, intentional presentation-type change, and serialized Markdown verification from Swift.
+
 Run:
 
 ```sh
@@ -175,6 +187,15 @@ Candidate A WebView editor spike:
 - Added dependency-free browser model tests using Node's built-in test runner.
 - Recommendation: proceed to a native macOS `WKWebView` editor spike or debug view next, with Swift as the authoritative Markdown serializer and DOM state treated as interaction state only.
 - Automated browser screenshot was not captured because Playwright is not installed in the runtime; the static prototype remains manually inspectable via a local server.
+
+Native Candidate A WebView editor spike:
+
+- Added `spikes/spike4-native-webview-editor` Swift package.
+- Added an AppKit `WKWebView` host with a narrow JavaScript-to-Swift bridge.
+- Added a side-by-side native source/status panel for inspecting serialized Markdown state.
+- Added `--smoke` mode that loads WebKit, edits a heading while preserving `#`, unlocks a list item, changes it to a paragraph, verifies serialized Markdown from Swift, and terminates.
+- Found that local ES module imports from the SwiftPM resource bundle did not initialize reliably in native smoke; the spike uses a self-contained classic script for the native WebView resource.
+- Recommendation: production editing can proceed to integration design, but only with Swift-owned canonical Markdown state and the remaining editing gates proven.
 
 Accessibility spot check:
 

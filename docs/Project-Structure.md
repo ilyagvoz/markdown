@@ -84,11 +84,20 @@ markdown/
 │   │   ├── RESULTS.md
 │   │   ├── Sources/
 │   │   └── Tests/
-│   └── spike3-candidate-a-webview-editor/
+│   ├── spike3-candidate-a-webview-editor/
+│   │   ├── README.md
+│   │   ├── RESULTS.md
+│   │   ├── tests/
+│   │   └── web/
+│   └── spike4-native-webview-editor/
+│       ├── Package.swift
 │       ├── README.md
 │       ├── RESULTS.md
-│       ├── tests/
-│       └── web/
+│       ├── Sources/
+│       │   ├── NativeWebViewEditorSpike/
+│       │   └── NativeWebViewEditorSpikeSupport/
+│       ├── Tests/
+│       └── scripts/
 │
 └── artifacts/
     ├── Markdown.app
@@ -196,6 +205,7 @@ Current spikes:
 - `spike1-rendering-engine` - completed; recommends WebView-backed rendering for MVP.
 - `spike2-editing-update-mode` - completed; recommends WebView-backed editing with app-owned Markdown serialization.
 - `spike3-candidate-a-webview-editor` - completed; prototypes and tests the WebView editor model path from Spike 2.
+- `spike4-native-webview-editor` - completed; proves the Candidate A editor model inside a native AppKit + `WKWebView` host with Swift bridge tests and native smoke validation.
 
 Rules:
 

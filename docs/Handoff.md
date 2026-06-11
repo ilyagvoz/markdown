@@ -38,4 +38,12 @@ Run the app against fixtures:
 ./scripts/run-macos.sh spikes/spike1-rendering-engine/fixtures
 ```
 
+Run editing spike validation:
+
+```sh
+swift test --package-path spikes/spike2-editing-update-mode
+node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs
+spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh
+```
+
 See `docs/Validation.md` for the latest visual QA screenshots and notes.
