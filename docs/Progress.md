@@ -42,6 +42,7 @@ Complete capabilities:
 - Sidebar pruning that hides child folders without Markdown descendants.
 - File rename from the File menu and file-row context menu, with a native rename prompt and safe extension handling.
 - Selection-based editor formatting with a floating formatting toolbar, `Cmd+B` bold, `Cmd+I` italic, `Cmd+E` inline code, `Cmd+K` links, and inline HTML `<mark>` highlighting.
+- Click-to-copy Markdown controls for the whole document and each fenced code section, backed by the native pasteboard.
 - Focused accessibility spot check with explicit labels added for icon-only controls.
 - Release build, install, profile, and UI smoke scripts.
 
@@ -87,7 +88,7 @@ Current UI smoke coverage includes:
 - selected-file rename
 - watched-folder add/delete
 - selected-file rename/delete and final-file deletion
-- live-preview editing, saving, undo/redo, new bullet creation, ordered-list continuation, ordered-list exit, blank-line paragraph entry, marker replacement, bold/italic/code/link/highlight formatting
+- live-preview editing, saving, undo/redo, new bullet creation, ordered-list continuation, ordered-list exit, blank-line paragraph entry, marker replacement, bold/italic/code/link/highlight formatting, whole-document Markdown copy, and fenced-code-section Markdown copy
 - crash-report checks
 
 See `docs/Validation.md` and `docs/Test-Coverage.md` for the latest details.

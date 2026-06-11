@@ -6,7 +6,30 @@ This document maps user-focused behavior to automated coverage. The goal is to c
 
 ## Gates
 
-Run before considering app behavior complete:
+Run during feature implementation:
+
+```sh
+./scripts/test-macos.sh
+```
+
+Then run the narrowest focused smoke script that covers the changed surface:
+
+```sh
+./scripts/smoke-macos-launch-window.sh
+./scripts/smoke-macos-navigation.sh
+./scripts/smoke-macos-files.sh
+./scripts/smoke-macos-editing.sh
+./scripts/smoke-macos-watch.sh
+```
+
+Build and install first when the focused smoke needs the installed app:
+
+```sh
+./scripts/build-macos-app.sh
+./scripts/install-macos-app.sh
+```
+
+Run the full battery as the pre-commit/progress gate, not after every iteration:
 
 ```sh
 ./scripts/test-macos.sh
@@ -15,20 +38,13 @@ Run before considering app behavior complete:
 ./scripts/smoke-macos-ui.sh
 ```
 
-Use focused smoke scripts while iterating:
-
-```sh
-./scripts/smoke-macos-navigation.sh
-./scripts/smoke-macos-files.sh
-./scripts/smoke-macos-editing.sh
-./scripts/smoke-macos-watch.sh
-```
-
 Recommended loop:
 
 - Use `./scripts/test-macos.sh` for pure logic and generated WebView/editor HTML changes.
-- Add the focused smoke script for the surface being changed.
-- Run `./scripts/smoke-macos-ui.sh` when a user-facing change is ready to call complete, before release/commit, or after touching shared app wiring.
+- Add 2-3 feature-specific smoke assertions to the focused script for the surface being changed.
+- Run only that focused script during iteration.
+- Use `./scripts/smoke-macos-launch-window.sh` for launch placement/display behavior instead of any larger smoke slice.
+- Run `./scripts/smoke-macos-ui.sh` when the user asks to commit/ship/record progress, or earlier only for cross-cutting/shared-wiring changes.
 
 Run for performance-sensitive changes:
 
@@ -40,6 +56,7 @@ Run for performance-sensitive changes:
 
 | Behavior | Coverage | Notes |
 |---|---|---|
+| Launch smoke starts on the built-in display | UI smoke | `smoke-macos-launch-window.sh` opens one fixture and verifies the Markdown window lands on the built-in display's visible frame without running feature workflows. |
 | Open a single Markdown file | UI smoke | Launches installed app with `basic.md` and exercises file-level search/shortcuts. |
 | Open a folder | UI smoke | Launches installed app with fixture folder and exercises sidebar/navigation. |
 | Unified `Cmd+O` open command | UI smoke | Opens the native panel and dismisses it with Escape. |
@@ -59,6 +76,7 @@ Run for performance-sensitive changes:
 | Ordered-list exit while editing | UI smoke | Presses `Return` twice after `1.` / `2.` / `3.`, types normal paragraph text, saves, and verifies no empty `4.` item is written. |
 | Blank-line paragraph editing | UI smoke | Types into an existing blank line, verifies text survives `Return`, and verifies text survives blur plus autosave. |
 | Selection formatting while editing | Unit tests and UI smoke | Unit tests cover formatting toolbar/script generation; UI smoke selects all text, applies bold with `Cmd+B`, inline code with `Cmd+E`, link with `Cmd+K`, highlight with `Cmd+Control+H`, saves, and verifies Markdown wrappers on disk. |
+| Copy Markdown from editor | Unit tests and UI smoke | Unit tests cover generated copy controls/script hooks; UI smoke clicks the whole-document copy button and a fenced-code-section copy button, then verifies `pbpaste` contains Markdown. |
 | Live-preview undo/redo | Unit tests and UI smoke | Unit tests cover editor history script generation; UI smoke edits a paragraph, saves after `Cmd+Z`, verifies original file content, then saves after `Shift+Cmd+Z` and verifies redone content. |
 | Marker replacement editing | UI smoke | Focuses a list item, uses Left Arrow marker replacement, saves, and verifies `* One` becomes `> One` on disk. |
 | Right outline panel | Unit tests and UI smoke | Unit tests verify outline extraction; UI smoke clicks outline landmarks. |

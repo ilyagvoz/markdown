@@ -162,7 +162,48 @@ Integration or UI tests should cover:
 - app-level shortcuts while focus is in WebView/search/outline
 - crash-report checks around UI smoke interactions
 
-Required local gates for interactive WebView/sidebar changes:
+### Test Selection Policy
+
+Default to the smallest test set that can catch the bug or regression in the area being changed. Iteration speed is part of engineering quality; avoid running the full UI smoke battery after every small edit.
+
+During feature implementation:
+
+- Run `./scripts/test-macos.sh` when touching Swift logic, generated WebView/editor HTML, parser/search/tree behavior, or bridge code.
+- Run `./scripts/build-macos-app.sh` and `./scripts/install-macos-app.sh` when a focused UI smoke needs the installed app.
+- Run only the focused smoke script that covers the current feature surface.
+- Prefer adding a feature-specific assertion to an existing focused smoke script over relying on the full smoke battery.
+
+Focused UI smoke scripts:
+
+```sh
+./scripts/smoke-macos-launch-window.sh
+./scripts/smoke-macos-navigation.sh
+./scripts/smoke-macos-files.sh
+./scripts/smoke-macos-editing.sh
+./scripts/smoke-macos-watch.sh
+```
+
+Smoke harness window behavior:
+
+- `smoke-macos-launch-window.sh` is the narrow regression check for launch placement. Use it when changing app launch, smoke harness startup, window sizing, display selection, or saved-window-frame behavior.
+- Smoke launches should pass `--smoke-window-frame-default` so the app suppresses startup auto-activation, allowing the harness to launch hidden, place the window on the built-in display, then activate it.
+- Before launching the app, smoke scripts should also seed SwiftUI's saved `NSWindow Frame ... AppWindow` defaults for the built-in display's visible frame when a built-in display is available.
+- Post-launch placement is only a safety check; the app should not visibly open on one screen and then jump to another during normal smoke runs.
+- Do not hard-code one-off window positions that can drift across external displays.
+- Keep repositioning to launch/focus setup only; individual smoke steps should not resize or drag the app window.
+- Use `MARKDOWN_SMOKE_WINDOW_BOUNDS=x,y,width,height` and `MARKDOWN_SMOKE_WINDOW_FRAME_DEFAULT="x y w h sx sy sw sh "` only as explicit local overrides for unusual display setups.
+
+Use examples:
+
+- Smoke harness launch/window placement changes: `smoke-macos-launch-window.sh`.
+- Navigation/search/outline/shortcut changes: `smoke-macos-navigation.sh`.
+- New file, autosave, blank-file editing, rename changes: `smoke-macos-files.sh`.
+- Live editor, formatting, copy/paste, list behavior, undo/redo changes: `smoke-macos-editing.sh`.
+- Filesystem watcher and selected-file churn changes: `smoke-macos-watch.sh`.
+
+Run the full smoke battery as a pre-commit/progress gate when the user asks to commit, ship, or record completed progress. Also run it earlier if a change touches shared app wiring, multiple feature surfaces, smoke harness infrastructure, app launch/install behavior, or crash-prone WebView/AppKit bridge boundaries.
+
+Pre-commit/progress gate for user-facing app changes:
 
 ```sh
 ./scripts/test-macos.sh

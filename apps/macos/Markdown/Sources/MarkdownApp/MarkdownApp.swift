@@ -6,9 +6,12 @@ struct MarkdownApplication: App {
     @StateObject private var model = AppModel()
 
     init() {
+        SmokeWindowPlacement.applyLaunchDefaultsIfPresent()
         NSApplication.shared.appearance = NSAppearance(named: .aqua)
         NSApplication.shared.setActivationPolicy(.regular)
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        if !SmokeWindowPlacement.isRequested {
+            NSApplication.shared.activate(ignoringOtherApps: true)
+        }
     }
 
     var body: some Scene {
@@ -107,5 +110,44 @@ struct MarkdownApplication: App {
                 .keyboardShortcut("/", modifiers: [.command])
             }
         }
+    }
+}
+
+enum SmokeWindowPlacement {
+    private static let argumentName = "--smoke-window-frame-default"
+    private static let knownWindowFrameKeys = [
+        "NSWindow Frame SwiftUI.ModifiedContent<SwiftUI.ModifiedContent<MarkdownApp.ContentView, SwiftUI._EnvironmentKeyWritingModifier<Swift.Optional<MarkdownApp.AppModel>>>, SwiftUI._TaskModifier2>-1-AppWindow-1",
+        "NSWindow Frame SwiftUI.ModifiedContent<SwiftUI.ModifiedContent<SwiftUI.ModifiedContent<MarkdownApp.ContentView, SwiftUI._EnvironmentKeyWritingModifier<Swift.Optional<MarkdownApp.AppModel>>>, SwiftUI._PreferenceWritingModifier<SwiftUI.PreferredColorSchemeKey>>, SwiftUI._TaskModifier2>-1-AppWindow-1",
+    ]
+
+    static var isRequested: Bool {
+        CommandLine.arguments.contains(argumentName)
+    }
+
+    static func applyLaunchDefaultsIfPresent(arguments: [String] = CommandLine.arguments) {
+        guard let index = arguments.firstIndex(of: argumentName),
+              arguments.indices.contains(index + 1)
+        else { return }
+
+        let frame = arguments[index + 1]
+        guard isValidWindowFrameDefault(frame) else { return }
+
+        let defaults = UserDefaults.standard
+        for key in existingWindowFrameKeys(in: defaults).union(knownWindowFrameKeys) {
+            defaults.set(frame, forKey: key)
+        }
+        defaults.synchronize()
+    }
+
+    private static func existingWindowFrameKeys(in defaults: UserDefaults) -> Set<String> {
+        Set(defaults.dictionaryRepresentation().keys.filter { key in
+            key.hasPrefix("NSWindow Frame ") && key.contains("AppWindow-1")
+        })
+    }
+
+    private static func isValidWindowFrameDefault(_ value: String) -> Bool {
+        let parts = value.split(separator: " ")
+        guard parts.count == 8 else { return false }
+        return parts.allSatisfy { Double($0) != nil }
     }
 }

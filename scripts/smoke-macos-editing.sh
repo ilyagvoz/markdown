@@ -150,6 +150,40 @@ if [[ "$(cat "$BLANK_BLUR_FILE")" != "$EXPECTED_BLANK_BLUR" ]]; then
 fi
 rm -rf "$BLANK_BLUR_DIR"
 
+COPY_DIR="$(mktemp -d /tmp/markdown-ui-copy.XXXXXX)"
+COPY_FILE="$COPY_DIR/copy.md"
+EXPECTED_COPY_DOCUMENT=$'# Copy Test\n\nSome **markdown**\n\n```swift\nlet value = 42\nprint(value)\n```\n\nAfter code'
+EXPECTED_COPY_CODE=$'```swift\nlet value = 42\nprint(value)\n```'
+printf '%s' "$EXPECTED_COPY_DOCUMENT" > "$COPY_FILE"
+launch_app "$COPY_FILE"
+printf '' | pbcopy
+run_applescript "copy whole document as markdown" '
+  tell process "Markdown"
+    set htmlContent to first UI element of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose role description is "HTML content"
+    click first button of htmlContent whose description is "Copy document as Markdown"
+  end tell
+  delay 0.5
+'
+if [[ "$(pbpaste)" != "$EXPECTED_COPY_DOCUMENT" ]]; then
+  echo "Document copy smoke failed: unexpected clipboard Markdown" >&2
+  pbpaste >&2
+  exit 1
+fi
+printf '' | pbcopy
+run_applescript "copy code section as markdown" '
+  tell process "Markdown"
+    set editorGroup to group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1
+    click first button of editorGroup whose description contains "Copy code section"
+  end tell
+  delay 0.5
+'
+if [[ "$(pbpaste)" != "$EXPECTED_COPY_CODE" ]]; then
+  echo "Code-section copy smoke failed: unexpected clipboard Markdown" >&2
+  pbpaste >&2
+  exit 1
+fi
+rm -rf "$COPY_DIR"
+
 FORMAT_DIR="$(mktemp -d /tmp/markdown-ui-format.XXXXXX)"
 FORMAT_FILE="$FORMAT_DIR/format.md"
 printf 'Format me\n' > "$FORMAT_FILE"

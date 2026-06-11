@@ -22,7 +22,7 @@
 
 ## First Commands
 
-Start with:
+Pre-commit/progress gate:
 
 ```sh
 ./scripts/test-macos.sh
@@ -32,16 +32,19 @@ Start with:
 ./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures
 ```
 
-For faster UI iteration, run the focused smoke script that matches the area being changed:
+For normal feature iteration, run `./scripts/test-macos.sh` plus the focused smoke script that matches the area being changed. Do not run the full `smoke-macos-ui.sh` battery after every small edit:
 
 ```sh
+./scripts/smoke-macos-launch-window.sh
 ./scripts/smoke-macos-navigation.sh
 ./scripts/smoke-macos-files.sh
 ./scripts/smoke-macos-editing.sh
 ./scripts/smoke-macos-watch.sh
 ```
 
-Use `./scripts/smoke-macos-ui.sh` as the full battery before calling a user-facing change complete.
+Use `./scripts/smoke-macos-launch-window.sh` for launch placement/display regressions. It should only open the app and report the window bounds; do not use a feature smoke when the bug is simply where the window appears.
+
+Use `./scripts/smoke-macos-ui.sh` as the full battery when the user asks to commit/ship/record progress, or when a change is cross-cutting.
 
 Run the app against fixtures:
 

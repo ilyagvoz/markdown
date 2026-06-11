@@ -1,3 +1,4 @@
+import AppKit
 import MarkdownAppSupport
 import SwiftUI
 import WebKit
@@ -81,6 +82,10 @@ struct MarkdownEditorView: NSViewRepresentable {
             case "saveRequested":
                 onSave()
                 isDirty = false
+            case "copyRequested":
+                guard let markdown = body["copyMarkdown"] as? String else { return }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(markdown, forType: .string)
             default:
                 break
             }

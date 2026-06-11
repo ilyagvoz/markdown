@@ -45,22 +45,29 @@ Add signing, notarization, and release packaging once the app is ready to distri
 
 ## Gates For Future Features
 
-Run before marking future work complete:
+Run during feature iteration:
+
+```sh
+./scripts/test-macos.sh
+```
+
+Then run the focused UI smoke script that matches the changed surface:
+
+```sh
+./scripts/smoke-macos-launch-window.sh
+./scripts/smoke-macos-navigation.sh
+./scripts/smoke-macos-files.sh
+./scripts/smoke-macos-editing.sh
+./scripts/smoke-macos-watch.sh
+```
+
+Run before committing, shipping, or recording completed progress:
 
 ```sh
 ./scripts/test-macos.sh
 ./scripts/build-macos-app.sh
 ./scripts/install-macos-app.sh
 ./scripts/smoke-macos-ui.sh
-```
-
-Run focused UI smoke scripts during iteration:
-
-```sh
-./scripts/smoke-macos-navigation.sh
-./scripts/smoke-macos-files.sh
-./scripts/smoke-macos-editing.sh
-./scripts/smoke-macos-watch.sh
 ```
 
 Run for performance-sensitive changes:

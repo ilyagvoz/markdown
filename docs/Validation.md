@@ -38,9 +38,10 @@ Latest result:
 - Passed.
 - Installs `/Applications/Markdown.app`.
 
-Run targeted UI smoke scripts during iteration:
+Run targeted UI smoke scripts during iteration. Prefer the narrowest script and the smallest number of feature-specific assertions that cover the work in progress:
 
 ```sh
+./scripts/smoke-macos-launch-window.sh
 ./scripts/smoke-macos-navigation.sh
 ./scripts/smoke-macos-files.sh
 ./scripts/smoke-macos-editing.sh
@@ -49,12 +50,18 @@ Run targeted UI smoke scripts during iteration:
 
 Use the narrowest script that covers the area being changed:
 
+- `smoke-macos-launch-window.sh` for smoke harness launch placement, display selection, and saved-window-frame behavior.
 - `smoke-macos-navigation.sh` for opening, search, outline, pane toggles, sidebar keyboarding, and reveal.
 - `smoke-macos-files.sh` for new-file creation, autosave from a blank file, and rename.
-- `smoke-macos-editing.sh` for live-preview editing, list continuation/exit, blank-line editing, formatting, undo/redo, and marker replacement.
+- `smoke-macos-editing.sh` for live-preview editing, list continuation/exit, blank-line editing, Markdown copy controls, formatting, undo/redo, and marker replacement.
 - `smoke-macos-watch.sh` for folder watcher add/delete and selected-file churn.
 
-Run the full UI battery before calling a user-facing feature complete:
+Latest launch-window result:
+
+- Passed.
+- `smoke-macos-launch-window.sh` opened the app at `0 30 1299 848` on the built-in display after launching hidden and activating only after placement.
+
+Run the full UI battery as a pre-commit/progress gate when the user asks to commit, ship, or record completed progress. Avoid running it after every small iteration unless the change is cross-cutting or touches shared launch/install/WebView/AppKit bridge wiring:
 
 ```sh
 ./scripts/smoke-macos-ui.sh
@@ -64,7 +71,7 @@ Latest result:
 
 - Passed.
 - Orchestrates the focused navigation, file, editing, and watcher smoke scripts against the installed app.
-- Drives `Cmd+O`, `Cmd+N`, `Cmd+F`, `Cmd+/`, `Cmd+S`, `Cmd+B`, `Cmd+I`, `Cmd+E`, `Cmd+K`, `Cmd+Control+H`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, folder-view file creation, native file rename prompt, debounced autosave, live-preview editing, selection formatting, saved Markdown assertions, folder add/delete events, selected-file rename/delete, and final Markdown-file deletion.
+- Drives `Cmd+O`, `Cmd+N`, `Cmd+F`, `Cmd+/`, `Cmd+S`, `Cmd+B`, `Cmd+I`, `Cmd+E`, `Cmd+K`, `Cmd+Control+H`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, folder-view file creation, native file rename prompt, debounced autosave, live-preview editing, Markdown copy buttons, selection formatting, saved Markdown assertions, folder add/delete events, selected-file rename/delete, and final Markdown-file deletion.
 - Fails if the app exits unexpectedly or a new `Markdown-*.ips` report appears.
 
 See `docs/Test-Coverage.md` for the user-focused coverage matrix.
@@ -227,6 +234,9 @@ Next paragraph
 - Focused the blank line, typed `This paragraph should survive Return`, pressed `Return`, and typed `Next paragraph`.
 - Saved with `Cmd+S` and verified both paragraphs survived.
 - Repeated the blank-line path, clicked away instead of pressing `Return`, waited for autosave debounce, and verified the paragraph survived blur.
+- Opened a temporary Markdown file containing a heading, paragraph, fenced Swift code block, and trailing paragraph.
+- Clicked the whole-document `Click to Copy` button and verified `pbpaste` contained the complete document Markdown.
+- Clicked the fenced-code-section `Click to Copy` button and verified `pbpaste` contained the fenced code block Markdown, including the opening language fence and closing fence.
 - Opened a temporary Markdown file containing `* One`.
 - Focused the first unordered-list item.
 - Pressed Left Arrow repeatedly to reach marker replacement, typed `>`, and saved with `Cmd+S`.

@@ -137,6 +137,31 @@ public enum MarkdownEditorHTML {
               min-width: 42px;
             }
 
+            .copy-button {
+              border: 1px solid rgba(36, 35, 31, 0.12);
+              border-radius: 6px;
+              color: var(--accent);
+              background: rgba(251, 250, 246, 0.94);
+              box-shadow: 0 6px 18px rgba(36, 35, 31, 0.10);
+              font: 650 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+              line-height: 1;
+              cursor: pointer;
+            }
+
+            .copy-button:hover,
+            .copy-button:focus-visible {
+              background: var(--focus);
+              outline: none;
+            }
+
+            .document-copy-button {
+              position: fixed;
+              z-index: 12;
+              top: 16px;
+              right: 20px;
+              padding: 8px 10px;
+            }
+
             .editor-block-blank {
               height: 0;
               min-height: 0;
@@ -261,6 +286,23 @@ public enum MarkdownEditorHTML {
 
             .editor-block-code-start {
               margin-top: 0.55em;
+              position: relative;
+            }
+
+            .code-copy-button {
+              position: absolute;
+              z-index: 10;
+              top: 8px;
+              right: 8px;
+              padding: 7px 9px;
+              opacity: 0;
+              transition: opacity 120ms ease;
+            }
+
+            .editor-block-code-start:hover .code-copy-button,
+            .editor-block-code-start:focus-within .code-copy-button,
+            .code-copy-button:focus-visible {
+              opacity: 1;
             }
 
             .editor-block-code-end {
@@ -310,6 +352,7 @@ public enum MarkdownEditorHTML {
           </style>
         </head>
         <body>
+          <button type="button" class="copy-button document-copy-button" data-copy-document aria-label="Copy document as Markdown">Click to Copy</button>
           <main>
             <div class="editor" data-editor aria-label="Markdown live preview editor"></div>
           </main>
@@ -361,11 +404,13 @@ public enum MarkdownEditorHTML {
   const redoStack = [];
   const editor = document.querySelector("[data-editor]");
   const formattingMenu = document.querySelector("[data-formatting-menu]");
+  const copyDocumentButton = document.querySelector("[data-copy-document]");
   let lastFormattingSelection = null;
 
   render();
   post("ready");
   installFormattingMenu();
+  installCopyControls();
   installBlankDocumentClickTarget();
 
   window.markdownClearSearchHighlights = function() {
@@ -435,10 +480,32 @@ public enum MarkdownEditorHTML {
       const emptyRow = editor.querySelector(".editor-block-empty-document");
       if (!emptyRow) return;
       if (formattingMenu?.contains(event.target)) return;
+      if (event.target.closest?.(".copy-button")) return;
       const content = emptyRow.querySelector(".editor-content");
       if (!content) return;
       content.focus();
       moveCaretToEnd(content);
+    });
+  }
+
+  function installCopyControls() {
+    copyDocumentButton?.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+    copyDocumentButton?.addEventListener("click", (event) => {
+      event.preventDefault();
+      requestMarkdownCopy("document", serializeBlocks(blocks), copyDocumentButton);
+    });
+
+    editor.addEventListener("mousedown", (event) => {
+      if (event.target.closest?.("[data-copy-code]")) event.preventDefault();
+    });
+    editor.addEventListener("click", (event) => {
+      const button = event.target.closest?.("[data-copy-code]");
+      if (!button) return;
+      event.preventDefault();
+      const markdown = codeSectionMarkdown(button.dataset.blockId);
+      requestMarkdownCopy("code", markdown, button);
     });
   }
 
@@ -589,6 +656,16 @@ public enum MarkdownEditorHTML {
       });
 
       row.append(marker, content);
+      if (block.type === "code" && row.classList.contains("editor-block-code-start")) {
+        const copyButton = document.createElement("button");
+        copyButton.type = "button";
+        copyButton.className = "copy-button code-copy-button";
+        copyButton.dataset.copyCode = "true";
+        copyButton.dataset.blockId = block.id;
+        copyButton.setAttribute("aria-label", `Copy code section starting at line ${block.index + 1} as Markdown`);
+        copyButton.textContent = "Click to Copy";
+        row.append(copyButton);
+      }
       editor.append(row);
     }
 
@@ -622,6 +699,40 @@ public enum MarkdownEditorHTML {
       markdown: serializeBlocks(blocks),
       ...payload,
     });
+  }
+
+  function requestMarkdownCopy(kind, markdown, button) {
+    window.webkit?.messageHandlers?.editor?.postMessage({
+      type: "copyRequested",
+      copyKind: kind,
+      copyMarkdown: markdown,
+    });
+    showCopiedState(button);
+  }
+
+  function showCopiedState(button) {
+    if (!button) return;
+    const original = button.dataset.originalLabel || button.textContent || "Click to Copy";
+    button.dataset.originalLabel = original;
+    button.textContent = "Copied";
+    window.setTimeout(() => {
+      button.textContent = button.dataset.originalLabel || "Click to Copy";
+    }, 1100);
+  }
+
+  function codeSectionMarkdown(blockID) {
+    const index = blocks.findIndex((block) => block.id === blockID);
+    if (index === -1) return "";
+
+    let start = index;
+    while (start > 0 && blocks[start - 1]?.type === "code") start -= 1;
+    if (blocks[start - 1]?.type === "fence") start -= 1;
+
+    let end = index;
+    while (end + 1 < blocks.length && blocks[end + 1]?.type === "code") end += 1;
+    if (blocks[end + 1]?.type === "fence") end += 1;
+
+    return blocks.slice(start, end + 1).map(serializeBlock).join("\n");
   }
 
   function updateFormattingMenu() {
