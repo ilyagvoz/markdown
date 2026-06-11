@@ -57,4 +57,18 @@ final class MarkdownHTMLRendererTests: XCTestCase {
         XCTAssertTrue(rendered.outline.contains { $0.kind == .table })
         XCTAssertTrue(rendered.outline.contains { $0.kind == .diagram })
     }
+
+    func testRendersRawHTMLAsText() {
+        let renderer = MarkdownHTMLRenderer()
+        let rendered = renderer.render(markdown: """
+        <script>alert("nope")</script>
+
+        Paragraph with <img src=x onerror=alert(1)> inline HTML.
+        """)
+
+        XCTAssertFalse(rendered.html.contains("<script>alert"))
+        XCTAssertFalse(rendered.html.contains("<img src=x"))
+        XCTAssertTrue(rendered.html.contains("&lt;script&gt;alert(\"nope\")&lt;/script&gt;"))
+        XCTAssertTrue(rendered.html.contains("&lt;img src=x onerror=alert(1)&gt;"))
+    }
 }

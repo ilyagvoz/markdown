@@ -41,7 +41,7 @@ Run a fuller hands-on VoiceOver and keyboard accessibility pass before external 
 
 ### Distribution Hardening
 
-Add signing, notarization, and release packaging once the app is ready to distribute beyond local install.
+Add Developer ID signing, notarization, and universal or clearly split architecture release packaging once the app is ready to distribute beyond the early 0.1 GitHub release.
 
 ## Gates For Future Features
 

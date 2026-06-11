@@ -13,8 +13,8 @@ Run:
 Latest result:
 
 - Passed.
-- 27 unit tests.
-- Coverage areas: Markdown HTML rendering, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, live-preview editor HTML/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
+- 28 unit tests.
+- Coverage areas: Markdown HTML rendering, raw HTML escaping, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, live-preview editor HTML/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
 
 Run:
 

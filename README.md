@@ -1,15 +1,70 @@
 # Markdown
 
-A fast, efficient, macOS-native Markdown renderer and live-preview editor for local Markdown files and folders.
+A fast, quiet, macOS-native Markdown reader and live-preview editor for local files and folders.
 
-The product should feel like a simplified Obsidian focused on preview-first reading and lightweight editing:
+Markdown is built for people who want a lightweight desktop app for reading and making small edits to Markdown without turning their notes into a database. It opens individual `.md` / `.markdown` files, opens folders as navigable workspaces, renders CommonMark-style Markdown by default, and keeps the interface intentionally small.
 
-- Open individual Markdown files.
-- Open folders as workspaces.
-- Show folders and Markdown files in a navigable, collapsible tree.
-- Render CommonMark-style Markdown by default in preview mode.
-- Edit Markdown directly in the rendered surface and save with `Cmd+S`.
-- Avoid plugin systems, backlinks, sync, graph views, databases, and other heavyweight note-app features.
+![Markdown workspace with sidebar, preview, and outline](artifacts/screenshots/markdown-next-06-final-fixtures.png)
+
+![Markdown live-preview editing](artifacts/screenshots/markdown-editing-branch-live-preview.png)
+
+## Features
+
+- Native SwiftUI macOS app with a light-only MVP design.
+- WebView-backed Markdown preview with app-owned typography, spacing, tables, code blocks, links, and images.
+- Open a single Markdown file or a folder workspace.
+- Collapsible sidebar tree for folders and Markdown files.
+- Current-document search, workspace search, and a right-side document outline.
+- Live-preview editing with `Cmd+S` save, debounced autosave, undo/redo, list continuation, and inline formatting shortcuts.
+- File watching for selected-file refresh, folder additions/deletions, and selected-file rename/delete recovery.
+- No plugins, sync, graph view, backlinks, wiki links, hidden indexing, or persistent database.
+
+## Download
+
+The 0.1 release provides a downloadable macOS app bundle zip from GitHub Releases.
+
+Requirements:
+
+- macOS 14 Sonoma or newer.
+- Apple Silicon build for the current 0.1 artifact.
+
+Install:
+
+1. Download `Markdown-0.1.0-macos-arm64.zip` from the latest release.
+2. Unzip it.
+3. Move `Markdown.app` to `/Applications`.
+4. Open it from Finder, Spotlight, or Launchpad.
+
+The 0.1 artifact is ad-hoc signed so the app bundle verifies on disk, but it is not yet Developer ID signed or notarized. Depending on Gatekeeper settings, macOS may ask you to confirm the first launch from Finder. Developer ID signing and notarization are tracked as distribution hardening work.
+
+## Build From Source
+
+Build and test:
+
+```sh
+./scripts/test-macos.sh
+./scripts/build-macos-app.sh
+```
+
+Install locally:
+
+```sh
+./scripts/install-macos-app.sh
+```
+
+Run with a folder:
+
+```sh
+./scripts/run-macos.sh spikes/spike1-rendering-engine/fixtures
+```
+
+The local release app bundle is generated at `artifacts/Markdown.app`.
+
+## Security And Privacy
+
+Markdown is local-first: it opens files and folders you choose and does not maintain a background index or sync service. The 0.1 renderer supports common Markdown only; raw HTML in Markdown files is rendered as text so arbitrary `<script>` or event-handler HTML cannot run in the preview. Clicked links open externally only for `http` and `https`.
+
+See [`SECURITY.md`](SECURITY.md) for reporting guidance and [`docs/Security-Review-0.1.md`](docs/Security-Review-0.1.md) for the 0.1 security review notes.
 
 ## Documentation
 
@@ -25,48 +80,3 @@ The product should feel like a simplified Obsidian focused on preview-first read
 | [`docs/Handoff.md`](docs/Handoff.md) | Minimal load order for future sessions |
 | [`docs/Validation.md`](docs/Validation.md) | Latest build/test/screenshot validation notes |
 | [`spikes/README.md`](spikes/README.md) | Technical spike index |
-
-## Current Focus
-
-The first polished MVP foundation is built under [`apps/macos/Markdown`](apps/macos/Markdown). It is a light-mode-only SwiftUI macOS app with WebView-backed Markdown live preview/editing, file/folder open flows, collapsible sidebar navigation, current-document and workspace search, a right-side outline, pane persistence, file watching, selected-file churn handling, and user-focused smoke coverage.
-
-## Run It
-
-Build and test:
-
-```sh
-./scripts/test-macos.sh
-./scripts/build-macos-app.sh
-```
-
-Install into Applications:
-
-```sh
-./scripts/install-macos-app.sh
-```
-
-Run with a folder:
-
-```sh
-./scripts/run-macos.sh spikes/spike1-rendering-engine/fixtures
-```
-
-The release app bundle is generated at `artifacts/Markdown.app`. After install, launch it from `/Applications/Markdown.app`, Spotlight, or Launchpad.
-
-## Validation
-
-Latest verified gates:
-
-- `./scripts/test-macos.sh` - 27 tests passing.
-- `./scripts/build-macos-app.sh` - builds `artifacts/Markdown.app`.
-- `./scripts/install-macos-app.sh` - installs `/Applications/Markdown.app`.
-- `./scripts/smoke-macos-ui.sh` - drives installed-app file/folder, current/workspace search, outline, shortcut, live editing/save, watcher, and crash-report checks.
-- `./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures` - release app idles near 0% CPU and about 92-95 MB RSS after launch settles.
-- Screenshot QA:
-  - `artifacts/screenshots/markdown-next-06-final-fixtures.png` - final three-pane fixture flow.
-  - `artifacts/screenshots/markdown-next-07-shortcuts-help.png` - keyboard shortcuts help.
-  - `artifacts/screenshots/markdown-pane-persistence-invisible-dividers.png` - pane persistence build with invisible resize hit targets.
-  - `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing with block syntax hidden in read mode.
-  - `artifacts/screenshots/markdown-editing-branch-restored-preview-spacing.png` - live-preview editing with preview-like spacing restored.
-
-The first rendering spike recommends a WebView-backed preview for MVP, fed by a Markdown parser/HTML renderer behind an adapter. See [`spikes/spike1-rendering-engine/RESULTS.md`](spikes/spike1-rendering-engine/RESULTS.md).

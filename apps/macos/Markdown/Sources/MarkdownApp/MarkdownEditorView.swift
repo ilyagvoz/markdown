@@ -133,10 +133,8 @@ struct MarkdownEditorView: NSViewRepresentable {
 
             if url.scheme == "http" || url.scheme == "https" {
                 NSWorkspace.shared.open(url)
-                decisionHandler(.cancel)
-            } else {
-                decisionHandler(.allow)
             }
+            decisionHandler(.cancel)
         }
     }
 }

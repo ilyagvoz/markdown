@@ -9,3 +9,5 @@ DerivedData/
 
 # Generated macOS app bundle. Screenshots under artifacts/ are kept for QA.
 artifacts/Markdown.app/
+artifacts/Markdown-*.zip
+artifacts/Markdown-*.zip.sha256

@@ -44,6 +44,7 @@ Complete capabilities:
 - Selection-based editor formatting with a floating formatting toolbar, `Cmd+B` bold, `Cmd+I` italic, `Cmd+E` inline code, `Cmd+K` links, and inline HTML `<mark>` highlighting.
 - Click-to-copy Markdown controls for the whole document and each fenced code section, backed by the native pasteboard.
 - Focused accessibility spot check with explicit labels added for icon-only controls.
+- Markdown preview hardening that renders raw HTML as text and only opens clicked `http` / `https` links externally.
 - Release build, install, profile, and UI smoke scripts.
 
 ## Architecture Decisions In Force
@@ -61,7 +62,7 @@ Durable decisions live in `docs/Architecture-Decisions.md`.
 
 Current verified gates:
 
-- `./scripts/test-macos.sh` passes with 27 tests.
+- `./scripts/test-macos.sh` passes with 28 tests.
 - `./scripts/build-macos-app.sh` builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` installs `/Applications/Markdown.app`.
 - Focused UI smoke scripts cover navigation, file actions, editing, and watcher behavior independently.
@@ -102,6 +103,8 @@ Use app-owned preview styling. The reading experience depends on local CSS that 
 Do not add heavy knowledge-management behavior by accident. Search and outline are document/workspace navigation aids, not a reason to add wiki links, backlinks, graph views, plugins, sync, or a database.
 
 Treat WebView bridge code as crash-sensitive. The search/outline crash came from using `NSJSONSerialization` for a top-level JavaScript string. Keep JavaScript generation small, tested, and isolated in support code.
+
+Treat rendered Markdown as untrusted local content. The MVP supports common Markdown only, so raw HTML is escaped before WebView rendering instead of being executed as document HTML.
 
 Treat filesystem watchers as actor-sensitive. The live-refresh crash came from dispatch-source callbacks crossing actor isolation unexpectedly. Keep watcher callbacks on the queue/actor their state expects, and cover user workflows with crash-report smoke checks.
 

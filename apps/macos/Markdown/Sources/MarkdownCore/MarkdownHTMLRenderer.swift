@@ -20,9 +20,11 @@ public struct MarkdownHTMLRenderer: Sendable {
 
     public func render(markdown: String, sourceURL: URL? = nil) -> RenderedMarkdown {
         let document = Document(parsing: markdown)
+        var sanitizer = CommonMarkdownSanitizer()
+        let sanitizedDocument = sanitizer.visit(document) ?? document
         let outline = analyzer.outline(for: markdown)
         let title = outline.first(where: { $0.kind == .heading })?.title ?? firstHeading(in: document)
-        let body = addAnchors(to: HTMLFormatter.format(document), outline: outline)
+        let body = addAnchors(to: HTMLFormatter.format(sanitizedDocument), outline: outline)
         return RenderedMarkdown(
             title: title,
             html: wrap(body: body, title: title ?? sourceURL?.deletingPathExtension().lastPathComponent ?? "Markdown"),
@@ -315,5 +317,15 @@ public struct MarkdownHTMLRenderer: Sendable {
         }
 
         return result
+    }
+}
+
+private struct CommonMarkdownSanitizer: MarkupRewriter {
+    mutating func visitHTMLBlock(_ html: HTMLBlock) -> Markup? {
+        Paragraph([Text(html.rawHTML)])
+    }
+
+    mutating func visitInlineHTML(_ inlineHTML: InlineHTML) -> Markup? {
+        Text(inlineHTML.rawHTML)
     }
 }
