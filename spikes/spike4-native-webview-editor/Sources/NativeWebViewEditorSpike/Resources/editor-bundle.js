@@ -14,6 +14,8 @@ let value = 1
 `;
 
   let blocks = parseMarkdown(initialMarkdown);
+  let pendingCommitTimer = null;
+  let pendingMarkerSelection = null;
 
   const editor = document.querySelector("[data-editor]");
   const status = document.querySelector("[data-status]");
@@ -21,13 +23,13 @@ let value = 1
   render();
   post("ready");
 
-  function render(focusID = null) {
+  function render(focusID = null, selectionRange = null) {
     editor.innerHTML = "";
 
     for (const block of blocks) {
       const row = document.createElement("div");
       row.className = `editor-block editor-block-${block.type}`;
-      row.dataset.blockID = block.id;
+      row.dataset.blockId = block.id;
       row.dataset.type = block.type;
 
       const marker = document.createElement("span");
@@ -44,6 +46,7 @@ let value = 1
       content.addEventListener("input", () => {
         if (block.unlocked) {
           blocks = updateUnlockedDraft(blocks, block.id, content.textContent);
+          scheduleUnlockedCommit(block.id);
         } else {
           blocks = editVisibleText(blocks, block.id, content.textContent);
         }
@@ -65,8 +68,20 @@ let value = 1
           return;
         }
 
+        if (block.unlocked && pendingMarkerSelection?.id === block.id && isMarkerReplacementKey(event)) {
+          event.preventDefault();
+          const replacement = event.key === "Backspace" || event.key === "Delete" ? "" : event.key;
+          replaceRangeInContent(content, pendingMarkerSelection.start, pendingMarkerSelection.end, replacement);
+          pendingMarkerSelection = null;
+          blocks = updateUnlockedDraft(blocks, block.id, content.textContent);
+          scheduleUnlockedCommit(block.id);
+          post("documentChanged");
+          return;
+        }
+
         if (block.unlocked && normalizedKey(event.key) === "Enter") {
           event.preventDefault();
+          clearPendingMarkerSelection();
           blocks = commitUnlockedSource(blocks, block.id);
           render(block.id);
           post("documentChanged");
@@ -75,15 +90,18 @@ let value = 1
 
         const caretOffset = currentCaretOffset();
         if (!block.unlocked && shouldUnlockFromKey(event, caretOffset)) {
+          const markerRange = markerSelectionRange(block);
           blocks = unlockBlock(blocks, block.id);
           status.textContent = `Unlocked Markdown marker on line ${block.index + 1}`;
           event.preventDefault();
-          render(block.id);
+          render(block.id, markerRange);
           post("blockUnlocked", { blockID: block.id });
         }
       });
 
       content.addEventListener("blur", () => {
+        clearPendingCommit();
+        clearPendingMarkerSelection();
         const current = findBlock(block.id);
         if (!current?.unlocked) return;
         blocks = commitUnlockedSource(blocks, block.id);
@@ -95,13 +113,25 @@ let value = 1
       editor.append(row);
     }
 
+    post("documentChanged");
+
     if (focusID) {
       const target = editor.querySelector(`[data-block-id="${focusID}"] .editor-content`);
       target?.focus();
-      moveCaretToStart(target);
+      if (selectionRange) {
+        pendingMarkerSelection = { id: focusID, ...selectionRange };
+        setTextSelection(target, selectionRange.start, selectionRange.end);
+        window.setTimeout(() => {
+          if (pendingMarkerSelection?.id === focusID) {
+            target?.focus();
+            setTextSelection(target, selectionRange.start, selectionRange.end);
+          }
+        }, 0);
+      } else {
+        clearPendingMarkerSelection();
+        moveCaretToStart(target);
+      }
     }
-
-    post("documentChanged");
   }
 
   function post(type, payload = {}) {
@@ -122,7 +152,7 @@ let value = 1
       case "documentChanged":
         return "Document state synced to Swift.";
       case "blockUnlocked":
-        return "Raw marker unlocked. Press Return or leave the line to apply.";
+        return "Raw marker selected. Type a replacement to apply.";
       case "saveRequested":
         return "Save routed to Swift.";
       case "shortcut":
@@ -179,8 +209,9 @@ let value = 1
       return serializeBlocks(blocks);
     },
     unlockLine(id) {
+      const block = findBlock(id);
       blocks = unlockBlock(blocks, id);
-      render(id);
+      render(id, block ? markerSelectionRange(block) : null);
       post("blockUnlocked", { blockID: id });
       return serializeBlocks(blocks);
     },
@@ -200,6 +231,49 @@ let value = 1
     },
     isUnlocked(id) {
       return Boolean(findBlock(id)?.unlocked);
+    },
+    selectedText() {
+      const nativeSelection = window.getSelection()?.toString() ?? "";
+      if (nativeSelection) return nativeSelection;
+      if (!pendingMarkerSelection) return "";
+      const block = findBlock(pendingMarkerSelection.id);
+      if (!block) return "";
+      return block.visibleText.slice(pendingMarkerSelection.start, pendingMarkerSelection.end);
+    },
+    replaceSelectedText(text) {
+      const active = document.activeElement;
+      let target = active?.classList?.contains("editor-content") ? active : null;
+      const selection = window.getSelection();
+      let start = 0;
+      let end = 0;
+
+      if (selection && selection.rangeCount > 0 && selection.toString()) {
+        const range = selection.getRangeAt(0);
+        start = range.startOffset;
+        end = range.endOffset;
+      } else if (pendingMarkerSelection) {
+        target = editor.querySelector(`[data-block-id="${pendingMarkerSelection.id}"] .editor-content`);
+        start = pendingMarkerSelection.start;
+        end = pendingMarkerSelection.end;
+      }
+
+      if (!target) return serializeBlocks(blocks);
+      replaceRangeInContent(target, start, end, text);
+      const blockID = target.closest("[data-block-id]")?.dataset.blockId;
+      clearPendingMarkerSelection();
+      if (blockID) {
+        blocks = updateUnlockedDraft(blocks, blockID, target.textContent);
+        scheduleUnlockedCommit(blockID);
+        post("documentChanged");
+      }
+      return serializeBlocks(blocks);
+    },
+    commitLine(id) {
+      clearPendingCommit();
+      blocks = commitUnlockedSource(blocks, id);
+      render(id);
+      post("documentChanged");
+      return serializeBlocks(blocks);
     },
     focusLine(id) {
       const target = editor.querySelector(`[data-block-id="${id}"] .editor-content`);
@@ -284,6 +358,79 @@ let value = 1
 
   function findBlock(id) {
     return blocks.find((block) => block.id === id);
+  }
+
+  function markerSelectionRange(block) {
+    const source = serializeBlock(block);
+    const leadingLength = source.match(/^\s*/)?.[0]?.length ?? 0;
+    const markerLength = markerTokenLength(block);
+    return {
+      start: leadingLength,
+      end: leadingLength + markerLength,
+    };
+  }
+
+  function markerTokenLength(block) {
+    switch (block.type) {
+      case "heading":
+        return block.level;
+      case "unordered-list":
+      case "ordered-list":
+      case "fence":
+        return block.marker.length;
+      case "quote":
+        return 1;
+      default:
+        return 0;
+    }
+  }
+
+  function setTextSelection(element, start, end) {
+    if (!element) return;
+    const textNode = element.firstChild;
+    const safeStart = Math.max(0, Math.min(start, element.textContent.length));
+    const safeEnd = Math.max(safeStart, Math.min(end, element.textContent.length));
+    const range = document.createRange();
+    range.setStart(textNode ?? element, textNode ? safeStart : 0);
+    range.setEnd(textNode ?? element, textNode ? safeEnd : 0);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  function scheduleUnlockedCommit(id) {
+    clearPendingCommit();
+    pendingCommitTimer = window.setTimeout(() => {
+      pendingCommitTimer = null;
+      const current = findBlock(id);
+      if (!current?.unlocked) return;
+      blocks = commitUnlockedSource(blocks, id);
+      render(id);
+      post("documentChanged");
+    }, 140);
+  }
+
+  function clearPendingCommit() {
+    if (!pendingCommitTimer) return;
+    window.clearTimeout(pendingCommitTimer);
+    pendingCommitTimer = null;
+  }
+
+  function clearPendingMarkerSelection() {
+    pendingMarkerSelection = null;
+  }
+
+  function replaceRangeInContent(element, start, end, replacement) {
+    const value = element.textContent;
+    const safeStart = Math.max(0, Math.min(start, value.length));
+    const safeEnd = Math.max(safeStart, Math.min(end, value.length));
+    element.textContent = value.slice(0, safeStart) + replacement + value.slice(safeEnd);
+    setTextSelection(element, safeStart + replacement.length, safeStart + replacement.length);
+  }
+
+  function isMarkerReplacementKey(event) {
+    if (event.metaKey || event.ctrlKey || event.altKey) return false;
+    return event.key.length === 1 || event.key === "Backspace" || event.key === "Delete";
   }
 
   function classifyShortcut(eventLike) {

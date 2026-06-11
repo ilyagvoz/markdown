@@ -155,14 +155,17 @@ final class EditorWindowController: NSObject, WKScriptMessageHandler, WKNavigati
     private func runSmokeTest() {
         let script = """
         window.nativeEditorSpike.editLine("line-0", "Native Edited");
-        window.nativeEditorSpike.editLine("line-3", "A list item keeps its marker after native smoke edit.");
-        window.nativeEditorSpike.unlockLine("line-3");
-        window.nativeEditorSpike.rawLine("line-3", "> Quote after unlock.");
+        window.nativeEditorSpike.editLine("line-4", "A list item keeps its marker after native smoke edit.");
+        window.nativeEditorSpike.unlockLine("line-4");
+        const selectedMarker = window.nativeEditorSpike.selectedText();
+        window.nativeEditorSpike.replaceSelectedText(">");
+        window.nativeEditorSpike.commitLine("line-4");
         [
           window.nativeEditorSpike.serialized(),
-          "---TYPE:" + window.nativeEditorSpike.blockType("line-3"),
-          "---MARKER:" + window.nativeEditorSpike.marker("line-3"),
-          "---UNLOCKED:" + String(window.nativeEditorSpike.isUnlocked("line-3"))
+          "---SELECTED:" + selectedMarker,
+          "---TYPE:" + window.nativeEditorSpike.blockType("line-4"),
+          "---MARKER:" + window.nativeEditorSpike.marker("line-4"),
+          "---UNLOCKED:" + String(window.nativeEditorSpike.isUnlocked("line-4"))
         ].join("\\n");
         """
 
@@ -178,8 +181,9 @@ final class EditorWindowController: NSObject, WKScriptMessageHandler, WKNavigati
             }
 
             guard markdown.contains("# Native Edited"),
-                  markdown.contains("> Quote after unlock."),
-                  !markdown.contains("- > Quote after unlock."),
+                  markdown.contains("> A list item keeps its marker after native smoke edit."),
+                  !markdown.contains("- > A list item keeps its marker after native smoke edit."),
+                  markdown.contains("---SELECTED:-"),
                   markdown.contains("---TYPE:quote"),
                   markdown.contains("---MARKER:>"),
                   markdown.contains("---UNLOCKED:false")

@@ -87,7 +87,7 @@ Latest result:
 
 - Passed.
 - 4 Swift bridge tests plus native `WKWebView` smoke.
-- Coverage areas: bridge message parsing/status text, native WebView resource load, marker-preserving visible edit, explicit unlock, intentional presentation-type change, unlocked line commit/re-render, and serialized Markdown verification from Swift.
+- Coverage areas: bridge message parsing/status text, native WebView resource load, marker-preserving visible edit, explicit unlock, marker preselection, intentional presentation-type change, unlocked line commit/re-render, and serialized Markdown verification from Swift.
 
 Run:
 
@@ -194,7 +194,7 @@ Native Candidate A WebView editor spike:
 - Added an AppKit `WKWebView` host with a narrow JavaScript-to-Swift bridge.
 - Added a side-by-side native source/status panel for inspecting serialized Markdown state.
 - Added `--smoke` mode that loads WebKit, edits a heading while preserving `#`, unlocks a list item, changes it to a quote, verifies serialized Markdown and rendered block type from Swift, and terminates.
-- Refined raw-marker editing after manual UX feedback: unlocked lines now commit and re-render on Return or blur, and smoke coverage verifies list-to-quote conversion renders as a quote rather than remaining raw.
+- Refined raw-marker editing after manual UX feedback: Left Arrow now preselects the Markdown marker, typed marker replacement can apply quickly without cursor repositioning, unlocked lines commit and re-render on Return/blur/live-edit debounce, and smoke coverage verifies list-to-quote conversion renders as a quote rather than remaining raw.
 - Found that local ES module imports from the SwiftPM resource bundle did not initialize reliably in native smoke; the spike uses a self-contained classic script for the native WebView resource.
 - Recommendation: production editing can proceed to integration design, but only with Swift-owned canonical Markdown state and the remaining editing gates proven.
 
