@@ -132,24 +132,7 @@ In the managed Codex sandbox, SwiftPM may warn that user-level SwiftPM configura
 
 ## Manual / Visual QA
 
-Validated screenshots:
-
-- `artifacts/screenshots/markdown-mvp-03-light.png` - folder-open flow with collapsible sidebar and rendered `basic.md`.
-- `artifacts/screenshots/markdown-mvp-04-single-file.png` - single-file open flow with rendered table fixture.
-- `artifacts/screenshots/markdown-next-01-outline-search.png` - three-pane outline flow with fixtures.
-- `artifacts/screenshots/markdown-next-02-folder-watch.png` - folder watcher after adding `added-later.md` without reopening.
-- `artifacts/screenshots/markdown-next-03-folder-delete.png` - folder watcher after deleting `added-later.md`.
-- `artifacts/screenshots/markdown-next-04-search.png` - `Cmd+F` current-document search with result chips.
-- `artifacts/screenshots/markdown-next-05-toggle-outline.png` - `Cmd+Right Arrow` hides the outline while search is focused.
-- `artifacts/screenshots/markdown-next-06-final-fixtures.png` - final three-pane fixture flow.
-- `artifacts/screenshots/markdown-next-07-shortcuts-help.png` - Help keyboard shortcuts sheet.
-- `artifacts/screenshots/markdown-pane-persistence-invisible-dividers.png` - pane persistence build with invisible resize hit targets.
-- `artifacts/screenshots/markdown-polish-01-default.png` - current default three-pane layout.
-- `artifacts/screenshots/markdown-polish-02-small.png` - current small-window layout.
-- `artifacts/screenshots/markdown-polish-03-workspace-search.png` - workspace search UI with cross-file results.
-- `artifacts/screenshots/markdown-editing-branch-live-preview.png` - live-preview editing with inline Markdown rendered in read mode and block syntax hidden.
-- `artifacts/screenshots/markdown-editing-branch-code-preview.png` - live-preview editing code-block view with fences and syntax gutter hidden.
-- `artifacts/screenshots/markdown-editing-branch-restored-preview-spacing.png` - live-preview editing after restoring preview-like spacing by hiding source-only blank lines in read mode.
+Previous QA screenshots were removed from repository history because they included desktop context. Future demo screenshots should be app-only captures and reviewed before publication.
 
 Assessment:
 

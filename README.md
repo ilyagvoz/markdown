@@ -4,9 +4,7 @@ A fast, quiet, macOS-native Markdown reader and live-preview editor for local fi
 
 Markdown is built for people who want a lightweight desktop app for reading and making small edits to Markdown without turning their notes into a database. It opens individual `.md` / `.markdown` files, opens folders as navigable workspaces, renders CommonMark-style Markdown by default, and keeps the interface intentionally small.
 
-![Markdown workspace with sidebar, preview, and outline](artifacts/screenshots/markdown-next-06-final-fixtures.png)
-
-![Markdown live-preview editing](artifacts/screenshots/markdown-editing-branch-live-preview.png)
+Demo screenshots are being regenerated as app-only captures before being added back to the README.
 
 ## Features
 
