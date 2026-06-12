@@ -83,6 +83,7 @@ final class AppModel: ObservableObject {
     private let resourceSampler = ProcessResourceSampler()
     private var restoredState = RestoredAppState.empty
     private var lastOpenedURL: URL?
+    private var hasPreparedAppState = false
     private var hasRestoredInitialState = false
     private var currentMarkdown = ""
     private var previewActionToken = 0
@@ -97,16 +98,7 @@ final class AppModel: ObservableObject {
     private let autosaveDelay: Duration = .milliseconds(1_500)
 
     func openLaunchArgumentIfPresent() async {
-        restoredState = settings.load()
-        recentDocuments = restoredState.recentDocuments.filter { FileManager.default.fileExists(atPath: $0.path) }
-        isApplyingRestoredState = true
-        leftSidebarWidth = restoredState.leftSidebarWidth
-        rightOutlineWidth = restoredState.rightOutlineWidth
-        isLeftSidebarVisible = restoredState.isLeftSidebarVisible
-        isOutlineVisible = restoredState.isOutlineVisible
-        isApplyingRestoredState = false
-        installShortcutMonitor()
-        startResourceSampling()
+        prepareAppStateIfNeeded()
 
         let arguments = CommandLine.arguments
         if let openIndex = arguments.firstIndex(of: "--open"),
@@ -124,6 +116,19 @@ final class AppModel: ObservableObject {
         } else {
             sampleResourcesIfVisible()
         }
+    }
+
+    func openExternalURLs(_ urls: [URL]) async {
+        prepareAppStateIfNeeded()
+
+        guard let url = preferredExternalOpenURL(from: urls) else {
+            sampleResourcesIfVisible()
+            return
+        }
+
+        hasRestoredInitialState = true
+        await open(url: url)
+        NSApplication.shared.activate(ignoringOtherApps: true)
     }
 
     func presentOpenPanel() {
@@ -593,6 +598,35 @@ final class AppModel: ObservableObject {
             workspaceSearchResults = []
             statusText = "Could not refresh workspace"
         }
+    }
+
+    private func prepareAppStateIfNeeded() {
+        guard !hasPreparedAppState else { return }
+        hasPreparedAppState = true
+
+        restoredState = settings.load()
+        recentDocuments = restoredState.recentDocuments.filter { FileManager.default.fileExists(atPath: $0.path) }
+        isApplyingRestoredState = true
+        leftSidebarWidth = restoredState.leftSidebarWidth
+        rightOutlineWidth = restoredState.rightOutlineWidth
+        isLeftSidebarVisible = restoredState.isLeftSidebarVisible
+        isOutlineVisible = restoredState.isOutlineVisible
+        isApplyingRestoredState = false
+        installShortcutMonitor()
+        startResourceSampling()
+    }
+
+    private func preferredExternalOpenURL(from urls: [URL]) -> URL? {
+        let standardizedURLs = urls.map(\.standardizedFileURL)
+        return standardizedURLs.first(where: isSupportedExternalOpenURL) ?? standardizedURLs.first
+    }
+
+    private func isSupportedExternalOpenURL(_ url: URL) -> Bool {
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
+            return false
+        }
+        return isDirectory.boolValue || WorkspaceTreeBuilder.isMarkdownFile(url)
     }
 
     private func renderFile(_ url: URL, statusReason: String?) async {

@@ -25,8 +25,11 @@ announce_keyboard_smoke() {
 }
 
 quit_app() {
-  osascript -e 'tell application "Markdown" to quit' >/dev/null 2>&1 || true
+  if pgrep -x Markdown >/dev/null; then
+    osascript -e "tell application id \"$BUNDLE_ID\" to quit" >/dev/null 2>&1 || true
+  fi
   sleep 0.5
+  pkill -f "$APP_PATH/Contents/MacOS/Markdown" >/dev/null 2>&1 || true
   pkill -x Markdown >/dev/null 2>&1 || true
   sleep 1
 }
@@ -40,6 +43,16 @@ launch_app() {
   open -n -j "$APP_PATH" --args --smoke-window-frame-default "$frame" --open "$open_path"
   sleep 3
   require_running "launching $open_path"
+  focus_window
+}
+
+launch_app_from_finder_item() {
+  local open_path="$1"
+  quit_app
+  prepare_smoke_window_placement
+  open -n -b "$BUNDLE_ID" "$open_path"
+  sleep 3
+  require_running "opening Finder item $open_path"
   focus_window
 }
 

@@ -7,6 +7,25 @@ source "$ROOT_DIR/scripts/lib/macos-ui-smoke.sh"
 ensure_app_installed
 announce_keyboard_smoke
 
+echo "UI smoke: Finder-style file open"
+launch_app_from_finder_item "$FIXTURE_DIR/basic.md"
+FINDER_SELECTED_PATH="$(osascript -l JavaScript <<JXA
+ObjC.import('Foundation')
+var defaults = $.NSUserDefaults.alloc.initWithSuiteName('$BUNDLE_ID')
+var data = defaults.dataForKey('Markdown.RestoredAppState.v1')
+var result = ''
+if (data) {
+  var stateJSON = ObjC.unwrap($.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding))
+  result = JSON.parse(stateJSON).selectedFilePath || ''
+}
+result
+JXA
+)"
+if [[ "$FINDER_SELECTED_PATH" != "$FIXTURE_DIR/basic.md" ]]; then
+  echo "Finder-style open failed: expected $FIXTURE_DIR/basic.md, got ${FINDER_SELECTED_PATH:-<empty>}" >&2
+  exit 1
+fi
+
 echo "UI smoke: single-file open and shortcuts"
 launch_app "$FIXTURE_DIR/basic.md"
 run_applescript "single-file search" '
