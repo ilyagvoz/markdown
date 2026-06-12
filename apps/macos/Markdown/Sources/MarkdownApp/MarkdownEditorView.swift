@@ -26,6 +26,7 @@ struct MarkdownEditorView: NSViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = false
         webView.setValue(false, forKey: "drawsBackground")
+        webView.unregisterDraggedTypes()
         return webView
     }
 
