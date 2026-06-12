@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct MarkdownApplication: App {
+    @NSApplicationDelegateAdaptor(MarkdownApplicationDelegate.self) private var appDelegate
     @StateObject private var model = AppModel()
 
     init() {
@@ -19,8 +20,14 @@ struct MarkdownApplication: App {
             ContentView()
                 .environmentObject(model)
                 .preferredColorScheme(.light)
+                .onOpenURL { url in
+                    Task { await model.openExternalURLs([url]) }
+                }
                 .task {
-                    await model.openLaunchArgumentIfPresent()
+                    appDelegate.model = model
+                    if !(await appDelegate.openPendingURLsIfNeeded()) {
+                        await model.openLaunchArgumentIfPresent()
+                    }
                 }
         }
         .commands {
@@ -109,6 +116,45 @@ struct MarkdownApplication: App {
                 }
                 .keyboardShortcut("/", modifiers: [.command])
             }
+        }
+    }
+}
+
+@MainActor
+final class MarkdownApplicationDelegate: NSObject, NSApplicationDelegate {
+    weak var model: AppModel?
+    private var pendingOpenURLs: [URL] = []
+
+    func application(_ sender: NSApplication, openFiles filenames: [String]) {
+        let urls = filenames.map { URL(fileURLWithPath: $0) }
+
+        Task { @MainActor in
+            await openURLs(urls)
+            sender.reply(toOpenOrPrint: .success)
+        }
+    }
+
+    func application(_ sender: NSApplication, openFile filename: String) -> Bool {
+        let url = URL(fileURLWithPath: filename)
+        Task { @MainActor in
+            await openURLs([url])
+        }
+        return true
+    }
+
+    func openPendingURLsIfNeeded() async -> Bool {
+        guard model != nil, !pendingOpenURLs.isEmpty else { return false }
+        let urls = pendingOpenURLs
+        pendingOpenURLs.removeAll()
+        await openURLs(urls)
+        return true
+    }
+
+    private func openURLs(_ urls: [URL]) async {
+        if let model {
+            await model.openExternalURLs(urls)
+        } else {
+            pendingOpenURLs.append(contentsOf: urls)
         }
     }
 }

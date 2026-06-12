@@ -9,5 +9,6 @@ APP_DEST="/Applications/Markdown.app"
 
 rm -rf "$APP_DEST"
 ditto "$APP_SOURCE" "$APP_DEST"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP_DEST"
 
 echo "$APP_DEST"
