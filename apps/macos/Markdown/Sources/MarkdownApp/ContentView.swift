@@ -1,9 +1,11 @@
 import AppKit
 import MarkdownCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var isFileDropTargeted = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -36,9 +38,103 @@ struct ContentView: View {
         .frame(minWidth: 980, minHeight: 660)
         .tint(.teal)
         .background(AppColors.previewBackground)
+        .modifier(FileDropOpeningModifier(isTargeted: $isFileDropTargeted))
         .sheet(isPresented: $model.isShortcutHelpPresented) {
             ShortcutHelpView()
         }
+    }
+}
+
+private struct FileDropOpeningModifier: ViewModifier {
+    @EnvironmentObject private var model: AppModel
+    @Binding var isTargeted: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .contentShape(Rectangle())
+            .onDrop(of: [UTType.fileURL.identifier], isTargeted: $isTargeted) { providers in
+                loadFileURLs(from: providers) { urls in
+                    Task { @MainActor in
+                        await model.openExternalURLs(urls)
+                    }
+                }
+                return true
+            }
+            .overlay {
+                if isTargeted {
+                    Rectangle()
+                        .strokeBorder(AppColors.selection.opacity(0.8), lineWidth: 3)
+                        .allowsHitTesting(false)
+                }
+            }
+    }
+
+    private func loadFileURLs(from providers: [NSItemProvider], completion: @escaping ([URL]) -> Void) {
+        let fileURLType = UTType.fileURL.identifier
+        let indexedProviders = providers.enumerated().filter { _, provider in
+            provider.hasItemConformingToTypeIdentifier(fileURLType)
+        }
+
+        guard !indexedProviders.isEmpty else {
+            completion([])
+            return
+        }
+
+        let group = DispatchGroup()
+        let collector = DroppedFileURLCollector()
+
+        for (index, provider) in indexedProviders {
+            group.enter()
+            provider.loadItem(forTypeIdentifier: fileURLType, options: nil) { item, _ in
+                if let url = DroppedFileURLDecoder.fileURL(from: item) {
+                    collector.append(url, at: index)
+                }
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) {
+            completion(collector.orderedURLs())
+        }
+    }
+}
+
+private final class DroppedFileURLCollector: @unchecked Sendable {
+    private let lock = NSLock()
+    private var loadedURLs: [(index: Int, url: URL)] = []
+
+    func append(_ url: URL, at index: Int) {
+        lock.lock()
+        loadedURLs.append((index, url))
+        lock.unlock()
+    }
+
+    func orderedURLs() -> [URL] {
+        lock.lock()
+        let urls = loadedURLs.sorted { $0.index < $1.index }.map(\.url)
+        lock.unlock()
+        return urls
+    }
+}
+
+private enum DroppedFileURLDecoder {
+    nonisolated static func fileURL(from item: NSSecureCoding?) -> URL? {
+        if let url = item as? URL {
+            return url.standardizedFileURL
+        }
+        if let url = item as? NSURL {
+            return (url as URL).standardizedFileURL
+        }
+        if let data = item as? Data {
+            return URL(dataRepresentation: data, relativeTo: nil)?.standardizedFileURL
+        }
+        if let string = item as? String {
+            return URL(string: string)?.standardizedFileURL
+        }
+        if let string = item as? NSString {
+            return URL(string: string as String)?.standardizedFileURL
+        }
+        return nil
     }
 }
 
