@@ -50,6 +50,14 @@ Install locally:
 ./scripts/install-macos-app.sh
 ```
 
+Update a local install to the latest GitHub commit:
+
+```sh
+./scripts/update-to-latest-commit.sh
+```
+
+The update helper fetches the latest commit from `origin`'s default branch, builds it in a temporary worktree, and installs the rebuilt app to `/Applications/Markdown.app` without changing your active checkout. Use `--run-tests` to run the Swift tests before installation, `--open` to launch the installed app, or `--branch main` to rebuild a specific remote branch.
+
 Run with a folder:
 
 ```sh

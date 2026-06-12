@@ -46,6 +46,7 @@ Complete capabilities:
 - Focused accessibility spot check with explicit labels added for icon-only controls.
 - Markdown preview hardening that renders raw HTML as text and only opens clicked `http` / `https` links externally.
 - Release build, install, profile, and UI smoke scripts.
+- Local source-update script that fetches the latest GitHub commit, rebuilds it in a temporary worktree, and redeploys it to `/Applications/Markdown.app`.
 
 ## Architecture Decisions In Force
 

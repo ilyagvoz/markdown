@@ -1,6 +1,6 @@
 # Validation
 
-Last updated: 2026-06-11
+Last updated: 2026-06-12
 
 ## Automated Gates
 
@@ -37,6 +37,17 @@ Latest result:
 
 - Passed.
 - Installs `/Applications/Markdown.app`.
+
+Run:
+
+```sh
+./scripts/update-to-latest-commit.sh
+```
+
+Latest result:
+
+- Passed on 2026-06-12.
+- Resolved `origin/main` from GitHub, fetched commit `0532ee9`, built it in a temporary worktree, and installed `/Applications/Markdown.app`.
 
 Run targeted UI smoke scripts during iteration. Prefer the narrowest script and the smallest number of feature-specific assertions that cover the work in progress:
 

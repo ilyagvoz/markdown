@@ -104,9 +104,10 @@ Initial performance budgets should be refined during the macOS app skeleton afte
 Recommended sequence:
 
 1. Local developer build.
-2. Private signed macOS app for personal daily use.
-3. Harden file/folder handling with real folders.
-4. Decide whether public distribution is worth pursuing after the MVP is useful.
+2. Local source update from the latest GitHub commit for technical testers.
+3. Private signed macOS app for personal daily use.
+4. Harden file/folder handling with real folders.
+5. Decide whether public distribution is worth pursuing after the MVP is useful.
 
 ## Quality Bar
 

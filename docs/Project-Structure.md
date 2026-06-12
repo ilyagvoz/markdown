@@ -190,6 +190,7 @@ Current scripts:
 - `test-macos.sh` - run Swift tests.
 - `build-macos-app.sh` - build release app bundle into `artifacts/Markdown.app`.
 - `install-macos-app.sh` - install `/Applications/Markdown.app`.
+- `update-to-latest-commit.sh` - fetch the latest GitHub commit, rebuild it in a temporary worktree, and install it locally.
 - `run-macos.sh` - run the app against a file or folder.
 - `smoke-macos-ui.sh` - drive installed-app user flows and crash-report checks.
 - `profile-macos.sh` - profile release app CPU/RSS.
