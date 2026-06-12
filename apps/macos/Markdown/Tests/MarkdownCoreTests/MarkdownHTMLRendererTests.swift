@@ -58,6 +58,23 @@ final class MarkdownHTMLRendererTests: XCTestCase {
         XCTAssertTrue(rendered.outline.contains { $0.kind == .diagram })
     }
 
+    func testRendersTableHeadersBodyAndAlignment() {
+        let renderer = MarkdownHTMLRenderer()
+        let rendered = renderer.render(markdown: """
+        | Feature | Native | WebView |
+        |---|---:|---:|
+        | Text selection | TBD | TBD |
+        | Markdown fidelity | TBD | TBD |
+        """)
+
+        XCTAssertTrue(rendered.html.contains("<thead>"))
+        XCTAssertTrue(rendered.html.contains("<tbody>"))
+        XCTAssertTrue(rendered.html.contains("<th>Feature</th>"))
+        XCTAssertTrue(rendered.html.contains(#"<th align="right">Native</th>"#))
+        XCTAssertTrue(rendered.html.contains(#"<td align="right">TBD</td>"#))
+        XCTAssertFalse(rendered.html.contains("|---|---:|---:|"))
+    }
+
     func testRendersRawHTMLAsText() {
         let renderer = MarkdownHTMLRenderer()
         let rendered = renderer.render(markdown: """

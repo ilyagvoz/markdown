@@ -22,6 +22,7 @@ public enum MarkdownEditorHTML {
               --focus: rgba(0, 107, 122, 0.14);
               --focus-strong: rgba(0, 107, 122, 0.22);
               --highlight: rgba(255, 214, 102, 0.52);
+              --table-stripe: rgba(0, 107, 122, 0.055);
             }
 
             html {
@@ -254,6 +255,46 @@ public enum MarkdownEditorHTML {
               color: var(--muted);
               border-left: 4px solid var(--quote);
               padding-left: 1.05em;
+            }
+
+            .editor-table {
+              width: 100%;
+              margin: 0 0 1.05em;
+              border-collapse: collapse;
+              font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+              font-size: 0.92em;
+              line-height: 1.45;
+            }
+
+            .editor-table th,
+            .editor-table td {
+              padding: 0.55em 0.7em;
+              border-bottom: 1px solid var(--rule);
+              vertical-align: top;
+            }
+
+            .editor-table th {
+              text-align: left;
+              font-weight: 680;
+              color: var(--text);
+            }
+
+            .editor-table tbody tr:nth-child(odd) {
+              background: var(--table-stripe);
+            }
+
+            .editor-table-cell {
+              min-height: 1.45em;
+              outline: none;
+              border-radius: 5px;
+              white-space: pre-wrap;
+              overflow-wrap: anywhere;
+            }
+
+            .editor-table-cell:focus {
+              padding: 0.04em 0.2em;
+              background: var(--focus);
+              box-shadow: 0 0 0 2px var(--focus-strong);
             }
 
             .editor-block-fence:not(.editor-block-unlocked) {
@@ -514,7 +555,15 @@ public enum MarkdownEditorHTML {
     editor.innerHTML = "";
     blocks = reindexBlocks(blocks);
 
-    for (const block of blocks) {
+    for (let index = 0; index < blocks.length; index += 1) {
+      const tableGroup = tableGroupAt(index);
+      if (tableGroup) {
+        renderTableGroup(tableGroup);
+        index = tableGroup.end;
+        continue;
+      }
+
+      const block = blocks[index];
       const row = document.createElement("div");
       row.className = `editor-block editor-block-${block.type}`;
       if (block.unlocked) row.classList.add("editor-block-unlocked");
@@ -670,7 +719,7 @@ public enum MarkdownEditorHTML {
     }
 
     if (focusID) {
-      const target = editor.querySelector(`[data-block-id="${focusID}"] .editor-content`);
+      const target = editor.querySelector(`[data-block-id="${focusID}"] .editor-content, [data-block-id="${focusID}"] .editor-table-cell`);
       target?.focus();
       if (selectionRange) {
         pendingMarkerSelection = { id: focusID, ...selectionRange };
@@ -691,6 +740,144 @@ public enum MarkdownEditorHTML {
         moveCaretToStart(target);
       }
     }
+  }
+
+  function tableGroupAt(index) {
+    const header = blocks[index];
+    const separator = blocks[index + 1];
+    if (header?.type !== "table-header" || separator?.type !== "table-separator") return null;
+
+    const rows = [];
+    let cursor = index + 2;
+    while (blocks[cursor]?.type === "table-row") {
+      rows.push(blocks[cursor]);
+      cursor += 1;
+    }
+
+    return {
+      header,
+      separator,
+      rows,
+      alignments: separator.alignments || header.alignments || [],
+      end: cursor - 1,
+    };
+  }
+
+  function renderTableGroup(group) {
+    const table = document.createElement("table");
+    table.className = "editor-table";
+    table.dataset.blockId = group.header.id;
+    table.dataset.type = "table";
+
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    headerRow.dataset.blockId = group.header.id;
+    group.header.cells.forEach((cell, cellIndex) => {
+      headerRow.append(tableCellElement("th", group.header, cellIndex, cell, group.alignments[cellIndex]));
+    });
+    thead.append(headerRow);
+    table.append(thead);
+
+    const tbody = document.createElement("tbody");
+    group.rows.forEach((rowBlock) => {
+      const row = document.createElement("tr");
+      row.dataset.blockId = rowBlock.id;
+      normalizedTableCells(rowBlock, group.header.cells.length).forEach((cell, cellIndex) => {
+        row.append(tableCellElement("td", rowBlock, cellIndex, cell, group.alignments[cellIndex]));
+      });
+      tbody.append(row);
+    });
+    table.append(tbody);
+    editor.append(table);
+  }
+
+  function tableCellElement(tag, block, cellIndex, value, alignment) {
+    const cell = document.createElement(tag);
+    if (alignment) cell.style.textAlign = alignment;
+
+    const content = document.createElement("div");
+    content.className = "editor-table-cell";
+    content.contentEditable = "true";
+    content.spellcheck = true;
+    content.dataset.raw = value;
+    content.dataset.cellIndex = String(cellIndex);
+    content.innerHTML = inlineMarkdownHTML(value);
+    content.setAttribute("aria-label", `${block.type} line ${block.index + 1} cell ${cellIndex + 1}`);
+
+    content.addEventListener("focus", () => {
+      const currentText = content.textContent;
+      content.textContent = tableCellValue(block.id, cellIndex);
+      if (currentText !== content.textContent) moveCaretToEnd(content);
+    });
+
+    content.addEventListener("beforeinput", (event) => {
+      captureUndoSnapshot(block.id, event);
+    });
+
+    content.addEventListener("input", () => {
+      recordUndoSnapshot();
+      blocks = updateTableCell(blocks, block.id, cellIndex, content.textContent);
+      post("documentChanged");
+    });
+
+    content.addEventListener("keydown", (event) => {
+      const route = classifyShortcut(event);
+      if (route === "save") {
+        event.preventDefault();
+        post("saveRequested", { key: event.key, route });
+        return;
+      }
+      if (route === "undo") {
+        event.preventDefault();
+        undo();
+        return;
+      }
+      if (route === "redo") {
+        event.preventDefault();
+        redo();
+        return;
+      }
+      if (route !== "editor") {
+        post("shortcut", { key: event.key, route });
+        return;
+      }
+      if (normalizedKey(event.key) === "Enter") {
+        event.preventDefault();
+      }
+    });
+
+    content.addEventListener("blur", () => {
+      render();
+      post("documentChanged");
+    });
+
+    cell.append(content);
+    return cell;
+  }
+
+  function tableCellValue(blockID, cellIndex) {
+    const block = findBlock(blockID);
+    return normalizedTableCells(block, cellIndex + 1)[cellIndex] || "";
+  }
+
+  function normalizedTableCells(block, minimumCount) {
+    const cells = [...(block?.cells || parseTableRow(block?.source || ""))];
+    while (cells.length < minimumCount) cells.push("");
+    return cells;
+  }
+
+  function updateTableCell(sourceBlocks, id, cellIndex, value) {
+    return sourceBlocks.map((block) => {
+      if (block.id !== id || !isTableBlock(block)) return block;
+      const cells = normalizedTableCells(block, cellIndex + 1);
+      cells[cellIndex] = value.replace(/\n/g, " ");
+      const source = tableRowSource(cells);
+      return { ...block, cells, source, visibleText: source };
+    });
+  }
+
+  function tableRowSource(cells) {
+    return `| ${cells.map((cell) => cell.trim()).join(" | ")} |`;
   }
 
   function post(type, payload = {}) {
@@ -986,7 +1173,7 @@ public enum MarkdownEditorHTML {
       if (parsed.type === "fence") inFence = !inFence;
     });
 
-    return parsedBlocks;
+    return classifyTableBlocks(parsedBlocks);
   }
 
   function serializeBlocks(sourceBlocks) {
@@ -1077,6 +1264,67 @@ public enum MarkdownEditorHTML {
       || block({ index, source, type: "paragraph", visibleText: source, prefix: "", suffix: "" });
   }
 
+  function classifyTableBlocks(sourceBlocks) {
+    const result = [...sourceBlocks];
+    for (let index = 0; index < result.length - 1; index += 1) {
+      if (result[index].type !== "paragraph" || result[index + 1].type !== "paragraph") continue;
+      if (!looksLikeTableRow(result[index].source) || !isTableSeparatorLine(result[index + 1].source)) continue;
+
+      const alignments = parseTableAlignments(result[index + 1].source);
+      result[index] = tableBlock(result[index], "table-header", alignments);
+      result[index + 1] = { ...result[index + 1], type: "table-separator", alignments, visibleText: result[index + 1].source };
+
+      let rowIndex = index + 2;
+      while (rowIndex < result.length && result[rowIndex].type === "paragraph" && looksLikeTableRow(result[rowIndex].source)) {
+        result[rowIndex] = tableBlock(result[rowIndex], "table-row", alignments);
+        rowIndex += 1;
+      }
+      index = rowIndex - 1;
+    }
+    return result;
+  }
+
+  function tableBlock(sourceBlock, type, alignments) {
+    return {
+      ...sourceBlock,
+      type,
+      cells: parseTableRow(sourceBlock.source),
+      alignments,
+      visibleText: sourceBlock.source,
+      prefix: "",
+      suffix: "",
+    };
+  }
+
+  function looksLikeTableRow(source) {
+    const trimmed = source.trim();
+    return trimmed.includes("|") && parseTableRow(source).length > 1;
+  }
+
+  function isTableSeparatorLine(source) {
+    if (!looksLikeTableRow(source)) return false;
+    return parseTableRow(source).every((cell) => /^:?-{3,}:?$/.test(cell.replace(/\s+/g, "")));
+  }
+
+  function parseTableAlignments(source) {
+    return parseTableRow(source).map((cell) => {
+      const marker = cell.replace(/\s+/g, "");
+      const left = marker.startsWith(":");
+      const right = marker.endsWith(":");
+      if (left && right) return "center";
+      if (right) return "right";
+      if (left) return "left";
+      return "left";
+    });
+  }
+
+  function parseTableRow(source) {
+    let row = source.trim();
+    if (row.startsWith("|")) row = row.slice(1);
+    if (row.endsWith("|")) row = row.slice(0, -1);
+    return row.split("|").map((cell) => cell.trim());
+  }
+
   function parseFence(source, index) {
     const [, leading = "", marker = "", language = ""] = source.match(/^(\s*)(```|~~~)(.*)$/) ?? [];
     if (!marker) return null;
@@ -1114,6 +1362,7 @@ public enum MarkdownEditorHTML {
   }
 
   function serializeBlock(block) {
+    if (isTableBlock(block)) return block.source;
     if (block.unlocked) return block.visibleText;
     return block.prefix + block.visibleText + block.suffix;
   }
@@ -1150,6 +1399,10 @@ public enum MarkdownEditorHTML {
 
   function isRawDisplayType(block) {
     return block.type === "code" || block.type === "fence";
+  }
+
+  function isTableBlock(block) {
+    return block?.type === "table-header" || block?.type === "table-separator" || block?.type === "table-row";
   }
 
   function inlineMarkdownHTML(value) {

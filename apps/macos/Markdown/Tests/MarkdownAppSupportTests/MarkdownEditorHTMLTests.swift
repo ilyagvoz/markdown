@@ -57,4 +57,18 @@ final class MarkdownEditorHTMLTests: XCTestCase {
         XCTAssertTrue(html.contains("editor-block-code-end"))
         XCTAssertTrue(html.contains("border-top-width: 0;"))
     }
+
+    func testIncludesRenderedTableSupport() {
+        let html = MarkdownEditorHTML.document(
+            markdown: "| Feature | Native | WebView |\n|---|---:|---:|\n| Text selection | TBD | TBD |",
+            title: "Doc"
+        )
+
+        XCTAssertTrue(html.contains(".editor-table"))
+        XCTAssertTrue(html.contains("function parseTableRow"))
+        XCTAssertTrue(html.contains("function renderTableGroup"))
+        XCTAssertTrue(html.contains("\"table-header\""))
+        XCTAssertTrue(html.contains("\"table-separator\""))
+        XCTAssertTrue(html.contains("updateTableCell"))
+    }
 }
