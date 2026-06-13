@@ -1,6 +1,6 @@
 # Validation
 
-Last updated: 2026-06-12
+Last updated: 2026-06-13
 
 ## Automated Gates
 
@@ -12,9 +12,9 @@ Run:
 
 Latest result:
 
-- Passed.
-- 28 unit tests.
-- Coverage areas: Markdown HTML rendering, raw HTML escaping, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, live-preview editor HTML/script generation, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
+- Passed on 2026-06-13 in 0.84s on a warm cache.
+- 35 unit tests.
+- Coverage areas: Markdown HTML rendering, raw HTML escaping, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, live-preview editor HTML/script generation including icon-only copy controls, code-block formatting and unwrap behavior, and tail-area append editing, default Markdown reader registration constants/errors, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
 
 Run:
 
@@ -49,40 +49,70 @@ Latest result:
 - Passed on 2026-06-12.
 - Resolved `origin/main` from GitHub, fetched commit `0532ee9`, built it in a temporary worktree, and installed `/Applications/Markdown.app`.
 
-Run targeted UI smoke scripts during iteration. Prefer the narrowest script and the smallest number of feature-specific assertions that cover the work in progress:
+Run the fast installed-app smoke when you want broad app health without the full regression cost:
+
+```sh
+./scripts/smoke-macos-ui.sh
+```
+
+It covers launch, single-file open, folder open, current-document search, one edit/save path, new-file creation, rename, process health, and crash-report checks.
+
+Latest fast-smoke result:
+
+- Passed on 2026-06-13 in 13.2s.
+
+Run targeted UI E2E regression scripts during iteration. Prefer the narrowest script and the smallest number of feature-specific assertions that cover the work in progress:
 
 ```sh
 ./scripts/smoke-macos-launch-window.sh
-./scripts/smoke-macos-navigation.sh
-./scripts/smoke-macos-files.sh
-./scripts/smoke-macos-editing.sh
-./scripts/smoke-macos-watch.sh
+./scripts/e2e-macos-navigation.sh
+./scripts/e2e-macos-files.sh
+./scripts/e2e-macos-editing.sh
+./scripts/e2e-macos-code-block-formatting.sh
+./scripts/e2e-macos-images.sh
+./scripts/e2e-macos-watch.sh
 ```
 
 Use the narrowest script that covers the area being changed:
 
 - `smoke-macos-launch-window.sh` for smoke harness launch placement, display selection, and saved-window-frame behavior.
-- `smoke-macos-navigation.sh` for opening, search, outline, pane toggles, sidebar keyboarding, and reveal.
-- `smoke-macos-files.sh` for new-file creation, autosave from a blank file, and rename.
-- `smoke-macos-editing.sh` for live-preview editing, list continuation/exit, blank-line editing, Markdown copy controls, formatting, undo/redo, and marker replacement.
-- `smoke-macos-watch.sh` for folder watcher add/delete and selected-file churn.
+- `e2e-macos-navigation.sh` for opening, search, outline, pane toggles, sidebar keyboarding, and reveal.
+- `e2e-macos-files.sh` for new-file creation, autosave from a blank file, and rename.
+- `e2e-macos-editing.sh` for live-preview editing, list continuation/exit, blank-line editing, Markdown copy controls, formatting, undo/redo, and marker replacement.
+- `e2e-macos-code-block-formatting.sh` for fenced-code Left Arrow unlock and unwrap behavior.
+- `e2e-macos-images.sh` for rendered local Markdown images and full-window image preview zoom controls.
+- `e2e-macos-watch.sh` for folder watcher add/delete and selected-file churn.
+
+Latest code-block formatting result:
+
+- Passed on 2026-06-13 in 18.5s.
+- `e2e-macos-code-block-formatting.sh` opened a fenced Swift code block, used the Left Arrow marker-edit path, deleted the opening fence, saved, and verified the Markdown was unwrapped on disk.
+
+Latest image rendering result:
+
+- Passed on 2026-06-12.
+- `e2e-macos-images.sh` opened a Markdown file with a relative local SVG image, opened the full-window preview, exercised zoom in, zoom out, reset, and close shortcuts, saved, and verified the image Markdown stayed unchanged.
 
 Latest launch-window result:
 
 - Passed.
 - `smoke-macos-launch-window.sh` opened the app at `0 30 1299 848` on the built-in display after launching hidden and activating only after placement.
 
-Run the full UI battery as a pre-commit/progress gate when the user asks to commit, ship, or record completed progress. Avoid running it after every small iteration unless the change is cross-cutting or touches shared launch/install/WebView/AppKit bridge wiring:
+Latest navigation E2E result:
+
+- Passed on 2026-06-13 in 23.8s after replacing avoidable relaunches with in-app opens.
+
+Run the full UI E2E battery as a ship/progress gate when the user asks to ship or record broad completed progress. Avoid running it after every small iteration unless the change is cross-cutting or touches shared launch/install/WebView/AppKit bridge wiring:
 
 ```sh
-./scripts/smoke-macos-ui.sh
+./scripts/e2e-macos-ui.sh
 ```
 
 Latest result:
 
-- Passed.
-- Orchestrates the focused navigation, file, editing, and watcher smoke scripts against the installed app.
-- Drives `Cmd+O`, `Cmd+N`, `Cmd+F`, `Cmd+/`, `Cmd+S`, `Cmd+B`, `Cmd+I`, `Cmd+E`, `Cmd+K`, `Cmd+Control+H`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, folder-view file creation, native file rename prompt, debounced autosave, live-preview editing, Markdown copy buttons, selection formatting, saved Markdown assertions, folder add/delete events, selected-file rename/delete, and final Markdown-file deletion.
+- Passed on 2026-06-13 in 164.1s before the final navigation relaunch consolidation; the changed navigation slice passed afterward as noted above.
+- Orchestrates the targeted navigation, file, editing, code-block formatting, image, and watcher E2E scripts against the installed app.
+- Drives `Cmd+O`, `Cmd+N`, `Cmd+F`, `Cmd+/`, `Cmd+S`, `Cmd+B`, `Cmd+I`, `Cmd+E`, `Cmd+K`, `Cmd+Control+H`, `Cmd+Up`, `Cmd+Down`, `Cmd+Left Arrow`, `Cmd+Right Arrow`, `Cmd+R`, plain sidebar arrows, `Space`, `Return`, outline clicks, current-document search-result clicks, workspace search-result clicks, folder-view file creation, native file rename prompt, debounced autosave, live-preview editing, Markdown copy buttons, selection formatting, fenced-code unwrap formatting, rendered image preview zoom controls, saved Markdown assertions, folder add/delete events, selected-file rename/delete, and final Markdown-file deletion.
 - Fails if the app exits unexpectedly or a new `Markdown-*.ips` report appears.
 
 See `docs/Test-Coverage.md` for the user-focused coverage matrix.
@@ -235,6 +265,10 @@ Next paragraph
 - Focused the first unordered-list item.
 - Pressed Left Arrow repeatedly to reach marker replacement, typed `>`, and saved with `Cmd+S`.
 - Verified the file on disk was exactly `> One`.
+- Opened a temporary copy of `scripts/fixtures/code-line-extraction.md`, which contains a fenced code block with a Markdown-looking `* dd a new line break here? ` line.
+- Focused that code line, pressed `Cmd+Left Arrow` then Left Arrow, saved, and verified the editor split the fenced code block around that single list item.
+- Captured before/after screenshots under `artifacts/screenshots/code-block-formatting/`.
+- Opened a temporary fenced code block containing two empty code lines, focused one empty code line, pressed Backspace, saved, and verified exactly one empty line was removed while the surrounding fence stayed intact.
 - Opened a temporary Markdown file containing `Format me`.
 - Selected the paragraph with `Cmd+A`, applied bold with `Cmd+B`, saved, and verified the file on disk was exactly `**Format me**`.
 - Opened a temporary Markdown file containing `Highlight me`.

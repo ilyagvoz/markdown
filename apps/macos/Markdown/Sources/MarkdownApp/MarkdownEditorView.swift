@@ -44,8 +44,8 @@ struct MarkdownEditorView: NSViewRepresentable {
             context.coordinator.isDirty = false
             context.coordinator.lastActionToken = nil
             context.coordinator.pendingAction = action
-            let html = MarkdownEditorHTML.document(markdown: markdown, title: title)
-            webView.loadHTMLString(html, baseURL: baseURL)
+            let html = MarkdownEditorHTML.document(markdown: markdown, title: title, baseURL: baseURL)
+            context.coordinator.load(html: html, baseURL: baseURL, in: webView)
             return
         }
 
@@ -61,12 +61,60 @@ struct MarkdownEditorView: NSViewRepresentable {
         var pendingAction: PreviewAction?
         var isLoaded = false
         var isDirty = false
+        var temporaryHTMLURL: URL?
         var onChange: (String) -> Void
         var onSave: () -> Void
 
         init(onChange: @escaping (String) -> Void, onSave: @escaping () -> Void) {
             self.onChange = onChange
             self.onSave = onSave
+        }
+
+        func load(html: String, baseURL: URL, in webView: WKWebView) {
+            do {
+                let htmlURL = try writeTemporaryHTML(html)
+                let readAccessURL = commonReadAccessURL(for: htmlURL, baseURL: baseURL)
+                webView.loadFileURL(htmlURL, allowingReadAccessTo: readAccessURL)
+            } catch {
+                webView.loadHTMLString(html, baseURL: baseURL)
+            }
+        }
+
+        private func writeTemporaryHTML(_ html: String) throws -> URL {
+            removeTemporaryHTML()
+
+            let directory = FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Caches/com.gvozdenko.markdown/MarkdownEditorWebView", isDirectory: true)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+            let htmlURL = directory.appendingPathComponent("\(UUID().uuidString).html")
+            try html.write(to: htmlURL, atomically: true, encoding: .utf8)
+            temporaryHTMLURL = htmlURL
+            return htmlURL
+        }
+
+        private func commonReadAccessURL(for htmlURL: URL, baseURL: URL) -> URL {
+            let htmlComponents = htmlURL.deletingLastPathComponent().standardizedFileURL.pathComponents
+            let baseComponents = baseURL.standardizedFileURL.pathComponents
+            var commonComponents: [String] = []
+
+            for (htmlComponent, baseComponent) in zip(htmlComponents, baseComponents) {
+                guard htmlComponent == baseComponent else { break }
+                commonComponents.append(htmlComponent)
+            }
+
+            guard !commonComponents.isEmpty else {
+                return URL(fileURLWithPath: "/", isDirectory: true)
+            }
+
+            let path = NSString.path(withComponents: commonComponents)
+            return URL(fileURLWithPath: path, isDirectory: true)
+        }
+
+        private func removeTemporaryHTML() {
+            guard let temporaryHTMLURL else { return }
+            try? FileManager.default.removeItem(at: temporaryHTMLURL)
+            self.temporaryHTMLURL = nil
         }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {

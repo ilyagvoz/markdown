@@ -7,7 +7,7 @@ source "$ROOT_DIR/scripts/lib/macos-ui-smoke.sh"
 ensure_app_installed
 announce_keyboard_smoke
 
-echo "UI smoke: folder watcher add/delete"
+echo "UI regression: folder watcher add/delete"
 WATCH_DIR="$(mktemp -d /tmp/markdown-ui-watch.XXXXXX)"
 mkdir -p "$WATCH_DIR/notes"
 printf '# Alpha\n\nFirst file.\n' > "$WATCH_DIR/alpha.md"
@@ -32,4 +32,4 @@ require_running "last markdown file delete"
 quit_app
 rm -rf "$WATCH_DIR"
 
-echo "UI smoke passed: folder watching and selected-file churn."
+echo "UI regression passed: folder watching and selected-file churn."

@@ -33,6 +33,11 @@ final class MarkdownHTMLRendererTests: XCTestCase {
         XCTAssertTrue(rendered.html.contains("color-scheme: light"))
         XCTAssertTrue(rendered.html.contains("\"New York\""))
         XCTAssertTrue(rendered.html.contains("max-width: 780px"))
+        XCTAssertTrue(rendered.html.contains("ul, ol { padding-left: 1.18em; }"))
+        XCTAssertTrue(rendered.html.contains("p:has(+ ul)"))
+        XCTAssertTrue(rendered.html.contains("p:has(+ ol)"))
+        XCTAssertTrue(rendered.html.contains("margin-bottom: 0.30em;"))
+        XCTAssertFalse(rendered.html.contains("margin-top: -0.75em;"))
     }
 
     func testAddsOutlineAnchorsForDocumentLandmarks() {

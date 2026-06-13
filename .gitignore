@@ -12,3 +12,4 @@ artifacts/Markdown.app/
 artifacts/Markdown-*.zip
 artifacts/Markdown-*.zip.sha256
 artifacts/screenshots/
+artifacts/image-demo/

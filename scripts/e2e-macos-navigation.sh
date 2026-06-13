@@ -7,7 +7,7 @@ source "$ROOT_DIR/scripts/lib/macos-ui-smoke.sh"
 ensure_app_installed
 announce_keyboard_smoke
 
-echo "UI smoke: Finder-style file open"
+echo "UI regression: Finder-style file open"
 launch_app_from_finder_item "$FIXTURE_DIR/basic.md"
 FINDER_SELECTED_PATH="$(osascript -l JavaScript <<JXA
 ObjC.import('Foundation')
@@ -26,8 +26,7 @@ if [[ "$FINDER_SELECTED_PATH" != "$FIXTURE_DIR/basic.md" ]]; then
   exit 1
 fi
 
-echo "UI smoke: single-file open and shortcuts"
-launch_app "$FIXTURE_DIR/basic.md"
+echo "UI regression: single-file open and shortcuts"
 run_applescript "single-file search" '
   my guardedKeystrokeUsing("f", command down)
   delay 0.3
@@ -55,8 +54,8 @@ run_applescript "open panel shortcut" '
   my guardedKeyCode(53)
 '
 
-echo "UI smoke: folder open, navigation, search, outline"
-launch_app "$FIXTURE_DIR"
+echo "UI regression: folder open, navigation, search, outline"
+open_item_in_running_app "$FIXTURE_DIR"
 run_applescript "sidebar plain-key navigation" '
   my guardedKeyCode(126)
   delay 0.2
@@ -101,4 +100,4 @@ run_applescript "reveal selected file shortcut" '
 '
 
 quit_app
-echo "UI smoke passed: navigation, search, outline, pane toggles, reveal, and open shortcuts."
+echo "UI regression passed: navigation, search, outline, pane toggles, reveal, and open shortcuts."

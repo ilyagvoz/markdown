@@ -20,8 +20,8 @@ announce_keyboard_smoke() {
   if [[ "${MARKDOWN_SMOKE_QUIET_NOTICE:-0}" == "1" ]]; then
     return
   fi
-  echo $'\aUI smoke sends keyboard input. It will refocus Markdown before scripted keystrokes; avoid using the mouse until it finishes for the smoothest run.'
-  osascript -e 'display notification "Smoke tests will refocus Markdown before scripted keystrokes." with title "Markdown UI smoke"' >/dev/null 2>&1 || true
+  echo $'\aMarkdown UI automation sends keyboard input. It will refocus Markdown before scripted keystrokes; avoid using the mouse until it finishes for the smoothest run.'
+  osascript -e 'display notification "UI automation will refocus Markdown before scripted keystrokes." with title "Markdown UI automation"' >/dev/null 2>&1 || true
 }
 
 quit_app() {
@@ -41,9 +41,10 @@ launch_app() {
   prepare_smoke_window_placement
   frame="$(smoke_window_frame_default)"
   open -n -j "$APP_PATH" --args --smoke-window-frame-default "$frame" --open "$open_path"
-  sleep 3
+  wait_for_markdown_window "launching $open_path"
   require_running "launching $open_path"
   focus_window
+  sleep "${MARKDOWN_SMOKE_LAUNCH_SETTLE:-1}"
 }
 
 launch_app_from_finder_item() {
@@ -51,9 +52,20 @@ launch_app_from_finder_item() {
   quit_app
   prepare_smoke_window_placement
   open -n -b "$BUNDLE_ID" "$open_path"
-  sleep 3
+  wait_for_markdown_window "opening Finder item $open_path"
   require_running "opening Finder item $open_path"
   focus_window
+  sleep "${MARKDOWN_SMOKE_LAUNCH_SETTLE:-1}"
+}
+
+open_item_in_running_app() {
+  local open_path="$1"
+  require_running "before opening $open_path"
+  open -b "$BUNDLE_ID" "$open_path"
+  wait_for_markdown_window "opening $open_path"
+  require_running "opening $open_path"
+  focus_window
+  sleep "${MARKDOWN_SMOKE_OPEN_SETTLE:-1}"
 }
 
 smoke_window_bounds() {
@@ -164,10 +176,31 @@ APPLESCRIPT
   sleep 0.4
 }
 
+wait_for_markdown_window() {
+  local label="$1"
+  if ! osascript <<'APPLESCRIPT' >/dev/null 2>&1
+tell application "System Events"
+  repeat 80 times
+    if exists process "Markdown" then
+      tell process "Markdown"
+        if exists window 1 then return
+      end tell
+    end if
+    delay 0.05
+  end repeat
+end tell
+error "Markdown window did not appear"
+APPLESCRIPT
+  then
+    echo "Markdown window was not ready during UI automation: $label" >&2
+    exit 1
+  fi
+}
+
 require_running() {
   local label="$1"
   if ! pgrep -x Markdown >/dev/null; then
-    echo "Markdown exited during UI smoke: $label" >&2
+    echo "Markdown exited during UI automation: $label" >&2
     exit 1
   fi
   check_no_crash_reports "$label"
@@ -176,10 +209,67 @@ require_running() {
 check_no_crash_reports() {
   local label="$1"
   if find "$CRASH_DIR" -name 'Markdown-*.ips' -newer "$MARKER" -print -quit | grep -q .; then
-    echo "New Markdown crash report appeared during UI smoke: $label" >&2
+    echo "New Markdown crash report appeared during UI automation: $label" >&2
     find "$CRASH_DIR" -name 'Markdown-*.ips' -newer "$MARKER" -print >&2
     exit 1
   fi
+}
+
+wait_for_path() {
+  local path="$1"
+  local label="${2:-$path}"
+  local attempts="${3:-50}"
+  local delay_seconds="${4:-0.1}"
+
+  for ((attempt = 1; attempt <= attempts; attempt += 1)); do
+    if [[ -e "$path" ]]; then
+      return
+    fi
+    sleep "$delay_seconds"
+  done
+
+  echo "Timed out waiting for $label" >&2
+  exit 1
+}
+
+wait_for_no_path() {
+  local path="$1"
+  local label="${2:-$path}"
+  local attempts="${3:-50}"
+  local delay_seconds="${4:-0.1}"
+
+  for ((attempt = 1; attempt <= attempts; attempt += 1)); do
+    if [[ ! -e "$path" ]]; then
+      return
+    fi
+    sleep "$delay_seconds"
+  done
+
+  echo "Timed out waiting for $label to disappear" >&2
+  exit 1
+}
+
+wait_for_file_contents() {
+  local path="$1"
+  local expected="$2"
+  local label="${3:-$path}"
+  local attempts="${4:-60}"
+  local delay_seconds="${5:-0.1}"
+
+  for ((attempt = 1; attempt <= attempts; attempt += 1)); do
+    if [[ -f "$path" && "$(cat "$path")" == "$expected" ]]; then
+      return
+    fi
+    sleep "$delay_seconds"
+  done
+
+  echo "Timed out waiting for expected contents: $label" >&2
+  if [[ -f "$path" ]]; then
+    cat "$path" >&2
+  else
+    echo "<missing file: $path>" >&2
+  fi
+  exit 1
 }
 
 run_applescript() {
@@ -198,7 +288,7 @@ on focusMarkdown(actionName)
       end if
       delay 0.1
     end repeat
-    error "Markdown UI smoke could not focus Markdown before " & actionName & ". Keep the Markdown window available while smoke tests type."
+    error "Markdown UI automation could not focus Markdown before " & actionName & ". Keep the Markdown window available while UI automation types."
   end tell
 end focusMarkdown
 
@@ -234,7 +324,7 @@ tell application "System Events"
 $script
 end tell
 APPLESCRIPT
-  sleep 1
+  sleep "${MARKDOWN_SMOKE_POST_SCRIPT_DELAY:-0.35}"
   if [[ -s "$log_file" ]]; then
     echo "AppleScript output for $label:"
     cat "$log_file"

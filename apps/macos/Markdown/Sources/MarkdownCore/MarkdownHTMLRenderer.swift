@@ -118,7 +118,9 @@ public struct MarkdownHTMLRenderer: Sendable {
               text-underline-offset: 0.18em;
             }
 
-            ul, ol { padding-left: 1.45em; }
+            ul, ol { padding-left: 1.18em; }
+            p:has(+ ul),
+            p:has(+ ol) { margin-bottom: 0.30em; }
             li + li { margin-top: 0.18em; }
             li > p { margin-bottom: 0.35em; }
 

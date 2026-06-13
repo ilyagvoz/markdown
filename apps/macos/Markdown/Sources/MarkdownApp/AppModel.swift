@@ -434,6 +434,15 @@ final class AppModel: ObservableObject {
         isShortcutHelpPresented = true
     }
 
+    func makeDefaultMarkdownReader() {
+        switch DefaultMarkdownReaderRegistration.makeDefaultReader(bundleIdentifier: Bundle.main.bundleIdentifier) {
+        case .success:
+            statusText = "Markdown is now the default reader for Markdown files"
+        case .failure(let error):
+            statusText = error.userMessage
+        }
+    }
+
     func revealSelectedFileInFinder() {
         guard let selectedFileURL else { return }
         NSWorkspace.shared.activateFileViewerSelecting([selectedFileURL])

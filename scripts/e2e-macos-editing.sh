@@ -7,7 +7,7 @@ source "$ROOT_DIR/scripts/lib/macos-ui-smoke.sh"
 ensure_app_installed
 announce_keyboard_smoke
 
-echo "UI smoke: live preview editing"
+echo "UI regression: live preview editing"
 EDIT_DIR="$(mktemp -d /tmp/markdown-ui-edit.XXXXXX)"
 EDIT_FILE="$EDIT_DIR/edit.md"
 printf 'Hello\n' > "$EDIT_FILE"
@@ -31,7 +31,7 @@ run_applescript "edit new bullet content" '
 '
 EXPECTED_EDIT=$'Here is a list with a bunch of bullet points:\n* One\n* Two'
 if [[ "$(cat "$EDIT_FILE")" != "$EXPECTED_EDIT" ]]; then
-  echo "Live editing smoke failed: unexpected saved Markdown" >&2
+  echo "Live editing regression failed: unexpected saved Markdown" >&2
   cat "$EDIT_FILE" >&2
   exit 1
 fi
@@ -40,7 +40,7 @@ rm -rf "$EDIT_DIR"
 ORDERED_DIR="$(mktemp -d /tmp/markdown-ui-ordered.XXXXXX)"
 ORDERED_FILE="$ORDERED_DIR/ordered.md"
 printf '1. One\n' > "$ORDERED_FILE"
-launch_app "$ORDERED_FILE"
+open_item_in_running_app "$ORDERED_FILE"
 run_applescript "edit ordered list continuation" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "ordered-list line 1"
@@ -61,7 +61,7 @@ run_applescript "edit ordered list continuation" '
 '
 EXPECTED_ORDERED=$'1. One\n2. Two\n3. Three'
 if [[ "$(cat "$ORDERED_FILE")" != "$EXPECTED_ORDERED" ]]; then
-  echo "Ordered list smoke failed: unexpected saved Markdown" >&2
+  echo "Ordered list regression failed: unexpected saved Markdown" >&2
   cat "$ORDERED_FILE" >&2
   exit 1
 fi
@@ -70,7 +70,7 @@ rm -rf "$ORDERED_DIR"
 ORDERED_EXIT_DIR="$(mktemp -d /tmp/markdown-ui-ordered-exit.XXXXXX)"
 ORDERED_EXIT_FILE="$ORDERED_EXIT_DIR/ordered-exit.md"
 printf '1. One\n2. Two\n3. Three' > "$ORDERED_EXIT_FILE"
-launch_app "$ORDERED_EXIT_FILE"
+open_item_in_running_app "$ORDERED_EXIT_FILE"
 run_applescript "edit ordered list double-return exit" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "ordered-list line 3"
@@ -96,7 +96,7 @@ run_applescript "edit ordered list double-return exit" '
 '
 EXPECTED_ORDERED_EXIT=$'1. One\n2. Two\n3. Three\nAfter list\nNext paragraph'
 if [[ "$(cat "$ORDERED_EXIT_FILE")" != "$EXPECTED_ORDERED_EXIT" ]]; then
-  echo "Ordered list exit smoke failed: unexpected saved Markdown" >&2
+  echo "Ordered list exit regression failed: unexpected saved Markdown" >&2
   cat "$ORDERED_EXIT_FILE" >&2
   exit 1
 fi
@@ -105,7 +105,7 @@ rm -rf "$ORDERED_EXIT_DIR"
 BLANK_ENTER_DIR="$(mktemp -d /tmp/markdown-ui-blank-enter.XXXXXX)"
 BLANK_ENTER_FILE="$BLANK_ENTER_DIR/blank-enter.md"
 printf 'Intro\n' > "$BLANK_ENTER_FILE"
-launch_app "$BLANK_ENTER_FILE"
+open_item_in_running_app "$BLANK_ENTER_FILE"
 run_applescript "edit blank line then press return" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "blank line"
@@ -121,7 +121,7 @@ run_applescript "edit blank line then press return" '
 '
 EXPECTED_BLANK_ENTER=$'Intro\nThis paragraph should survive Return\nNext paragraph'
 if [[ "$(cat "$BLANK_ENTER_FILE")" != "$EXPECTED_BLANK_ENTER" ]]; then
-  echo "Blank-line Return smoke failed: unexpected saved Markdown" >&2
+  echo "Blank-line Return regression failed: unexpected saved Markdown" >&2
   cat "$BLANK_ENTER_FILE" >&2
   exit 1
 fi
@@ -130,7 +130,7 @@ rm -rf "$BLANK_ENTER_DIR"
 BLANK_BLUR_DIR="$(mktemp -d /tmp/markdown-ui-blank-blur.XXXXXX)"
 BLANK_BLUR_FILE="$BLANK_BLUR_DIR/blank-blur.md"
 printf 'Intro\n' > "$BLANK_BLUR_FILE"
-launch_app "$BLANK_BLUR_FILE"
+open_item_in_running_app "$BLANK_BLUR_FILE"
 run_applescript "edit blank line then blur" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "blank line"
@@ -144,7 +144,7 @@ run_applescript "edit blank line then blur" '
 '
 EXPECTED_BLANK_BLUR=$'Intro\nThis paragraph should survive blur'
 if [[ "$(cat "$BLANK_BLUR_FILE")" != "$EXPECTED_BLANK_BLUR" ]]; then
-  echo "Blank-line blur/autosave smoke failed: unexpected Markdown" >&2
+  echo "Blank-line blur/autosave regression failed: unexpected Markdown" >&2
   cat "$BLANK_BLUR_FILE" >&2
   exit 1
 fi
@@ -155,7 +155,7 @@ COPY_FILE="$COPY_DIR/copy.md"
 EXPECTED_COPY_DOCUMENT=$'# Copy Test\n\nSome **markdown**\n\n```swift\nlet value = 42\nprint(value)\n```\n\nAfter code'
 EXPECTED_COPY_CODE=$'```swift\nlet value = 42\nprint(value)\n```'
 printf '%s' "$EXPECTED_COPY_DOCUMENT" > "$COPY_FILE"
-launch_app "$COPY_FILE"
+open_item_in_running_app "$COPY_FILE"
 printf '' | pbcopy
 run_applescript "copy whole document as markdown" '
   tell process "Markdown"
@@ -165,7 +165,7 @@ run_applescript "copy whole document as markdown" '
   delay 0.5
 '
 if [[ "$(pbpaste)" != "$EXPECTED_COPY_DOCUMENT" ]]; then
-  echo "Document copy smoke failed: unexpected clipboard Markdown" >&2
+  echo "Document copy regression failed: unexpected clipboard Markdown" >&2
   pbpaste >&2
   exit 1
 fi
@@ -178,7 +178,7 @@ run_applescript "copy code section as markdown" '
   delay 0.5
 '
 if [[ "$(pbpaste)" != "$EXPECTED_COPY_CODE" ]]; then
-  echo "Code-section copy smoke failed: unexpected clipboard Markdown" >&2
+  echo "Code-section copy regression failed: unexpected clipboard Markdown" >&2
   pbpaste >&2
   exit 1
 fi
@@ -187,7 +187,7 @@ rm -rf "$COPY_DIR"
 FORMAT_DIR="$(mktemp -d /tmp/markdown-ui-format.XXXXXX)"
 FORMAT_FILE="$FORMAT_DIR/format.md"
 printf 'Format me\n' > "$FORMAT_FILE"
-launch_app "$FORMAT_FILE"
+open_item_in_running_app "$FORMAT_FILE"
 run_applescript "format selected text bold" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "paragraph line 1"
@@ -202,13 +202,13 @@ run_applescript "format selected text bold" '
   delay 0.7
 '
 if [[ "$(cat "$FORMAT_FILE")" != "**Format me**" ]]; then
-  echo "Bold formatting smoke failed: unexpected saved Markdown" >&2
+  echo "Bold formatting regression failed: unexpected saved Markdown" >&2
   cat "$FORMAT_FILE" >&2
   exit 1
 fi
 HIGHLIGHT_FILE="$FORMAT_DIR/highlight.md"
 printf 'Highlight me\n' > "$HIGHLIGHT_FILE"
-launch_app "$HIGHLIGHT_FILE"
+open_item_in_running_app "$HIGHLIGHT_FILE"
 run_applescript "format selected text highlight" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "paragraph line 1"
@@ -223,13 +223,13 @@ run_applescript "format selected text highlight" '
   delay 0.7
 '
 if [[ "$(cat "$HIGHLIGHT_FILE")" != "<mark>Highlight me</mark>" ]]; then
-  echo "Highlight formatting smoke failed: unexpected saved Markdown" >&2
+  echo "Highlight formatting regression failed: unexpected saved Markdown" >&2
   cat "$HIGHLIGHT_FILE" >&2
   exit 1
 fi
 CODE_FILE="$FORMAT_DIR/code.md"
 printf 'Code me\n' > "$CODE_FILE"
-launch_app "$CODE_FILE"
+open_item_in_running_app "$CODE_FILE"
 run_applescript "format selected text inline code" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "paragraph line 1"
@@ -244,13 +244,13 @@ run_applescript "format selected text inline code" '
   delay 0.7
 '
 if [[ "$(cat "$CODE_FILE")" != '`Code me`' ]]; then
-  echo "Inline code formatting smoke failed: unexpected saved Markdown" >&2
+  echo "Inline code formatting regression failed: unexpected saved Markdown" >&2
   cat "$CODE_FILE" >&2
   exit 1
 fi
 LINK_FILE="$FORMAT_DIR/link.md"
 printf 'OpenAI\n' > "$LINK_FILE"
-launch_app "$LINK_FILE"
+open_item_in_running_app "$LINK_FILE"
 run_applescript "format selected text link" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "paragraph line 1"
@@ -267,7 +267,7 @@ run_applescript "format selected text link" '
   delay 0.7
 '
 if [[ "$(cat "$LINK_FILE")" != '[OpenAI](https://openai.com)' ]]; then
-  echo "Link formatting smoke failed: unexpected saved Markdown" >&2
+  echo "Link formatting regression failed: unexpected saved Markdown" >&2
   cat "$LINK_FILE" >&2
   exit 1
 fi
@@ -276,7 +276,7 @@ rm -rf "$FORMAT_DIR"
 UNDO_DIR="$(mktemp -d /tmp/markdown-ui-undo.XXXXXX)"
 UNDO_FILE="$UNDO_DIR/undo.md"
 printf 'Original\n' > "$UNDO_FILE"
-launch_app "$UNDO_FILE"
+open_item_in_running_app "$UNDO_FILE"
 run_applescript "edit undo and redo" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "paragraph line 1"
@@ -293,7 +293,7 @@ run_applescript "edit undo and redo" '
   delay 0.7
 '
 if [[ "$(cat "$UNDO_FILE")" != "Original" ]]; then
-  echo "Undo smoke failed: unexpected saved Markdown after undo" >&2
+  echo "Undo regression failed: unexpected saved Markdown after undo" >&2
   cat "$UNDO_FILE" >&2
   exit 1
 fi
@@ -304,7 +304,7 @@ run_applescript "redo edit" '
   delay 0.7
 '
 if [[ "$(cat "$UNDO_FILE")" != "Changed" ]]; then
-  echo "Redo smoke failed: unexpected saved Markdown after redo" >&2
+  echo "Redo regression failed: unexpected saved Markdown after redo" >&2
   cat "$UNDO_FILE" >&2
   exit 1
 fi
@@ -313,7 +313,7 @@ rm -rf "$UNDO_DIR"
 MARKER_DIR="$(mktemp -d /tmp/markdown-ui-marker.XXXXXX)"
 MARKER_FILE="$MARKER_DIR/marker.md"
 printf '* One\n' > "$MARKER_FILE"
-launch_app "$MARKER_FILE"
+open_item_in_running_app "$MARKER_FILE"
 run_applescript "edit marker replacement" '
   tell process "Markdown"
     set targetArea to first text area of group "Markdown live preview editor" of group 1 of UI element 1 of scroll area 1 of group 1 of group 1 of group 1 of window 1 whose description contains "unordered-list line 1"
@@ -330,11 +330,11 @@ run_applescript "edit marker replacement" '
   delay 1
 '
 if [[ "$(cat "$MARKER_FILE")" != "> One" ]]; then
-  echo "Marker editing smoke failed: unexpected saved Markdown" >&2
+  echo "Marker editing regression failed: unexpected saved Markdown" >&2
   cat "$MARKER_FILE" >&2
   exit 1
 fi
 rm -rf "$MARKER_DIR"
 
 quit_app
-echo "UI smoke passed: live editing, autosave regressions, formatting, undo/redo, and marker replacement."
+echo "UI regression passed: live editing, autosave regressions, formatting, undo/redo, and marker replacement."

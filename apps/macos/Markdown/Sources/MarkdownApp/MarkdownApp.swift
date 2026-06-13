@@ -110,6 +110,12 @@ struct MarkdownApplication: App {
                 .keyboardShortcut(.rightArrow, modifiers: [.command])
             }
 
+            CommandGroup(after: .appSettings) {
+                Button("Make Markdown Default Reader") {
+                    model.makeDefaultMarkdownReader()
+                }
+            }
+
             CommandGroup(replacing: .help) {
                 Button("Keyboard Shortcuts") {
                     model.showShortcutHelp()

@@ -66,6 +66,7 @@ markdown/
 │   ├── install-macos-app.sh
 │   ├── profile-macos.sh
 │   ├── run-macos.sh
+│   ├── e2e-macos-ui.sh
 │   ├── smoke-macos-ui.sh
 │   ├── test-macos.sh
 │   └── lib/
@@ -166,7 +167,7 @@ Rules:
 
 - Add unit tests for deterministic logic.
 - Add app-support tests for WebView bridge scripts, settings, formatting, and other crash-sensitive helpers.
-- Use UI smoke scripts for SwiftUI/AppKit/WebKit interaction boundaries.
+- Use fast UI smoke for installed-app health and targeted UI E2E scripts for SwiftUI/AppKit/WebKit interaction boundaries.
 
 ### `docs`
 
@@ -192,8 +193,17 @@ Current scripts:
 - `install-macos-app.sh` - install `/Applications/Markdown.app`.
 - `update-to-latest-commit.sh` - fetch the latest GitHub commit, rebuild it in a temporary worktree, and install it locally.
 - `run-macos.sh` - run the app against a file or folder.
-- `smoke-macos-ui.sh` - drive installed-app user flows and crash-report checks.
+- `smoke-macos-ui.sh` - fast installed-app health check for launch/open/search/edit/create/rename and crash-report checks.
+- `smoke-macos-launch-window.sh` - narrow launch-window placement smoke check.
+- `e2e-macos-ui.sh` - orchestrate the full installed-app UI regression battery.
+- `e2e-macos-navigation.sh` - verify opening, search, outline, pane toggles, sidebar keyboarding, reveal, and open shortcuts.
+- `e2e-macos-files.sh` - verify new-file creation, blank-file autosave, and rename.
+- `e2e-macos-editing.sh` - verify live editing, list behavior, formatting, copy, undo/redo, and marker replacement.
+- `e2e-macos-code-block-formatting.sh` - verify fenced-code marker unlock and unwrap behavior.
+- `e2e-macos-images.sh` - verify rendered local Markdown images and image preview zoom controls.
+- `e2e-macos-watch.sh` - verify folder watcher and selected-file churn survival.
 - `profile-macos.sh` - profile release app CPU/RSS.
+- `fixtures/` - deterministic source files copied into temporary smoke workspaces before mutation.
 
 Rules:
 

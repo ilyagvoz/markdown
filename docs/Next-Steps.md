@@ -1,6 +1,6 @@
 # Next Steps
 
-Last updated: 2026-06-11
+Last updated: 2026-06-13
 
 All planned reader-MVP items from the previous backlog are complete. Completed capabilities and lessons live in `docs/Progress.md`; latest test/profile/screenshot results live in `docs/Validation.md`.
 
@@ -17,7 +17,7 @@ Complete:
 - Native WebView editing spike and recommendation.
 - Production live-preview editing implementation.
 - Focused accessibility spot check.
-- Autosave, folder pruning, new-file creation, file rename, selection formatting, and split UI smoke coverage.
+- Autosave, folder pruning, new-file creation, file rename, selection formatting, and split fast-smoke/UI-E2E coverage.
 
 ## Future Candidates
 
@@ -51,14 +51,17 @@ Run during feature iteration:
 ./scripts/test-macos.sh
 ```
 
-Then run the focused UI smoke script that matches the changed surface:
+Then run the fast smoke or focused UI E2E script that matches the changed surface:
 
 ```sh
 ./scripts/smoke-macos-launch-window.sh
-./scripts/smoke-macos-navigation.sh
-./scripts/smoke-macos-files.sh
-./scripts/smoke-macos-editing.sh
-./scripts/smoke-macos-watch.sh
+./scripts/smoke-macos-ui.sh
+./scripts/e2e-macos-navigation.sh
+./scripts/e2e-macos-files.sh
+./scripts/e2e-macos-editing.sh
+./scripts/e2e-macos-code-block-formatting.sh
+./scripts/e2e-macos-images.sh
+./scripts/e2e-macos-watch.sh
 ```
 
 Run before committing, shipping, or recording completed progress:
@@ -68,6 +71,7 @@ Run before committing, shipping, or recording completed progress:
 ./scripts/build-macos-app.sh
 ./scripts/install-macos-app.sh
 ./scripts/smoke-macos-ui.sh
+./scripts/e2e-macos-ui.sh
 ```
 
 Run for performance-sensitive changes:

@@ -109,5 +109,5 @@ Consequences:
 - Pressing Return creates a new editable block; typed markers such as `*`, `>`, and `#` convert the new block.
 - `Cmd+S` writes the current Markdown source back to the selected local file.
 - `Cmd+Z` and `Shift+Cmd+Z` use an app-owned editor history so undo/redo works across rendered block edits, block creation, and marker replacement.
-- The editor bridge must remain small, defensive, and covered by UI smoke because WebKit interaction bugs are easy to miss with unit tests alone.
+- The editor bridge must remain small, defensive, and covered by targeted UI E2E because WebKit interaction bugs are easy to miss with unit tests alone.
 - Paste normalization, IME/input methods, external file conflicts, accessibility, and large-file editing remain hardening areas.

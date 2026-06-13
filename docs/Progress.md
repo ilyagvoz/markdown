@@ -37,16 +37,19 @@ Complete capabilities:
 - Candidate A WebView editor spike with tested marker-preserving browser model prototype.
 - Native WebView editor spike with a Swift/AppKit host, WebKit bridge, and automated native smoke validation.
 - Production live-preview editing with WebView-backed editable Markdown blocks, `Cmd+S` save, `Cmd+Z` / `Shift+Cmd+Z` undo/redo, marker replacement, new-line block creation, hidden block syntax in read mode, inline read-mode rendering, restored preview-like spacing, and smoke coverage for saved Markdown output.
+- Tail-area editing affordance that appends a new editable line when clicking whitespace after the document or typing while no line is focused.
 - Folder-view Markdown file creation with `Cmd+N`, unique `Untitled.md` naming, automatic sidebar refresh, and selection of the new file.
 - Debounced autosave after editing pauses, plus dirty-document flush before switching/opening files.
 - Sidebar pruning that hides child folders without Markdown descendants.
 - File rename from the File menu and file-row context menu, with a native rename prompt and safe extension handling.
-- Selection-based editor formatting with a floating formatting toolbar, `Cmd+B` bold, `Cmd+I` italic, `Cmd+E` inline code, `Cmd+K` links, and inline HTML `<mark>` highlighting.
-- Click-to-copy Markdown controls for the whole document and each fenced code section, backed by the native pasteboard.
+- Selection-based editor formatting with a floating formatting toolbar, `Cmd+B` bold, `Cmd+I` italic, `Cmd+E` inline code, code-block formatting with fenced-code unwrap support, `Cmd+K` links, and inline HTML `<mark>` highlighting.
+- Icon-only click-to-copy Markdown controls for the whole document and each fenced code section, backed by the native pasteboard and visible on code blocks without hover.
+- Rendered Markdown image blocks in the live-preview editor, with source-preserving editing, relative local image loading, unsafe image URL blocking, missing-image fallback, and full-window image preview with zoom, reset, pan, and keyboard dismissal.
 - Focused accessibility spot check with explicit labels added for icon-only controls.
 - Markdown preview hardening that renders raw HTML as text and only opens clicked `http` / `https` links externally.
-- Release build, install, profile, and UI smoke scripts.
+- Release build, install, profile, fast UI smoke, and UI E2E regression scripts.
 - Local source-update script that fetches the latest GitHub commit, rebuilds it in a temporary worktree, and redeploys it to `/Applications/Markdown.app`.
+- App-menu action that asks macOS to make Markdown the default reader for Markdown documents.
 
 ## Architecture Decisions In Force
 
@@ -63,17 +66,28 @@ Durable decisions live in `docs/Architecture-Decisions.md`.
 
 Current verified gates:
 
-- `./scripts/test-macos.sh` passes with 28 tests.
+- `./scripts/test-macos.sh` passes with 35 tests.
 - `./scripts/build-macos-app.sh` builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` installs `/Applications/Markdown.app`.
-- Focused UI smoke scripts cover navigation, file actions, editing, and watcher behavior independently.
-- `./scripts/smoke-macos-ui.sh` orchestrates the focused UI smoke scripts and passes against the installed app.
+- `./scripts/smoke-macos-ui.sh` covers a fast installed-app health path.
+- Targeted UI E2E scripts cover navigation, file actions, editing, code-block formatting, images, and watcher behavior independently.
+- `./scripts/e2e-macos-ui.sh` orchestrates the targeted UI E2E scripts against the installed app.
 - `swift test --package-path spikes/spike2-editing-update-mode` passes with 7 tests.
 - `node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs` passes with 5 tests.
 - `spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh` passes with 4 Swift bridge tests plus native WebView smoke.
 - `./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures` shows settled idle CPU near 0% and RSS around 92-95 MB in release builds.
 
-Current UI smoke coverage includes:
+Current fast UI smoke coverage includes:
+
+- single-file open
+- folder open
+- current-document search
+- edit/save
+- new Markdown file creation in an opened folder
+- selected-file rename
+- crash-report checks
+
+Current UI E2E coverage includes:
 
 - single-file open
 - folder open
@@ -90,7 +104,7 @@ Current UI smoke coverage includes:
 - selected-file rename
 - watched-folder add/delete
 - selected-file rename/delete and final-file deletion
-- live-preview editing, saving, undo/redo, new bullet creation, ordered-list continuation, ordered-list exit, blank-line paragraph entry, marker replacement, bold/italic/code/link/highlight formatting, whole-document Markdown copy, and fenced-code-section Markdown copy
+- live-preview editing, saving, undo/redo, new bullet creation, ordered-list continuation, ordered-list exit, blank-line paragraph entry, marker replacement, fenced-code unwrap, empty-line deletion inside fenced code, single-line extraction from fenced code, bold/italic/code/link/highlight formatting, whole-document Markdown copy, fenced-code-section Markdown copy, and image rendering with zoom controls
 - crash-report checks
 
 See `docs/Validation.md` and `docs/Test-Coverage.md` for the latest details.
@@ -109,9 +123,9 @@ Treat rendered Markdown as untrusted local content. The MVP supports common Mark
 
 Treat filesystem watchers as actor-sensitive. The live-refresh crash came from dispatch-source callbacks crossing actor isolation unexpectedly. Keep watcher callbacks on the queue/actor their state expects, and cover user workflows with crash-report smoke checks.
 
-User-facing automation matters. The smoke suite caught and now guards the important flows: opening, search, outline, shortcuts, folder watching, and crash reports. Add pure unit tests for deterministic logic and UI smoke for SwiftUI/AppKit/WebKit interaction boundaries.
+User-facing automation matters. Fast smoke now guards cheap installed-app health, while UI E2E regression scripts guard important flows: opening, search, outline, shortcuts, folder watching, and crash reports. Add pure unit tests for deterministic logic and targeted UI E2E for SwiftUI/AppKit/WebKit interaction boundaries.
 
-Pane dragging itself should remain manual QA for now. Synthetic macOS drag-coordinate tests were unreliable. The saved pane layout state is unit-tested, and pane visibility is covered by UI smoke.
+Pane dragging itself should remain manual QA for now. Synthetic macOS drag-coordinate tests were unreliable. The saved pane layout state is unit-tested, and pane visibility is covered by UI E2E.
 
 Visual polish is product work, not garnish. The app should remain light, quiet, readable, and joyful. Avoid heavy visible divider lines; invisible resize hit targets fit the current design better.
 

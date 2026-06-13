@@ -29,22 +29,25 @@ Pre-commit/progress gate:
 ./scripts/build-macos-app.sh
 ./scripts/install-macos-app.sh
 ./scripts/smoke-macos-ui.sh
+./scripts/e2e-macos-ui.sh
 ./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures
 ```
 
-For normal feature iteration, run `./scripts/test-macos.sh` plus the focused smoke script that matches the area being changed. Do not run the full `smoke-macos-ui.sh` battery after every small edit:
+For normal feature iteration, run `./scripts/test-macos.sh`, then `./scripts/smoke-macos-ui.sh` when you need a fast installed-app health check. If the change touches a specific UI surface, run only the targeted E2E regression slice for that surface:
 
 ```sh
 ./scripts/smoke-macos-launch-window.sh
-./scripts/smoke-macos-navigation.sh
-./scripts/smoke-macos-files.sh
-./scripts/smoke-macos-editing.sh
-./scripts/smoke-macos-watch.sh
+./scripts/e2e-macos-navigation.sh
+./scripts/e2e-macos-files.sh
+./scripts/e2e-macos-editing.sh
+./scripts/e2e-macos-code-block-formatting.sh
+./scripts/e2e-macos-images.sh
+./scripts/e2e-macos-watch.sh
 ```
 
-Use `./scripts/smoke-macos-launch-window.sh` for launch placement/display regressions. It should only open the app and report the window bounds; do not use a feature smoke when the bug is simply where the window appears.
+Use `./scripts/smoke-macos-launch-window.sh` for launch placement/display regressions. It should only open the app and report the window bounds; do not use a feature E2E slice when the bug is simply where the window appears.
 
-Use `./scripts/smoke-macos-ui.sh` as the full battery when the user asks to commit/ship/record progress, or when a change is cross-cutting.
+Use `./scripts/e2e-macos-ui.sh` as the full UI regression battery when the user asks to ship/record broad progress, or when a change is cross-cutting. `./scripts/smoke-macos-ui.sh` is intentionally small and should stay under roughly 30 seconds on a warm app/build.
 
 Run the app against fixtures:
 

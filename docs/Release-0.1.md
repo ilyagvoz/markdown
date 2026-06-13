@@ -28,6 +28,7 @@ Release validation should include:
 ./scripts/build-macos-app.sh
 ./scripts/install-macos-app.sh
 ./scripts/smoke-macos-ui.sh
+./scripts/e2e-macos-ui.sh
 ./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures
 ```
 
