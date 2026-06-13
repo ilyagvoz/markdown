@@ -28,7 +28,7 @@ Context: The app is a reader/renderer first, not a Markdown editor.
 Consequences:
 
 - The first implementation should optimize preview quality, file switching, and reading ergonomics.
-- Editing is out of MVP unless explicitly reintroduced.
+- Editing was later reintroduced through ADR 007; preview-first reading remains the default experience.
 - Parser and renderer choices should be judged by reading performance and fidelity.
 
 ## ADR 003: Common Markdown Only For MVP
@@ -73,7 +73,7 @@ Consequences:
 - Production preview should use `WKWebView` with local generated HTML and app-owned CSS.
 - MVP preview styling should be light-only.
 - CSS should explicitly control fonts, spacing, readable width, tables, code blocks, links, and the page palette.
-- JavaScript should stay disabled unless a specific feature requires it.
+- JavaScript should stay limited to app-owned preview/editor behavior such as search, outline jumps, copy controls, formatting, and image preview controls. Markdown document content must not execute arbitrary HTML or script.
 - Parser and HTML generation should be isolated behind a renderer adapter.
 - Native app navigation, file handling, commands, and sidebar should remain SwiftUI/AppKit-native.
 - The native renderer can be revisited later if WebView selection, accessibility, memory, or styling behavior becomes a product problem.

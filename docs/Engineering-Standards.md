@@ -36,7 +36,7 @@ Rules:
 - Filesystem traversal should not live in views.
 - Markdown parser-specific types should not leak through the whole app.
 - Rendering decisions should be isolated behind an adapter so the spike result can be implemented without rewriting navigation.
-- File writes are out of MVP unless editing is explicitly added later.
+- File writes should stay limited to explicit local Markdown editing flows: selected-file saves, debounced autosave, and documented file actions such as create/rename.
 
 ### Packages
 
@@ -86,7 +86,8 @@ Out of scope:
 - Plugin syntax.
 - Graph views.
 - Dataview-style queries.
-- Live preview editing.
+- Sync or live collaborative editing.
+- Custom Markdown dialects unless explicitly accepted through ADR.
 
 ## Filesystem Standards
 
@@ -166,67 +167,20 @@ Integration or UI tests should cover:
 
 Default to the smallest test set that can catch the bug or regression in the area being changed. Iteration speed is part of engineering quality; avoid running the full UI E2E battery after every small edit.
 
-During feature implementation:
+`docs/Test-Coverage.md` is the canonical source for exact test commands and target-script selection. Keep these principles in sync with that file:
 
-- Run `./scripts/test-macos.sh` when touching Swift logic, generated WebView/editor HTML, parser/search/tree behavior, or bridge code.
-- Run `./scripts/build-macos-app.sh` and `./scripts/install-macos-app.sh` when installed-app UI automation is needed.
-- Run `./scripts/smoke-macos-ui.sh` for a fast health check after app wiring or install changes.
-- Run only the targeted E2E regression script that covers the current feature surface.
-- Prefer adding a feature-specific assertion to an existing targeted E2E script over relying on the full E2E battery.
-
-UI automation tiers:
-
-```sh
-./scripts/smoke-macos-launch-window.sh
-./scripts/smoke-macos-ui.sh
-./scripts/e2e-macos-navigation.sh
-./scripts/e2e-macos-files.sh
-./scripts/e2e-macos-editing.sh
-./scripts/e2e-macos-code-block-formatting.sh
-./scripts/e2e-macos-images.sh
-./scripts/e2e-macos-watch.sh
-```
-
-Smoke harness window behavior:
-
-- `smoke-macos-launch-window.sh` is the narrow smoke check for launch placement. Use it when changing app launch, smoke harness startup, window sizing, display selection, or saved-window-frame behavior.
-- `smoke-macos-ui.sh` is the fast installed-app smoke check for launch, single-file open, folder open, search, edit/save, new file, rename, and crash-report checks.
-- Smoke launches should pass `--smoke-window-frame-default` so the app suppresses startup auto-activation, allowing the harness to launch hidden, place the window on the built-in display, then activate it.
-- Before launching the app, smoke scripts should also seed SwiftUI's saved `NSWindow Frame ... AppWindow` defaults for the built-in display's visible frame when a built-in display is available.
-- Post-launch placement is only a safety check; the app should not visibly open on one screen and then jump to another during normal smoke runs.
-- Do not hard-code one-off window positions that can drift across external displays.
-- Keep repositioning to launch/focus setup only; individual smoke steps should not resize or drag the app window.
-- Use `MARKDOWN_SMOKE_WINDOW_BOUNDS=x,y,width,height` and `MARKDOWN_SMOKE_WINDOW_FRAME_DEFAULT="x y w h sx sy sw sh "` only as explicit local overrides for unusual display setups.
-
-Use examples:
-
-- Smoke harness launch/window placement changes: `smoke-macos-launch-window.sh`.
-- Navigation/search/outline/shortcut changes: `e2e-macos-navigation.sh`.
-- New file, autosave, blank-file editing, rename changes: `e2e-macos-files.sh`.
-- Live editor, formatting, copy/paste, list behavior, undo/redo changes: `e2e-macos-editing.sh`.
-- Fenced-code marker/unwrapping changes: `e2e-macos-code-block-formatting.sh`.
-- Image rendering and zoom changes: `e2e-macos-images.sh`.
-- Filesystem watcher and selected-file churn changes: `e2e-macos-watch.sh`.
-
-Run the fast smoke during normal iteration. Run the full E2E battery as a pre-commit/progress gate when the user asks to ship or record broad completed progress. Also run it earlier if a change touches shared app wiring, multiple feature surfaces, UI automation infrastructure, app launch/install behavior, or crash-prone WebView/AppKit bridge boundaries.
-
-Pre-commit/progress gate for user-facing app changes:
-
-```sh
-./scripts/test-macos.sh
-./scripts/build-macos-app.sh
-./scripts/install-macos-app.sh
-./scripts/smoke-macos-ui.sh
-./scripts/e2e-macos-ui.sh
-```
-
-The UI smoke and E2E gates must fail if the app process exits unexpectedly or if a new `Markdown-*.ips` crash report appears during the run.
+- Unit-test deterministic Swift, parser, workspace, and generated WebView/editor behavior first.
+- Build and install before UI automation when the installed bundle must reflect current changes.
+- Use the fast smoke for broad installed-app health.
+- Use the narrowest targeted UI E2E script for the changed surface during iteration.
+- Reserve the full UI E2E battery for shipping, broad progress records, cross-cutting app wiring, UI automation infrastructure, app launch/install behavior, and crash-prone WebView/AppKit bridge boundaries.
+- UI smoke and E2E gates must fail if the app process exits unexpectedly or if a new `Markdown-*.ips` crash report appears during the run.
 
 Manual QA should cover:
 
 - light theme rendering
 - keyboard navigation
-- VoiceOver basics once UI exists
+- broader VoiceOver basics before distribution
 - window resizing and sidebar resizing
 - multiple windows if supported
 

@@ -49,7 +49,7 @@ Latest result:
 - Passed on 2026-06-12.
 - Resolved `origin/main` from GitHub, fetched commit `0532ee9`, built it in a temporary worktree, and installed `/Applications/Markdown.app`.
 
-Run the fast installed-app smoke when you want broad app health without the full regression cost:
+Fast installed-app smoke:
 
 ```sh
 ./scripts/smoke-macos-ui.sh
@@ -61,7 +61,7 @@ Latest fast-smoke result:
 
 - Passed on 2026-06-13 in 13.2s.
 
-Run targeted UI E2E regression scripts during iteration. Prefer the narrowest script and the smallest number of feature-specific assertions that cover the work in progress:
+Targeted UI E2E scripts tracked here:
 
 ```sh
 ./scripts/smoke-macos-launch-window.sh
@@ -73,7 +73,7 @@ Run targeted UI E2E regression scripts during iteration. Prefer the narrowest sc
 ./scripts/e2e-macos-watch.sh
 ```
 
-Use the narrowest script that covers the area being changed:
+Surface covered by each script:
 
 - `smoke-macos-launch-window.sh` for smoke harness launch placement, display selection, and saved-window-frame behavior.
 - `e2e-macos-navigation.sh` for opening, search, outline, pane toggles, sidebar keyboarding, and reveal.
@@ -102,7 +102,7 @@ Latest navigation E2E result:
 
 - Passed on 2026-06-13 in 23.8s after replacing avoidable relaunches with in-app opens.
 
-Run the full UI E2E battery as a ship/progress gate when the user asks to ship or record broad completed progress. Avoid running it after every small iteration unless the change is cross-cutting or touches shared launch/install/WebView/AppKit bridge wiring:
+Full UI E2E battery:
 
 ```sh
 ./scripts/e2e-macos-ui.sh
@@ -185,212 +185,6 @@ Known UX follow-ups:
 
 - Add a first-run empty-state screenshot pass once final window sizing is settled.
 
-## Feature Smoke
+## Detailed History
 
-Folder new-file creation:
-
-- Opened a temporary empty folder.
-- Used `Cmd+N` to create a Markdown file in the folder view.
-- Verified `Untitled.md` was created.
-- Typed into the newly-created blank file, waited for autosave debounce without pressing `Cmd+S`, and verified the file on disk was exactly `From scratch` followed by `Second line`.
-- Used `Cmd+N` again.
-- Verified `Untitled 2.md` was created without overwriting the first file.
-
-Rename:
-
-- Opened a temporary folder containing `RenameMe.md`.
-- Used the File menu rename command to open the native rename prompt.
-- Entered `Renamed`.
-- Verified `RenameMe.md` moved to `Renamed.md`.
-- File rows also expose Rename from the right-click context menu.
-
-Folder watch:
-
-- Opened a temporary folder containing `alpha.md` and `notes/nested.md`.
-- Added `added-later.md` on disk while the app was open.
-- Verified `added-later.md` appeared in the sidebar without reopening.
-- Deleted `added-later.md` on disk.
-- Verified it disappeared from the sidebar without reopening.
-- Renamed the selected Markdown file on disk and verified the app stayed alive without stale-preview crashes.
-- Deleted the selected Markdown file on disk and verified the app selected a nearby file when possible.
-- Deleted the final Markdown file in the folder and verified the app stayed alive with no crash report.
-- Verified the app process stayed alive.
-
-Live-preview editing:
-
-- Opened a temporary Markdown file containing `Hello`.
-- Focused the first editable paragraph through accessibility.
-- Replaced it with a paragraph plus two typed bullet lines using `Return`.
-- Saved with `Cmd+S`.
-- Verified the file on disk was exactly:
-
-```text
-Here is a list with a bunch of bullet points:
-* One
-* Two
-```
-
-- Opened a temporary Markdown file containing `1. One`.
-- Focused the first ordered-list item, then typed `Return`, `Two`, `Return`, `Three`.
-- Saved with `Cmd+S`.
-- Verified the file on disk was exactly:
-
-```text
-1. One
-2. Two
-3. Three
-```
-
-- Opened a temporary Markdown file containing `1. One`, `2. Two`, and `3. Three`.
-- Focused the third ordered-list item, pressed `Return` twice, typed normal paragraph text, pressed `Return`, and typed another paragraph.
-- Saved with `Cmd+S`.
-- Verified the file on disk was exactly:
-
-```text
-1. One
-2. Two
-3. Three
-After list
-Next paragraph
-```
-
-- Opened a temporary Markdown file containing `Intro` plus a blank line.
-- Focused the blank line, typed `This paragraph should survive Return`, pressed `Return`, and typed `Next paragraph`.
-- Saved with `Cmd+S` and verified both paragraphs survived.
-- Repeated the blank-line path, clicked away instead of pressing `Return`, waited for autosave debounce, and verified the paragraph survived blur.
-- Opened a temporary Markdown file containing a heading, paragraph, fenced Swift code block, and trailing paragraph.
-- Clicked the whole-document `Click to Copy` button and verified `pbpaste` contained the complete document Markdown.
-- Clicked the fenced-code-section `Click to Copy` button and verified `pbpaste` contained the fenced code block Markdown, including the opening language fence and closing fence.
-- Opened a temporary Markdown file containing `* One`.
-- Focused the first unordered-list item.
-- Pressed Left Arrow repeatedly to reach marker replacement, typed `>`, and saved with `Cmd+S`.
-- Verified the file on disk was exactly `> One`.
-- Opened a temporary copy of `scripts/fixtures/code-line-extraction.md`, which contains a fenced code block with a Markdown-looking `* dd a new line break here? ` line.
-- Focused that code line, pressed `Cmd+Left Arrow` then Left Arrow, saved, and verified the editor split the fenced code block around that single list item.
-- Captured before/after screenshots under `artifacts/screenshots/code-block-formatting/`.
-- Opened a temporary fenced code block containing two empty code lines, focused one empty code line, pressed Backspace, saved, and verified exactly one empty line was removed while the surrounding fence stayed intact.
-- Opened a temporary Markdown file containing `Format me`.
-- Selected the paragraph with `Cmd+A`, applied bold with `Cmd+B`, saved, and verified the file on disk was exactly `**Format me**`.
-- Opened a temporary Markdown file containing `Highlight me`.
-- Selected the paragraph with `Cmd+A`, applied highlight with `Cmd+Control+H`, saved, and verified the file on disk was exactly `<mark>Highlight me</mark>`.
-- Opened a temporary Markdown file containing `Code me`.
-- Selected the paragraph with `Cmd+A`, applied inline code with `Cmd+E`, saved, and verified the file on disk was exactly `` `Code me` ``.
-- Opened a temporary Markdown file containing `OpenAI`.
-- Selected the paragraph with `Cmd+A`, applied link formatting with `Cmd+K`, replaced the URL placeholder, saved, and verified the file on disk was exactly `[OpenAI](https://openai.com)`.
-- Opened a temporary Markdown file containing `Original`.
-- Replaced it with `Changed`, pressed `Cmd+Z`, saved, and verified the file on disk returned to `Original`.
-- Pressed `Shift+Cmd+Z`, saved, and verified the file on disk became `Changed`.
-
-Keyboard/search:
-
-- `Cmd+F` opened the current-document search UI and accepted typed input.
-- Search results showed heading context and snippets.
-- Workspace search showed file paths, heading context, and snippets across an opened folder.
-- Clicking a workspace search result selected the target file and ran the existing preview find action.
-- Plain sidebar keys moved the highlighted row, toggled folder expansion, and activated a highlighted Markdown file while the app stayed alive.
-- `Cmd+Right Arrow` hid the right outline panel while search focus was active.
-- `Cmd+/` opened the keyboard shortcut reference sheet.
-
-Pane persistence:
-
-- Left sidebar and right outline widths are now stored in restored app state.
-- Left sidebar and right outline visibility are stored in restored app state.
-- Added unit coverage for save/load, older preference migration, and pane width clamping.
-- Kept pane resize hit targets invisible; no heavy divider lines are shown in the UI.
-- Did not add synthetic drag UI automation because macOS drag-coordinate tests were unreliable; drag behavior remains manual QA while persistence logic is automated.
-
-App identity:
-
-- Added `AppIcon.icns` and a full iconset under `apps/macos/Markdown/Resources`.
-- Added `CFBundleIconFile`, Markdown document type metadata, and productivity app category metadata to `Info.plist`.
-- Updated `build-macos-app.sh` to copy resource files into `Contents/Resources`.
-- Verified `/Applications/Markdown.app/Contents/Resources/AppIcon.icns` exists after install.
-
-Editing/update-mode spike:
-
-- Added `spikes/spike2-editing-update-mode` Swift package.
-- Added a tested Markdown line-model prototype for preserving presentation markers during ordinary visible-text edits.
-- Recommendation: prototype production editing with a WebView-backed live-preview editor first, while keeping Markdown serialization in an app-owned Swift line/block model.
-- Production editing has since shipped its first implementation; remaining hardening now lives in `docs/Next-Steps.md`.
-
-Candidate A WebView editor spike:
-
-- Added `spikes/spike3-candidate-a-webview-editor` static WebView/editor prototype.
-- Added dependency-free browser model tests using Node's built-in test runner.
-- Recommendation: proceed to a native macOS `WKWebView` editor spike or debug view next, with Swift as the authoritative Markdown serializer and DOM state treated as interaction state only.
-- Automated browser screenshot was not captured because Playwright is not installed in the runtime; the static prototype remains manually inspectable via a local server.
-
-Native Candidate A WebView editor spike:
-
-- Added `spikes/spike4-native-webview-editor` Swift package.
-- Added an AppKit `WKWebView` host with a narrow JavaScript-to-Swift bridge.
-- Added a side-by-side native source/status panel for inspecting serialized Markdown state.
-- Added `--smoke` mode that loads WebKit, edits a heading while preserving `#`, unlocks a list item, changes it to a quote, verifies serialized Markdown and rendered block type from Swift, and terminates.
-- Refined raw-marker editing after manual UX feedback: Left Arrow now preselects the Markdown marker, typed marker replacement can apply quickly without cursor repositioning, unlocked lines commit and re-render on Return/blur/live-edit debounce, and smoke coverage verifies list-to-quote conversion renders as a quote rather than remaining raw.
-- Found that local ES module imports from the SwiftPM resource bundle did not initialize reliably in native smoke; the spike uses a self-contained classic script for the native WebView resource.
-- Recommendation was accepted: production editing proceeded with app-owned canonical Markdown state and WebView interaction state.
-
-Accessibility spot check:
-
-- Verified the app exposes a standard macOS accessibility window through System Events.
-- Drove the keyboard-only sidebar path with plain arrows, `Space`, and `Return`; the app stayed alive and did not trap the key path.
-- Added explicit accessibility labels for icon-only search, outline, clear-search, and hide-outline controls.
-- Sidebar file/folder rows include explicit file/folder accessibility labels in code.
-- System Events did not expose enough SwiftUI child labels to act as a full accessibility audit, so a broader hands-on VoiceOver pass remains a future distribution-quality task.
-
-## Crash Fix
-
-2026-06-10: A crash was observed after adding live file refresh. The latest crash report was:
-
-`~/Library/Logs/DiagnosticReports/Markdown-2026-06-10-230944.ips`
-
-Root cause:
-
-- `FileWatcher` was `@MainActor`.
-- Its `DispatchSourceFileSystemObject` event handler ran on a utility queue.
-- Swift runtime actor isolation trapped on the cross-actor handler.
-
-Fix:
-
-- File-system events now dispatch on `DispatchQueue.main`, matching `FileWatcher`'s main-actor isolation.
-
-Verification:
-
-- `./scripts/test-macos.sh` passed.
-- `./scripts/build-macos-app.sh` passed.
-- `./scripts/install-macos-app.sh` passed.
-- Live-edit smoke: opened `/tmp/markdown-live-test/live.md`, edited it on disk, verified the app process stayed alive and no new `Markdown-*.ips` crash report was created.
-
-2026-06-11: Two crashes were observed after adding outline/search jump behavior. The fresh crash reports were:
-
-- `~/Library/Logs/DiagnosticReports/Markdown-2026-06-11-121548.ips`
-- `~/Library/Logs/DiagnosticReports/Markdown-2026-06-11-121549.ips`
-
-Root cause:
-
-- The faulting stack was `MarkdownWebPreview.Coordinator.execute(...)`.
-- The WebView bridge used `NSJSONSerialization.data(withJSONObject:)` to encode a top-level Swift `String` as a JavaScript string literal.
-- On this OS, that invalid top-level JSON object raised an Objective-C exception inside `NSJSONSerialization`, which AppKit converted into an `EXC_BREAKPOINT` crash.
-
-Fix:
-
-- Replaced `NSJSONSerialization` with `JSONEncoder().encode(value)` for JavaScript string-literal generation.
-- This safely encodes top-level strings and avoids Objective-C exception behavior.
-
-Verification:
-
-- `./scripts/test-macos.sh` passed.
-- `./scripts/build-macos-app.sh` passed.
-- `./scripts/install-macos-app.sh` passed.
-- Outline jump smoke: launched `outline.md`, clicked an outline item, verified the app process stayed alive and no new `Markdown-*.ips` crash report appeared.
-- Search jump smoke: opened `Cmd+F`, searched `diagram`, clicked a result, verified the app process stayed alive and no new `Markdown-*.ips` crash report appeared.
-
-2026-06-11 follow-up:
-
-- A later user-observed crash/termination did not produce a new `Markdown-*.ips` report; the newest reports remained the `12:15:48` and `12:15:49` reports above.
-- Added defensive WebView action handling anyway:
-  - pending preview actions now wait until WebView navigation finishes;
-  - action tokens reset on reload;
-  - JavaScript evaluation completion ignores page-side errors instead of feeding them into SwiftUI updates.
-- Rebuilt and installed `/Applications/Markdown.app`.
-- Ran four repeated smoke iterations opening `outline.md`, clicking outline items, using `Cmd+F`, clicking search results, and toggling the right outline. The app process stayed alive each time and no new crash report appeared.
+Older feature-smoke transcripts, spike validation notes, and crash investigations live in `docs/Validation-History.md`.

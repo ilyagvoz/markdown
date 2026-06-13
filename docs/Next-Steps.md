@@ -45,53 +45,13 @@ Add Developer ID signing, notarization, and universal or clearly split architect
 
 ## Gates For Future Features
 
-Run during feature iteration:
-
-```sh
-./scripts/test-macos.sh
-```
-
-Then run the fast smoke or focused UI E2E script that matches the changed surface:
-
-```sh
-./scripts/smoke-macos-launch-window.sh
-./scripts/smoke-macos-ui.sh
-./scripts/e2e-macos-navigation.sh
-./scripts/e2e-macos-files.sh
-./scripts/e2e-macos-editing.sh
-./scripts/e2e-macos-code-block-formatting.sh
-./scripts/e2e-macos-images.sh
-./scripts/e2e-macos-watch.sh
-```
-
-Run before committing, shipping, or recording completed progress:
-
-```sh
-./scripts/test-macos.sh
-./scripts/build-macos-app.sh
-./scripts/install-macos-app.sh
-./scripts/smoke-macos-ui.sh
-./scripts/e2e-macos-ui.sh
-```
-
-Run for performance-sensitive changes:
-
-```sh
-./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures
-```
-
-Run for editing-spike changes:
-
-```sh
-swift test --package-path spikes/spike2-editing-update-mode
-node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs
-spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh
-```
+Use `docs/Test-Coverage.md` as the canonical test-selection guide. Run the smallest gate that covers the changed surface during iteration, and reserve the full installed-app E2E battery for shipping, broad progress records, or cross-cutting app wiring changes.
 
 Update the relevant docs in the same change:
 
 - `docs/Progress.md` for completed capabilities and lessons.
 - `docs/Validation.md` for latest test/profile/screenshot results.
+- `docs/Validation-History.md` for older smoke transcripts, crash notes, or detailed investigation records that should not crowd the latest-status view.
 - `docs/Test-Coverage.md` for user-focused coverage.
 - `docs/Architecture-Decisions.md` for durable architecture choices.
 

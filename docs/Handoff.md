@@ -22,32 +22,22 @@
 
 ## First Commands
 
-Pre-commit/progress gate:
+Use `docs/Test-Coverage.md` as the canonical test-selection guide. For ordinary Swift or app-support changes, start with:
 
 ```sh
 ./scripts/test-macos.sh
+```
+
+When installed-app behavior matters, build/install first, then run the fast smoke or the narrowest targeted E2E script named in `docs/Test-Coverage.md`. Use the full UI E2E battery only for shipping/progress gates or cross-cutting app wiring:
+
+```sh
 ./scripts/build-macos-app.sh
 ./scripts/install-macos-app.sh
 ./scripts/smoke-macos-ui.sh
 ./scripts/e2e-macos-ui.sh
-./scripts/profile-macos.sh spikes/spike1-rendering-engine/fixtures
-```
-
-For normal feature iteration, run `./scripts/test-macos.sh`, then `./scripts/smoke-macos-ui.sh` when you need a fast installed-app health check. If the change touches a specific UI surface, run only the targeted E2E regression slice for that surface:
-
-```sh
-./scripts/smoke-macos-launch-window.sh
-./scripts/e2e-macos-navigation.sh
-./scripts/e2e-macos-files.sh
-./scripts/e2e-macos-editing.sh
-./scripts/e2e-macos-code-block-formatting.sh
-./scripts/e2e-macos-images.sh
-./scripts/e2e-macos-watch.sh
 ```
 
 Use `./scripts/smoke-macos-launch-window.sh` for launch placement/display regressions. It should only open the app and report the window bounds; do not use a feature E2E slice when the bug is simply where the window appears.
-
-Use `./scripts/e2e-macos-ui.sh` as the full UI regression battery when the user asks to ship/record broad progress, or when a change is cross-cutting. `./scripts/smoke-macos-ui.sh` is intentionally small and should stay under roughly 30 seconds on a warm app/build.
 
 Run the app against fixtures:
 
@@ -55,12 +45,6 @@ Run the app against fixtures:
 ./scripts/run-macos.sh spikes/spike1-rendering-engine/fixtures
 ```
 
-Run editing spike validation:
+Run spike validation only when changing the relevant spike; commands are listed in `docs/Test-Coverage.md`.
 
-```sh
-swift test --package-path spikes/spike2-editing-update-mode
-node --test spikes/spike3-candidate-a-webview-editor/tests/*.test.mjs
-spikes/spike4-native-webview-editor/scripts/smoke-native-editor.sh
-```
-
-See `docs/Validation.md` for the latest visual QA screenshots and notes.
+See `docs/Validation.md` for latest gate results and `docs/Validation-History.md` for older smoke/crash notes.

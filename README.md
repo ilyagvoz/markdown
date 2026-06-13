@@ -79,10 +79,11 @@ See [`SECURITY.md`](SECURITY.md) for reporting guidance and [`docs/Security-Revi
 | [`docs/Product-Design.md`](docs/Product-Design.md) | Product vision, MVP scope, UX principles, and quality bar |
 | [`docs/Engineering-Standards.md`](docs/Engineering-Standards.md) | Code quality, architecture, testing, performance, and docs rules |
 | [`docs/Progress.md`](docs/Progress.md) | Completed capabilities, implementation lessons, and deferred product work |
-| [`docs/Build-Plan.md`](docs/Build-Plan.md) | Initial architecture plan and sequencing |
+| [`docs/Build-Plan.md`](docs/Build-Plan.md) | Historical first-version architecture plan and sequencing |
 | [`docs/Architecture-Decisions.md`](docs/Architecture-Decisions.md) | Durable decisions and pending ADRs |
-| [`docs/Project-Structure.md`](docs/Project-Structure.md) | Intended repository layout and ownership boundaries |
+| [`docs/Project-Structure.md`](docs/Project-Structure.md) | High-level repository map and ownership boundaries |
 | [`docs/Next-Steps.md`](docs/Next-Steps.md) | Forward-looking planning backlog |
 | [`docs/Handoff.md`](docs/Handoff.md) | Minimal load order for future sessions |
-| [`docs/Validation.md`](docs/Validation.md) | Latest build/test/screenshot validation notes |
+| [`docs/Validation.md`](docs/Validation.md) | Latest build/test/profile validation notes |
+| [`docs/Validation-History.md`](docs/Validation-History.md) | Older smoke transcripts, manual QA notes, and crash investigations |
 | [`spikes/README.md`](spikes/README.md) | Technical spike index |

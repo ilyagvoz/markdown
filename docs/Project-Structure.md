@@ -4,111 +4,37 @@ This repository is named `markdown`.
 
 The project is a small macOS-focused repo with production app code, durable docs, technical spikes, repeatable scripts, and generated artifacts. Shared packages should only be added when a real boundary is justified.
 
-## Current Layout
+## High-Level Layout
+
+This is an orientation map, not an exact file manifest. Use `rg --files` or `find` when an up-to-date file list matters.
 
 ```text
 markdown/
-├── README.md
-├── AGENTS.md
+├── README.md, SECURITY.md, AGENTS.md
 ├── docs/
-│   ├── Architecture-Decisions.md
-│   ├── Build-Plan.md
-│   ├── Engineering-Standards.md
-│   ├── Handoff.md
-│   ├── Next-Steps.md
-│   ├── Product-Design.md
-│   ├── Progress.md
-│   ├── Project-Structure.md
-│   ├── Test-Coverage.md
-│   └── Validation.md
-│
-├── apps/
-│   └── macos/
-│       └── Markdown/
-│           ├── Package.swift
-│           ├── Package.resolved
-│           ├── Resources/
-│           │   ├── AppIcon.icns
-│           │   ├── AppIcon.iconset/
-│           │   └── Info.plist
-│           ├── Sources/
-│           │   ├── MarkdownApp/
-│           │   │   ├── AppModel.swift
-│           │   │   ├── ContentView.swift
-│           │   │   ├── DirectoryWatcher.swift
-│           │   │   ├── FileWatcher.swift
-│           │   │   ├── KeyboardShortcutMonitor.swift
-│           │   │   ├── MarkdownApp.swift
-│           │   │   ├── MarkdownEditorView.swift
-│           │   │   ├── MarkdownWebPreview.swift
-│           │   │   ├── PreviewAction.swift
-│           │   │   └── ProcessResourceSampler.swift
-│           │   ├── MarkdownAppSupport/
-│           │   │   ├── AppSettings.swift
-│           │   │   ├── MarkdownEditorHTML.swift
-│           │   │   └── PreviewJavaScript.swift
-│           │   └── MarkdownCore/
-│           │       ├── MarkdownDocumentAnalyzer.swift
-│           │       ├── MarkdownHTMLRenderer.swift
-│           │       └── WorkspaceTree.swift
-│           └── Tests/
-│               ├── MarkdownAppSupportTests/
-│               │   ├── AppSettingsTests.swift
-│               │   ├── MarkdownEditorHTMLTests.swift
-│               │   └── PreviewJavaScriptTests.swift
-│               └── MarkdownCoreTests/
-│                   ├── MarkdownDocumentAnalyzerTests.swift
-│                   ├── MarkdownHTMLRendererTests.swift
-│                   └── WorkspaceTreeBuilderTests.swift
-│
+│   ├── product, architecture, progress, coverage, and validation docs
+│   └── assets/
+├── apps/macos/Markdown/
+│   ├── Package.swift and Package.resolved
+│   ├── Resources/
+│   ├── Sources/
+│   │   ├── MarkdownApp/
+│   │   ├── MarkdownAppSupport/
+│   │   └── MarkdownCore/
+│   └── Tests/
+│       ├── MarkdownAppSupportTests/
+│       └── MarkdownCoreTests/
 ├── scripts/
-│   ├── build-macos-app.sh
-│   ├── install-macos-app.sh
-│   ├── profile-macos.sh
-│   ├── run-macos.sh
-│   ├── e2e-macos-ui.sh
-│   ├── smoke-macos-ui.sh
-│   ├── test-macos.sh
+│   ├── build/install/run/test/profile/update helpers
+│   ├── smoke and targeted UI E2E scripts
+│   ├── fixtures/
 │   └── lib/
-│       └── swift-env.sh
-│
 ├── spikes/
-│   ├── README.md
-│   ├── spike1-rendering-engine/
-│   │   ├── Package.swift
-│   │   ├── Package.resolved
-│   │   ├── README.md
-│   │   ├── NOTES.md
-│   │   ├── RESULTS.md
-│   │   ├── Sources/
-│   │   └── fixtures/
-│   ├── spike2-editing-update-mode/
-│   │   ├── Package.swift
-│   │   ├── README.md
-│   │   ├── RESULTS.md
-│   │   ├── Sources/
-│   │   └── Tests/
-│   ├── spike3-candidate-a-webview-editor/
-│   │   ├── README.md
-│   │   ├── RESULTS.md
-│   │   ├── tests/
-│   │   └── web/
-│   └── spike4-native-webview-editor/
-│       ├── Package.swift
-│       ├── README.md
-│       ├── RESULTS.md
-│       ├── Sources/
-│       │   ├── NativeWebViewEditorSpike/
-│       │   └── NativeWebViewEditorSpikeSupport/
-│       ├── Tests/
-│       └── scripts/
-│
-└── artifacts/
-    ├── Markdown.app
-    └── screenshots/
+├── artifacts/
+└── packages/        # absent until a shared boundary is justified
 ```
 
-Generated build folders such as `.build/` and `apps/macos/Markdown/.build/` are intentionally omitted from the tree above.
+Generated build folders such as `.build/` and `apps/macos/Markdown/.build/` are intentionally omitted. `artifacts/` contains generated local outputs, not source truth.
 
 ## Ownership Boundaries
 
@@ -180,6 +106,7 @@ Rules:
 - Keep `docs/Next-Steps.md` forward-looking.
 - Use `docs/Architecture-Decisions.md` for durable choices.
 - Update `docs/Validation.md` after meaningful test, profile, or screenshot passes.
+- Move older smoke transcripts, manual QA notes, and crash investigations to `docs/Validation-History.md` when they no longer belong in the latest-status view.
 - Update `docs/Test-Coverage.md` when user-facing behavior coverage changes.
 
 ### `scripts`
@@ -241,7 +168,7 @@ Current outputs:
 Rules:
 
 - Do not treat artifacts as source of truth.
-- Reference useful screenshots from `docs/Validation.md`.
+- Reference useful current screenshots from `docs/Validation.md`; preserve older screenshot notes in `docs/Validation-History.md` when needed.
 
 ## Intentional Absences
 

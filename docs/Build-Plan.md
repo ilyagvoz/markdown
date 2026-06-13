@@ -1,10 +1,10 @@
 # Build Plan
 
-This is the condensed architecture plan for the first usable version.
+This is the historical condensed architecture plan for the first usable version. Current product status lives in `docs/Progress.md`, active follow-up work lives in `docs/Next-Steps.md`, and durable architecture changes live in `docs/Architecture-Decisions.md`.
 
 ## Decision
 
-Build a private macOS Markdown reader that opens files and folders and renders Markdown in preview mode by default.
+Build a private macOS Markdown reader that opens files and folders and renders Markdown in preview mode by default. Live-preview editing was later accepted through ADR 007 and shipped as part of the first production editor pass.
 
 The first spike recommends a WebView-backed renderer for MVP. The rest of the architecture should still keep rendering behind an adapter:
 
@@ -12,7 +12,7 @@ The first spike recommends a WebView-backed renderer for MVP. The rest of the ar
 - Workspace model owns folder trees, expansion state, and selected files.
 - Filesystem layer owns scanning, filtering, and file reads.
 - Markdown layer owns parser/renderer adapters.
-- Preview layer displays rendered content.
+- Preview/editor layer displays rendered content and app-owned editing behavior.
 
 ## Architecture
 
@@ -23,7 +23,7 @@ graph TD
     C --> D[Selected Markdown File]
     D --> E[Filesystem Reader]
     E --> F[Markdown Renderer Adapter]
-    F --> G[Preview Pane]
+    F --> G[Preview / Editor Pane]
     C --> H[Sidebar Tree]
 ```
 
@@ -78,7 +78,7 @@ Status: complete for first MVP slice.
 - Implement the WebView-backed renderer adapter.
 - Generate semantic HTML from parsed Markdown.
 - Load local HTML/CSS into `WKWebView`.
-- Keep JavaScript disabled unless explicitly justified.
+- Keep JavaScript limited to app-owned behavior that is explicitly justified.
 - Force a light-only preview theme for MVP.
 - Tune CSS for fonts, tighter spacing, readable width, links, tables, and code blocks.
 - Render common Markdown fixtures.
@@ -87,7 +87,7 @@ Status: complete for first MVP slice.
 
 ### Slice 4: Native Polish
 
-Status: mostly complete for the reader MVP foundation.
+Status: complete for the reader MVP foundation; broader accessibility remains distribution hardening.
 
 Complete:
 
@@ -107,17 +107,30 @@ Complete:
 - Lightweight CPU/RSS status readout.
 - Release CPU/RSS profiling script.
 
-Remaining:
+Distribution follow-up:
 
 - Broader accessibility pass before distribution.
 
+### Slice 5: Live Preview Editing
+
+Status: first production pass complete via ADR 007.
+
+Complete:
+
+- WebView-backed editable Markdown blocks.
+- App-owned Markdown serialization.
+- `Cmd+S` save and debounced autosave.
+- Undo/redo, list continuation, marker replacement, formatting, Markdown copy controls, and rendered image blocks.
+
+Remaining hardening lives in `docs/Next-Steps.md`.
+
 ## Non-Goals For MVP
 
-- Editing.
 - Obsidian wiki links/backlinks.
 - Graph view.
 - Plugins.
 - Sync.
+- Live collaborative editing.
 - Persistent indexed search.
 - Persistent library database.
 - Publishing.

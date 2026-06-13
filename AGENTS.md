@@ -34,3 +34,4 @@
 - Use `docs/Next-Steps.md` for active work.
 - Use `docs/Engineering-Standards.md` for build, test, performance, and documentation rules.
 - Record durable architecture choices in `docs/Architecture-Decisions.md`.
+- For full documentation health passes, use the local Codex `doc-review` skill.
