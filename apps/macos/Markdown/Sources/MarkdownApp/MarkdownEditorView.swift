@@ -11,9 +11,16 @@ struct MarkdownEditorView: NSViewRepresentable {
     let action: PreviewAction?
     let onChange: (String) -> Void
     let onSave: () -> Void
+    let onLinkHover: (String?, String?) -> Void
+    let onOpenLink: (String, String?) -> Void
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onChange: onChange, onSave: onSave)
+        Coordinator(
+            onChange: onChange,
+            onSave: onSave,
+            onLinkHover: onLinkHover,
+            onOpenLink: onOpenLink
+        )
     }
 
     func makeNSView(context: Context) -> WKWebView {
@@ -33,6 +40,8 @@ struct MarkdownEditorView: NSViewRepresentable {
     func updateNSView(_ webView: WKWebView, context: Context) {
         context.coordinator.onChange = onChange
         context.coordinator.onSave = onSave
+        context.coordinator.onLinkHover = onLinkHover
+        context.coordinator.onOpenLink = onOpenLink
 
         let documentID = documentURL.standardizedFileURL.path
         let key = "\(documentID)#\(markdown.hashValue)"
@@ -64,10 +73,19 @@ struct MarkdownEditorView: NSViewRepresentable {
         var temporaryHTMLURL: URL?
         var onChange: (String) -> Void
         var onSave: () -> Void
+        var onLinkHover: (String?, String?) -> Void
+        var onOpenLink: (String, String?) -> Void
 
-        init(onChange: @escaping (String) -> Void, onSave: @escaping () -> Void) {
+        init(
+            onChange: @escaping (String) -> Void,
+            onSave: @escaping () -> Void,
+            onLinkHover: @escaping (String?, String?) -> Void,
+            onOpenLink: @escaping (String, String?) -> Void
+        ) {
             self.onChange = onChange
             self.onSave = onSave
+            self.onLinkHover = onLinkHover
+            self.onOpenLink = onOpenLink
         }
 
         func load(html: String, baseURL: URL, in webView: WKWebView) {
@@ -135,6 +153,13 @@ struct MarkdownEditorView: NSViewRepresentable {
                 guard let markdown = body["copyMarkdown"] as? String else { return }
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(markdown, forType: .string)
+            case "linkHovered":
+                onLinkHover(body["href"] as? String, body["resolvedHref"] as? String)
+            case "linkHoverEnded":
+                onLinkHover(nil, nil)
+            case "linkActivated":
+                guard let href = body["href"] as? String else { return }
+                onOpenLink(href, body["resolvedHref"] as? String)
             default:
                 break
             }
@@ -180,8 +205,8 @@ struct MarkdownEditorView: NSViewRepresentable {
                 return
             }
 
-            if url.scheme == "http" || url.scheme == "https" {
-                NSWorkspace.shared.open(url)
+            if navigationAction.modifierFlags.contains(.command) || navigationAction.modifierFlags.contains(.control) {
+                onOpenLink(url.absoluteString, url.absoluteString)
             }
             decisionHandler(.cancel)
         }

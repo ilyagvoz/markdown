@@ -307,6 +307,9 @@ struct StatusBar: View {
     }
 
     private var status: String {
+        if let hoveredLinkDestination = model.hoveredLinkDestination {
+            return "Link: \(hoveredLinkDestination)"
+        }
         guard !model.resourceText.isEmpty else { return model.statusText }
         return "\(model.statusText) · \(model.resourceText)"
     }
@@ -471,6 +474,28 @@ struct PreviewPane: View {
 
     private var previewHeader: some View {
         HStack(spacing: 12) {
+            HStack(spacing: 6) {
+                Button {
+                    Task { await model.goBackInLinkHistory() }
+                } label: {
+                    Image(systemName: "chevron.left")
+                }
+                .buttonStyle(.borderless)
+                .disabled(!model.canNavigateBack)
+                .help("Go back")
+                .accessibilityLabel("Go back")
+
+                Button {
+                    Task { await model.goForwardInLinkHistory() }
+                } label: {
+                    Image(systemName: "chevron.right")
+                }
+                .buttonStyle(.borderless)
+                .disabled(!model.canNavigateForward)
+                .help("Go forward")
+                .accessibilityLabel("Go forward")
+            }
+
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 7) {
                     Image(systemName: "doc.text")
@@ -534,6 +559,12 @@ struct PreviewPane: View {
                 },
                 onSave: {
                     model.saveSelectedFile()
+                },
+                onLinkHover: { href, resolvedHref in
+                    model.linkHoverChanged(href: href, resolvedHref: resolvedHref, documentURL: fileURL)
+                },
+                onOpenLink: { href, resolvedHref in
+                    Task { await model.openLink(href: href, resolvedHref: resolvedHref, documentURL: fileURL) }
                 }
             )
         case let .failure(message):
@@ -829,6 +860,9 @@ struct ShortcutHelpView: View {
         ]),
         ("Navigation", [
             ("Search current document", "Cmd F"),
+            ("Open link", "Cmd click / Ctrl click"),
+            ("Back from link", "Cmd ["),
+            ("Forward from link", "Cmd ]"),
             ("Previous Markdown file", "Cmd Up"),
             ("Next Markdown file", "Cmd Down"),
             ("Toggle left sidebar", "Cmd Left Arrow"),

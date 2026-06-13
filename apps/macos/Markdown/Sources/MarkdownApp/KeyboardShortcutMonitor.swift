@@ -5,6 +5,8 @@ final class KeyboardShortcutMonitor {
     private var monitor: Any?
 
     func install(
+        onBack: @escaping @MainActor () -> Void,
+        onForward: @escaping @MainActor () -> Void,
         onPreviousFile: @escaping @MainActor () -> Void,
         onNextFile: @escaping @MainActor () -> Void,
         onToggleLeftPane: @escaping @MainActor () -> Void,
@@ -17,6 +19,12 @@ final class KeyboardShortcutMonitor {
             guard modifiers == .command else { return event }
 
             switch event.keyCode {
+            case 33:
+                onBack()
+                return nil
+            case 30:
+                onForward()
+                return nil
             case 126:
                 onPreviousFile()
                 return nil

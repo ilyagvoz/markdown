@@ -75,6 +75,7 @@ Run for performance-sensitive changes:
 | Rename selected Markdown file | UI smoke and UI E2E | Uses the File menu rename command, edits the native rename prompt, and verifies the file is moved on disk. File rows also expose Rename in their context menu. |
 | Render common Markdown | Unit tests | Verifies headings, emphasis, code, lists, tables, light CSS, and wrapped HTML. |
 | Render and zoom Markdown images | Unit tests and UI E2E | Unit tests cover generated image parsing/rendering hooks and image URL constraints; `e2e-macos-images.sh` opens a real relative local image, opens the full-window preview, exercises zoom/reset/close shortcuts, saves, and verifies Markdown source is unchanged. |
+| Hover and open Markdown links | Unit tests and manual/user verification | Unit tests cover local Markdown vs external `http` / `https` destination resolution, same-document fragments, unsupported schemes/files, and generated WebView hover/activation bridge hooks. The actual `Cmd`/`Ctrl` modifier-click gesture is verified manually because synthetic macOS modifier-clicks against contentEditable WebKit links were unreliable. |
 | Build folder tree | Unit tests | Covers Markdown filtering, hidden files, single-file workspaces, unsupported files, and symlink skipping. |
 | Sidebar file selection via keyboard | UI E2E | Uses `Cmd+Down` and `Cmd+Up` across visible Markdown files. |
 | Sidebar visible row model | Unit tests | Verifies visible ordering, depth, parent IDs, expansion behavior, and node lookup. |
@@ -115,6 +116,7 @@ Run for performance-sensitive changes:
 - Selected-file live refresh should get automated E2E coverage that edits the selected file on disk.
 - Resource readout formatting and throttling should be moved into a testable support module.
 - Pane dragging itself is manual QA; the persisted layout state has automated coverage.
+- Actual modifier-click link opening is manual QA; deterministic resolver and generated WebView bridge behavior are unit-tested.
 - Visual polish remains screenshot/manual QA rather than pixel-diff automation.
 - Live-preview editing still needs automated coverage for IME/input, paste normalization, cross-block selection behavior, external file-conflict handling, accessibility, and large-file behavior.
 

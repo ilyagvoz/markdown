@@ -87,6 +87,20 @@ struct MarkdownApplication: App {
 
                 Divider()
 
+                Button("Back") {
+                    Task { await model.goBackInLinkHistory() }
+                }
+                .keyboardShortcut("[", modifiers: [.command])
+                .disabled(!model.canNavigateBack)
+
+                Button("Forward") {
+                    Task { await model.goForwardInLinkHistory() }
+                }
+                .keyboardShortcut("]", modifiers: [.command])
+                .disabled(!model.canNavigateForward)
+
+                Divider()
+
                 Button("Previous Markdown File") {
                     Task { await model.moveSelection(delta: -1, expandedNodeIDs: model.expandedNodeIDs) }
                 }

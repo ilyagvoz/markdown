@@ -19,6 +19,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var previewState: PreviewState = .empty
     @Published private(set) var statusText = "Open a Markdown file or folder"
     @Published private(set) var resourceText = ""
+    @Published private(set) var hoveredLinkDestination: String?
+    @Published private(set) var canNavigateBack = false
+    @Published private(set) var canNavigateForward = false
     @Published private(set) var recentDocuments: [RecentDocument] = []
     @Published private(set) var documentOutline: [DocumentOutlineItem] = []
     @Published private(set) var searchResults: [DocumentSearchResult] = []
@@ -76,6 +79,7 @@ final class AppModel: ObservableObject {
     private let treeNavigator = WorkspaceTreeNavigator()
     private let renderer = MarkdownHTMLRenderer()
     private let analyzer = MarkdownDocumentAnalyzer()
+    private let linkResolver = MarkdownLinkResolver()
     private let settings = AppSettings()
     private let selectedFileWatcher = FileWatcher()
     private let directoryWatcher = DirectoryWatcher()
@@ -96,6 +100,22 @@ final class AppModel: ObservableObject {
     private var lastSidebarClickAt: Date?
     private let sidebarRenameDelay: TimeInterval = 0.55
     private let autosaveDelay: Duration = .milliseconds(1_500)
+    private var navigationBackStack: [NavigationLocation] = [] {
+        didSet { updateNavigationAvailability() }
+    }
+    private var navigationForwardStack: [NavigationLocation] = [] {
+        didSet { updateNavigationAvailability() }
+    }
+
+    enum NavigationHistoryPolicy {
+        case reset
+        case preserve
+    }
+
+    private struct NavigationLocation: Equatable {
+        let openedURL: URL
+        let selectedFileURL: URL?
+    }
 
     func openLaunchArgumentIfPresent() async {
         prepareAppStateIfNeeded()
@@ -155,7 +175,15 @@ final class AppModel: ObservableObject {
         await open(url: recent.url)
     }
 
-    func open(url: URL, preferredSelectedFile: URL? = nil) async {
+    func open(
+        url: URL,
+        preferredSelectedFile: URL? = nil,
+        historyPolicy: NavigationHistoryPolicy = .reset
+    ) async {
+        if historyPolicy == .reset {
+            resetLinkNavigationHistory()
+        }
+        hoveredLinkDestination = nil
         flushAutosaveIfNeeded()
         statusText = "Opening \(url.lastPathComponent)..."
         previewState = .loading(url.lastPathComponent)
@@ -170,12 +198,12 @@ final class AppModel: ObservableObject {
             watchDirectories(in: workspace)
 
             if workspace.root.kind == .markdownFile {
-                await selectFile(workspace.root.url)
+                await selectFile(workspace.root.url, historyPolicy: historyPolicy)
             } else if let preferredSelectedFile,
                       containsFile(preferredSelectedFile, in: workspace.root) {
-                await selectFile(preferredSelectedFile)
+                await selectFile(preferredSelectedFile, historyPolicy: historyPolicy)
             } else if let first = firstMarkdownFile(in: workspace.root) {
-                await selectFile(first.url)
+                await selectFile(first.url, historyPolicy: historyPolicy)
             } else {
                 selectedFileURL = nil
                 sidebarSelectionID = workspace.root.id
@@ -203,7 +231,11 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func selectFile(_ url: URL) async {
+    func selectFile(_ url: URL, historyPolicy: NavigationHistoryPolicy = .reset) async {
+        if historyPolicy == .reset {
+            resetLinkNavigationHistory()
+        }
+        hoveredLinkDestination = nil
         flushAutosaveIfNeeded()
         selectedFileURL = url
         sidebarSelectionID = url.standardizedFileURL.path
@@ -448,6 +480,57 @@ final class AppModel: ObservableObject {
         NSWorkspace.shared.activateFileViewerSelecting([selectedFileURL])
     }
 
+    func linkHoverChanged(href: String?, resolvedHref: String?, documentURL: URL) {
+        guard let href,
+              !href.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            hoveredLinkDestination = nil
+            return
+        }
+
+        let destination = linkResolver.resolve(
+            href: href,
+            resolvedHref: resolvedHref,
+            documentURL: documentURL
+        )
+        hoveredLinkDestination = displayString(for: destination)
+    }
+
+    func openLink(href: String, resolvedHref: String?, documentURL: URL) async {
+        hoveredLinkDestination = nil
+        let destination = linkResolver.resolve(
+            href: href,
+            resolvedHref: resolvedHref,
+            documentURL: documentURL
+        )
+
+        switch destination {
+        case let .externalURL(url):
+            NSWorkspace.shared.open(url)
+            statusText = "Opened \(url.host(percentEncoded: false) ?? url.absoluteString) in browser"
+        case let .markdownFile(fileURL, fragment):
+            await openMarkdownLink(fileURL: fileURL, fragment: fragment)
+        case let .unsupported(url):
+            statusText = unsupportedLinkStatus(for: url)
+        }
+    }
+
+    func goBackInLinkHistory() async {
+        guard let destination = navigationBackStack.popLast() else { return }
+        if let currentLocation {
+            navigationForwardStack.append(currentLocation)
+        }
+        await restoreNavigationLocation(destination)
+    }
+
+    func goForwardInLinkHistory() async {
+        guard let destination = navigationForwardStack.popLast() else { return }
+        if let currentLocation {
+            navigationBackStack.append(currentLocation)
+        }
+        await restoreNavigationLocation(destination)
+    }
+
     var canCreateMarkdownFile: Bool {
         workspace?.root.kind == .folder
     }
@@ -607,6 +690,139 @@ final class AppModel: ObservableObject {
             workspaceSearchResults = []
             statusText = "Could not refresh workspace"
         }
+    }
+
+    private var currentLocation: NavigationLocation? {
+        guard let lastOpenedURL else { return nil }
+        return NavigationLocation(
+            openedURL: lastOpenedURL.standardizedFileURL,
+            selectedFileURL: selectedFileURL?.standardizedFileURL
+        )
+    }
+
+    private func openMarkdownLink(fileURL: URL, fragment: String?) async {
+        let standardizedFileURL = fileURL.standardizedFileURL
+
+        if selectedFileURL?.standardizedFileURL.path == standardizedFileURL.path {
+            jumpToLinkFragment(fragment)
+            statusText = fragment == nil
+                ? "Already viewing \(standardizedFileURL.lastPathComponent)"
+                : "Jumped to \(standardizedFileURL.lastPathComponent)"
+            return
+        }
+
+        if let currentLocation {
+            navigationBackStack.append(currentLocation)
+            navigationForwardStack.removeAll()
+        }
+
+        if let workspace,
+           containsFile(standardizedFileURL, in: workspace.root) {
+            revealFileInSidebar(standardizedFileURL)
+            await selectFile(standardizedFileURL, historyPolicy: .preserve)
+        } else {
+            await open(url: standardizedFileURL, preferredSelectedFile: standardizedFileURL, historyPolicy: .preserve)
+        }
+
+        jumpToLinkFragment(fragment)
+        statusText = "\(standardizedFileURL.lastPathComponent) opened from link"
+    }
+
+    private func restoreNavigationLocation(_ location: NavigationLocation) async {
+        if let workspace,
+           lastOpenedURL?.standardizedFileURL.path == location.openedURL.standardizedFileURL.path,
+           let selectedFileURL = location.selectedFileURL,
+           containsFile(selectedFileURL, in: workspace.root) {
+            revealFileInSidebar(selectedFileURL)
+            await selectFile(selectedFileURL, historyPolicy: .preserve)
+            statusText = "\(selectedFileURL.lastPathComponent) restored"
+            return
+        }
+
+        await open(url: location.openedURL, preferredSelectedFile: location.selectedFileURL, historyPolicy: .preserve)
+        if let selectedFileURL = location.selectedFileURL {
+            revealFileInSidebar(selectedFileURL)
+            statusText = "\(selectedFileURL.lastPathComponent) restored"
+        }
+    }
+
+    private func jumpToLinkFragment(_ fragment: String?) {
+        guard let fragment,
+              !fragment.isEmpty
+        else { return }
+        previewActionToken += 1
+        pendingPreviewAction = PreviewAction(token: previewActionToken, kind: .jumpToAnchor(fragment))
+    }
+
+    private func resetLinkNavigationHistory() {
+        navigationBackStack.removeAll()
+        navigationForwardStack.removeAll()
+        hoveredLinkDestination = nil
+    }
+
+    private func updateNavigationAvailability() {
+        canNavigateBack = !navigationBackStack.isEmpty
+        canNavigateForward = !navigationForwardStack.isEmpty
+    }
+
+    private func revealFileInSidebar(_ fileURL: URL) {
+        guard let workspace,
+              let ancestorIDs = ancestorFolderIDs(containing: fileURL, in: workspace.root)
+        else { return }
+        expandedNodeIDs.formUnion(ancestorIDs)
+        sidebarSelectionID = fileURL.standardizedFileURL.path
+    }
+
+    private func ancestorFolderIDs(containing fileURL: URL, in node: WorkspaceNode, ancestors: [String] = []) -> [String]? {
+        if node.kind == .markdownFile {
+            return node.url.standardizedFileURL.path == fileURL.standardizedFileURL.path ? ancestors : nil
+        }
+
+        for child in node.children {
+            if let found = ancestorFolderIDs(containing: fileURL, in: child, ancestors: ancestors + [node.id]) {
+                return found
+            }
+        }
+
+        return nil
+    }
+
+    private func displayString(for destination: MarkdownLinkDestination) -> String {
+        switch destination {
+        case let .externalURL(url):
+            return url.absoluteString
+        case let .markdownFile(fileURL, fragment):
+            return displayPath(fileURL, fragment: fragment)
+        case let .unsupported(url):
+            guard let url else { return "Unsupported link" }
+            if url.isFileURL {
+                return displayPath(url, fragment: url.fragment)
+            }
+            return url.absoluteString
+        }
+    }
+
+    private func displayPath(_ fileURL: URL, fragment: String?) -> String {
+        let path: String
+        if let workspace,
+           workspace.root.kind == .folder {
+            path = Self.relativeDisplayPath(for: fileURL, rootURL: workspace.rootURL)
+        } else {
+            path = fileURL.standardizedFileURL.path
+        }
+
+        guard let fragment,
+              !fragment.isEmpty
+        else { return path }
+        return "\(path)#\(fragment)"
+    }
+
+    private func unsupportedLinkStatus(for url: URL?) -> String {
+        guard let url else { return "Could not open link" }
+        if url.isFileURL {
+            return "\(url.lastPathComponent) is not a Markdown file"
+        }
+        return "\(url.scheme ?? "Link") links are not supported"
     }
 
     private func prepareAppStateIfNeeded() {
@@ -914,6 +1130,14 @@ final class AppModel: ObservableObject {
 
     private func installShortcutMonitor() {
         shortcutMonitor.install(
+            onBack: { [weak self] in
+                guard let self else { return }
+                Task { await self.goBackInLinkHistory() }
+            },
+            onForward: { [weak self] in
+                guard let self else { return }
+                Task { await self.goForwardInLinkHistory() }
+            },
             onPreviousFile: { [weak self] in
                 guard let self else { return }
                 Task { await self.moveSelection(delta: -1, expandedNodeIDs: self.expandedNodeIDs) }

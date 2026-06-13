@@ -14,6 +14,7 @@ Markdown is built for people who want a lightweight desktop app for reading and 
 - Collapsible sidebar tree for folders and Markdown files.
 - Current-document search, workspace search, and a right-side document outline.
 - Live-preview editing with `Cmd+S` save, debounced autosave, undo/redo, list continuation, and inline formatting shortcuts.
+- Link hover destinations, plus `Cmd`/`Ctrl` click to open local Markdown links in the app or `http`/`https` links in a browser.
 - File watching for selected-file refresh, folder additions/deletions, and selected-file rename/delete recovery.
 - No plugins, sync, graph view, backlinks, wiki links, hidden indexing, or persistent database.
 
@@ -68,7 +69,7 @@ The local release app bundle is generated at `artifacts/Markdown.app`.
 
 ## Security And Privacy
 
-Markdown is local-first: it opens files and folders you choose and does not maintain a background index or sync service. The 0.1 renderer supports common Markdown only; raw HTML in Markdown files is rendered as text so arbitrary `<script>` or event-handler HTML cannot run in the preview. Clicked links open externally only for `http` and `https`.
+Markdown is local-first: it opens files and folders you choose and does not maintain a background index or sync service. The 0.1 renderer supports common Markdown only; raw HTML in Markdown files is rendered as text so arbitrary `<script>` or event-handler HTML cannot run in the preview. Explicitly opened links support local Markdown files inside the app and external `http` / `https` URLs in a browser; other schemes and non-Markdown local files are not opened.
 
 See [`SECURITY.md`](SECURITY.md) for reporting guidance and [`docs/Security-Review-0.1.md`](docs/Security-Review-0.1.md) for the 0.1 security review notes.
 

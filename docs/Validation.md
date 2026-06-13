@@ -12,9 +12,9 @@ Run:
 
 Latest result:
 
-- Passed on 2026-06-13 in 0.84s on a warm cache.
-- 35 unit tests.
-- Coverage areas: Markdown HTML rendering, raw HTML escaping, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, live-preview editor HTML/script generation including icon-only copy controls, code-block formatting and unwrap behavior, and tail-area append editing, default Markdown reader registration constants/errors, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
+- Passed on 2026-06-13 in 0.20s test runtime on a warm cache.
+- 41 unit tests.
+- Coverage areas: Markdown HTML rendering, raw HTML escaping, light-only CSS contract, outline/landmark extraction, current-document search, workspace search result metadata/snippets, visible sidebar row navigation, selected-file replacement during workspace rebuilds, WebView JavaScript string/script generation, live-preview editor HTML/script generation including icon-only copy controls and link hover/activation bridge hooks, link destination resolution for local Markdown files, fragments, external URLs, unsupported schemes/files, code-block formatting and unwrap behavior, and tail-area append editing, default Markdown reader registration constants/errors, restored pane layout state, folder tree building, single-file workspace, unsupported file rejection, symbolic-link skipping.
 
 Run:
 
@@ -59,7 +59,7 @@ It covers launch, single-file open, folder open, current-document search, one ed
 
 Latest fast-smoke result:
 
-- Passed on 2026-06-13 in 13.2s.
+- Passed on 2026-06-13 in 12.9s.
 
 Targeted UI E2E scripts tracked here:
 
@@ -100,7 +100,7 @@ Latest launch-window result:
 
 Latest navigation E2E result:
 
-- Passed on 2026-06-13 in 23.8s after replacing avoidable relaunches with in-app opens.
+- Passed on 2026-06-13 in 23.8s after link-history shortcut monitor changes; opening, search, outline, pane toggles, sidebar keyboarding, reveal, and open shortcuts remained healthy.
 
 Full UI E2E battery:
 
@@ -180,6 +180,11 @@ Assessment:
 - Function: single-file and folder-open flows work.
 - Usability: sidebar hierarchy is clear, selected row is obvious, current/workspace search is discoverable, the outline panel is useful without overpowering the reading/editing surface, live-preview editing keeps block markers hidden until intentional marker editing, and status text remains unobtrusive.
 - Joy: the light-only palette, warm paper reading surface, teal selection, calm three-pane layout, comfortable typography, restored preview-like document spacing, and new app icon are directionally right for daily use.
+
+Link behavior:
+
+- User manually verified link hover/open behavior in the native editor: `Cmd`/`Ctrl` click opens Markdown links in-app and external links in the browser, with in-app Back/Forward available afterward.
+- Synthetic macOS modifier-click automation against contentEditable WebKit links was unreliable during implementation, so automated coverage is kept to deterministic resolver and generated bridge tests.
 
 Known UX follow-ups:
 

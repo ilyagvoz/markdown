@@ -27,6 +27,7 @@ Complete capabilities:
 - Left and right pane toggles with `Cmd+Left Arrow` and `Cmd+Right Arrow`.
 - Pane size and visibility persistence for the left sidebar and right outline.
 - App-level command-arrow routing so `Cmd+Up` and `Cmd+Down` continue to change documents when focus is in preview/search/outline.
+- Link destinations shown on hover, with `Cmd`/`Ctrl` click opening local Markdown links in the app, `http` / `https` links in a browser, and link Back/Forward through `Cmd+[` / `Cmd+]` plus header chevrons.
 - Sidebar row keyboard navigation for folders and files with plain arrows, `Return`, and `Space`.
 - `Cmd+R` reveal in Finder.
 - Help menu keyboard shortcut reference.
@@ -46,7 +47,7 @@ Complete capabilities:
 - Icon-only click-to-copy Markdown controls for the whole document and each fenced code section, backed by the native pasteboard and visible on code blocks without hover.
 - Rendered Markdown image blocks in the live-preview editor, with source-preserving editing, relative local image loading, unsafe image URL blocking, missing-image fallback, and full-window image preview with zoom, reset, pan, and keyboard dismissal.
 - Focused accessibility spot check with explicit labels added for icon-only controls.
-- Markdown preview hardening that renders raw HTML as text and only opens clicked `http` / `https` links externally.
+- Markdown preview hardening that renders raw HTML as text, keeps link opening explicit, opens only local Markdown files in-app, and opens only `http` / `https` URLs externally.
 - Release build, install, profile, fast UI smoke, and UI E2E regression scripts.
 - Local source-update script that fetches the latest GitHub commit, rebuilds it in a temporary worktree, and redeploys it to `/Applications/Markdown.app`.
 - App-menu action that asks macOS to make Markdown the default reader for Markdown documents.
@@ -66,7 +67,7 @@ Durable decisions live in `docs/Architecture-Decisions.md`.
 
 Current verified gates:
 
-- `./scripts/test-macos.sh` passes with 35 tests.
+- `./scripts/test-macos.sh` passes with 41 tests.
 - `./scripts/build-macos-app.sh` builds `artifacts/Markdown.app`.
 - `./scripts/install-macos-app.sh` installs `/Applications/Markdown.app`.
 - `./scripts/smoke-macos-ui.sh` covers a fast installed-app health path.
@@ -86,6 +87,11 @@ Current fast UI smoke coverage includes:
 - new Markdown file creation in an opened folder
 - selected-file rename
 - crash-report checks
+
+Current link coverage includes:
+
+- unit-tested local/external link destination resolution and generated WebView link bridge hooks
+- user-verified modifier-click link opening for the native WebView editor
 
 Current UI E2E coverage includes:
 

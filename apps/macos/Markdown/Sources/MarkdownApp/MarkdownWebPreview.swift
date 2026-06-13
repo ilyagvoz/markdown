@@ -85,7 +85,8 @@ struct MarkdownWebPreview: NSViewRepresentable {
                 return
             }
 
-            if url.scheme == "http" || url.scheme == "https" {
+            if (url.scheme == "http" || url.scheme == "https"),
+               navigationAction.modifierFlags.contains(.command) || navigationAction.modifierFlags.contains(.control) {
                 NSWorkspace.shared.open(url)
             }
             decisionHandler(.cancel)

@@ -21,4 +21,4 @@ Avoid filing public issues for vulnerabilities until there is a fix or a coordin
 
 Markdown is a local-first desktop app. It opens files and folders selected by the user, renders common Markdown, and writes only the selected Markdown file during editing/save flows.
 
-The 0.1 release intentionally does not support raw HTML execution, plugins, sync, backlinks, graph views, hidden indexing, or a persistent database.
+The app does not support raw HTML execution, plugins, sync, backlinks, graph views, hidden indexing, or a persistent database. Link opening is explicit: `Cmd`/`Ctrl` click opens existing local Markdown files inside the app and opens external `http` / `https` URLs in the browser. Other schemes and non-Markdown local files are not opened.

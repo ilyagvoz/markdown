@@ -693,6 +693,7 @@ public enum MarkdownEditorHTML {
   installCopyControls();
   installImageInteractions();
   installBlankDocumentClickTarget();
+  installLinkInteractions();
 
   window.markdownClearSearchHighlights = function() {
     document.querySelectorAll(".md-search-hit").forEach(function(node) {
@@ -778,6 +779,49 @@ public enum MarkdownEditorHTML {
       event.preventDefault();
       appendBlockAtEnd(normalizedKey(event.key) === "Enter" ? "" : event.key);
     });
+  }
+
+  function installLinkInteractions() {
+    let hoveredLink = null;
+    let lastActivation = { href: "", at: 0 };
+
+    editor.addEventListener("mouseover", (event) => {
+      const link = closestLink(event.target);
+      if (!link || !editor.contains(link)) return;
+      const payload = linkPayload(link);
+      link.setAttribute("title", payload.resolvedHref || payload.href);
+      if (hoveredLink === link) return;
+      hoveredLink = link;
+      post("linkHovered", payload, false);
+    });
+
+    editor.addEventListener("mouseout", (event) => {
+      const link = closestLink(event.target);
+      if (!link || !editor.contains(link)) return;
+      if (event.relatedTarget && link.contains(event.relatedTarget)) return;
+      if (hoveredLink === link) hoveredLink = null;
+      post("linkHoverEnded", {}, false);
+    });
+
+    editor.addEventListener("mousedown", (event) => {
+      const link = closestLink(event.target);
+      if (!link || !editor.contains(link)) return;
+      if (hasLinkOpenModifier(event)) activateLink(link, event, lastActivation);
+    }, true);
+
+    editor.addEventListener("click", (event) => {
+      const link = closestLink(event.target);
+      if (!link || !editor.contains(link)) return;
+      event.preventDefault();
+      if (!hasLinkOpenModifier(event)) return;
+      activateLink(link, event, lastActivation);
+    });
+
+    editor.addEventListener("contextmenu", (event) => {
+      const link = closestLink(event.target);
+      if (!link || !editor.contains(link) || !event.ctrlKey) return;
+      activateLink(link, event, lastActivation);
+    }, true);
   }
 
   function installCopyControls() {
@@ -1163,12 +1207,13 @@ public enum MarkdownEditorHTML {
     return `| ${cells.map((cell) => cell.trim()).join(" | ")} |`;
   }
 
-  function post(type, payload = {}) {
-    window.webkit?.messageHandlers?.editor?.postMessage({
+  function post(type, payload = {}, includeMarkdown = true) {
+    const message = {
       type,
-      markdown: serializeBlocks(blocks),
       ...payload,
-    });
+    };
+    if (includeMarkdown) message.markdown = serializeBlocks(blocks);
+    window.webkit?.messageHandlers?.editor?.postMessage(message);
   }
 
   function requestMarkdownCopy(kind, markdown, button) {
@@ -2400,6 +2445,31 @@ public enum MarkdownEditorHTML {
     return event.key.length === 1 || event.key === "Backspace" || event.key === "Delete";
   }
 
+  function linkPayload(link) {
+    const href = link.getAttribute("href") || "";
+    return { href, resolvedHref: link.href || href };
+  }
+
+  function closestLink(target) {
+    const element = target?.nodeType === Node.ELEMENT_NODE ? target : target?.parentElement;
+    return element?.closest?.("a[href]") || null;
+  }
+
+  function hasLinkOpenModifier(event) {
+    return Boolean(event.metaKey || event.ctrlKey);
+  }
+
+  function activateLink(link, event, lastActivation) {
+    event.preventDefault();
+    const payload = linkPayload(link);
+    const activationKey = payload.resolvedHref || payload.href;
+    const now = Date.now();
+    if (lastActivation.href === activationKey && now - lastActivation.at < 450) return;
+    lastActivation.href = activationKey;
+    lastActivation.at = now;
+    post("linkActivated", payload, false);
+  }
+
   function shouldUnlockFromKey(eventLike, caretOffset) {
     return normalizedKey(eventLike.key) === "ArrowLeft" && caretOffset === 0 && !eventLike.metaKey;
   }
@@ -2418,7 +2488,7 @@ public enum MarkdownEditorHTML {
     if (key === "h" && eventLike.ctrlKey) return "format-highlight";
     if (key === "s") return "save";
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) return "native-navigation";
-    if (key === "o" || key === "f" || key === "/" || key === "r") return "native-command";
+    if (key === "o" || key === "f" || key === "/" || key === "r" || key === "[" || key === "]") return "native-command";
     return "editor";
   }
 
